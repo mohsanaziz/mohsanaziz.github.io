@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .bg {
+    &-accent-200 {
+      background-color: rgba(168 177 255 / 1);
+    }
+
+    &-background {
+      background: var(--background);
+      &-secondary {
+        background-color: var(--background-secondary);
+      }
+
+      &-tertiary {
+        background-color: var(--background-tertiary);
+      }
+    }
+  }
+
+  .text {
+    &-accent-200 {
+      color: rgb(168 177 255 / 1);
+    }
+
+    &-secondary-foreground {
+      color: var(--secondary-foreground);
+    }
+  }
+}
