@@ -1,0 +1,9 @@
+---
+const { href, label } = Astro.props;
+---
+
+<a href={href} target="_blank" aria-label={label}>
+  <div class="bg-accent-200 flex items-center justify-center rounded-lg p-2 shadow-sm">
+    <slot />
+  </div>
+</a>

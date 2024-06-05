@@ -21,8 +21,17 @@
   }
 
   .text {
-    &-accent-200 {
-      color: rgb(168 177 255 / 1);
+    &-accent {
+      &-200 {
+        color: rgba(168 177 255 / 1);
+      }
+      &-300 {
+        color: rgba(128 140 255 / 1);
+      }
+    }
+
+    &-muted-foreground {
+      color: hsl(var(--muted-foreground) / 1);
     }
 
     &-secondary-foreground {
