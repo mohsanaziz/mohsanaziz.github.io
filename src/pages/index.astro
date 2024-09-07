@@ -2,13 +2,14 @@
 import Card from '../components/Card.astro';
 import Info from '../components/Info.astro';
 import Link from '../components/Link.astro';
+import Skill from '../components/Skill.astro';
 import Content from '../layouts/Content.astro';
 import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="CV - Mohsan AZIZ">
   <main class="flex w-screen flex-col items-center px-5 pt-5 font-sans leading-relaxed md:px-0 lg:max-w-7xl">
-    <header class="z-20 w-full md:fixed md:px-5 lg:max-w-7xl">
+    <!-- <header class="z-20 w-full md:fixed md:px-5 lg:max-w-7xl">
       <nav class="grid grid-cols-1 md:grid-cols-3">
         <div
           class="bg-background-tertiary z-10 col-span-2 col-start-2 mb-5 hidden flex-row justify-between rounded-2xl border border-transparent p-5 shadow-xl md:flex"
@@ -21,7 +22,7 @@ import Layout from '../layouts/Layout.astro';
           <a href="" class="flex-none text-[1.05rem] font-medium">Outils</a>
         </div>
       </nav>
-    </header>
+    </header> -->
 
     <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
       <aside class="top-5 flex flex-col items-center justify-center pt-16 md:sticky md:col-span-1 md:h-screen md:pl-5">
@@ -42,7 +43,7 @@ import Layout from '../layouts/Layout.astro';
               <h1 class="text-3xl font-bold">Mohsan AZIZ</h1>
 
               <!-- Job title -->
-              <h2 class="text-xl">Développeur Angular/Java</h2>
+              <h2 class="text-center text-xl">Développeur freelance Angular/Java</h2>
 
               <!-- Links -->
               <div class="flex flex-row gap-x-4 pb-3 pt-1">
@@ -148,40 +149,262 @@ import Layout from '../layouts/Layout.astro';
 
       <!-- Main content -->
       <div class="md:col-span-2 md:mr-5">
-        <div class="bg-background-tertiary mt-5 rounded-2xl border border-transparent p-5 md:mt-[5.5rem]">
+        <div class="bg-background-tertiary mt-5 rounded-2xl border border-transparent p-5">
           <!-- About -->
           <Content title="A propos">
             <p class="text-muted-foreground">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquid nihil cumque, inventore vel et, cupiditate accusantium
-              accusamus, quasi impedit dolorem quaerat. Assumenda cum adipisci corporis provident. Doloribus ipsam, beatae odio quasi
-              nostrum iure voluptatem commodi excepturi amet aut aliquid consequuntur nam molestias sapiente eius. Inventore aspernatur
-              impedit non nemo quia?
+              Je suis Mohsan AZIZ, développeur freelance spécialisé en Angular et Java, avec une expertise particulière en Angular. Au fil
+              de mes projets, j'ai participé à la refonte et au développement de systèmes d'information complexes, couvrant des domaines
+              variés comme les systèmes judiciaires, administratifs et le secteur commercial.<br /><br />
+
+              L'un de mes projets récents inclut la refonte de l'application des magasins Point P, une solution permettant la gestion de
+              commandes et de devis, avec une intégration à l'ERP SAP via des API externes. Ce projet reposait sur une architecture
+              microservices en Java pour le back-end et une architecture monolithique en Angular pour le front-end, utilisant Bootstrap et
+              NgRx pour la gestion de l'état.<br /><br />
+
+              J'ai également travaillé sur des projets majeurs, tels que la refonte de systèmes de gestion pénale et judiciaire, en
+              utilisant des technologies comme Java (Spring Boot) et Angular, dans des architectures microservices et monolithiques. Je suis
+              habitué à évoluer dans des environnements Agile (SCRUM), au sein d'équipes pluridisciplinaires, et à collaborer avec des
+              Product Owners, chefs de projet, et experts fonctionnels.<br /><br />
+
+              Je mets un point d'honneur à la qualité du code, à l'optimisation des processus de développement, et je suis toujours en quête
+              de nouveaux défis où je peux apporter mon expertise technique, particulièrement en Angular.
             </p>
           </Content>
 
           <!-- Experiences -->
-          <Content title="Expériences">
-            <Card title="Saint-Gobain" subtitle="Développeur Angular/Java" date="Septembre 2022 - Aujourd'hui" />
+          <Content title="Expérience professionnelle">
+            <Card title="SASU AZMOPAK" subtitle="Développeur freelance Angular/Java" date="Novembre 2019 - Aujourd'hui" />
+            <Card title="Sopra Steria" subtitle="Développeur Angular/Java" date="Mai 2016 - Septembre 2019" />
           </Content>
 
-          <Content title="Projets">
-            <div class="flex flex-col gap-y-3 sm:flex-row sm:gap-x-3 sm:gap-y-0">
-              <a
-                class="border-border bg-primary-foreground hover:border-foreground/25 flex w-full flex-col gap-y-3 rounded-2xl border transition-all hover:shadow-sm sm:w-1/2"
-              >
-                <img
-                  class="h-48 w-full rounded-2xl rounded-bl-none rounded-br-none object-cover"
-                  loading="lazy"
-                  width="1023"
-                  height="1023"
-                  decoding="async"
+          <Content title="Projet client">
+            <Card title="ATLAS IHM" subtitle="Saint-Gobain" date="Septembre 2022 - Aujourd'hui">
+              <Skill
+                skills={{
+                  title: '',
+                  values: [
+                    'Java',
+                    'Spring Boot',
+                    'Angular',
+                    'RxJS',
+                    'Ngrx',
+                    'Bootstrap',
+                    'npm',
+                    'git',
+                    'Docker',
+                    'Kubernetes',
+                    'Jenkins',
+                    'Gitlab',
+                    'Confluence',
+                    'Jira',
+                  ],
+                }}
+              />
+              <p class="text-muted-foreground text-justify">
+                Projet de refonte de l'application des magasins Point P, visant à permettre la création de commandes et de devis, ainsi que
+                la gestion des commandes auprès de divers fournisseurs.<br />
+                L'application est développée en Java pour le back-end, reposant sur une architecture microservices, qui communique avec des API
+                externes, notamment l'ERP SAP. Le front-end, écrit en Angular, suit une architecture monolithique et utilise Bootstrap ainsi
+                que NgRx pour la gestion de l'état.<br />
+                L'équipe projet est composée de deux tech leads, chacun supervisant sept développeurs, et l'ensemble est coordonné par un chef
+                de projet. La gestion du projet est basée sur une méthodologie semi Agile.
+              </p>
+            </Card>
+
+            <Card title="SPS" subtitle="Ministère de la Justice" date="Mars 2022 - Juin 2022">
+              <Skill
+                skills={{
+                  title: '',
+                  values: [
+                    'Java',
+                    'Spring Boot',
+                    'Hibernate',
+                    'PostgreSQL',
+                    'ElasticSearch',
+                    'Zuul',
+                    'Spring Batch',
+                    'Spring Data JPA',
+                    'Angular',
+                    'Angular Material',
+                    'RxJS',
+                    'Bootstrap',
+                    'npm',
+                    'git',
+                    'Docker',
+                    'Docker Compose',
+                    'Openshift',
+                    'Jenkins',
+                    'Gitlab',
+                    'Nexus',
+                    'Confluence',
+                    'Jira',
+                  ],
+                }}
+              />
+              <p class="text-muted-foreground text-justify">
+                Projet de refonte du système de gestion pénale destiné à stocker des documents relatifs aux affaires en cours d'instruction.<br
                 />
-                <div class="flex flex-col gap-y-0.5 px-5 py-4">
-                  <h1 class="text-lg font-medium">TCG tracker</h1>
-                  <p class="text-muted-foreground">Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo, porro.</p>
-                </div>
-              </a>
-            </div>
+                Le projet comportait une dimension fonctionnelle avec une application web en front-end développée en Angular et une partie back-end
+                réalisée en Java (Spring Boot). Une phase de reprise des données a également été mise en œuvre pour migrer les informations de
+                l'ancienne application vers la nouvelle, à l'aide de Spring Batch.<br />
+                Le projet a été conduit selon la méthodologie Agile (SCRUM), avec une équipe composée d'une dizaine de développeurs, d'un expert
+                fonctionnel, d'un Product Owner (PO) et d'un Project Manager (PM).
+              </p>
+            </Card>
+
+            <Card title="SIAJ" subtitle="Ministère de la Justice" date="Octobre 2020 - Décembre 2021">
+              <Skill
+                skills={{
+                  title: '',
+                  values: [
+                    'Java',
+                    'Spring Boot',
+                    'Hibernate',
+                    'PostgreSQL',
+                    'Zuul',
+                    'Spring Batch',
+                    'Spring Data JPA',
+                    'Angular',
+                    'Angular Material',
+                    'RxJS',
+                    'Bootstrap',
+                    'npm',
+                    'git',
+                    'Docker',
+                    'Docker Compose',
+                    'Openshift',
+                    'Jenkins',
+                    'Gitlab',
+                    'Nexus',
+                    'Confluence',
+                    'Jira',
+                  ],
+                }}
+              />
+              <p class="text-muted-foreground text-justify">
+                Projet de refonte du système d'information de l'aide juridictionnelle visant à simplifier la soumission des demandes en
+                ligne.<br />
+                Le projet comprend deux volets : une partie front-office (internet) et une partie back-office (intranet). La partie back-office
+                est développée avec une architecture en microservices (Java), tandis que la partie front-office repose sur une architecture monolithique
+                (Angular). Ces deux composants communiquent via un broker de messages (ActiveMQ) pour l'échange de données.<br />
+                La gestion du projet a été effectuée selon la méthodologie Agile (SCRUM), avec une équipe composée d'une douzaine de développeurs,
+                de trois experts fonctionnels, de cinq Product Owners (PO) et d'un Project Manager (PM).
+              </p>
+            </Card>
+
+            <Card title="PARCOURS" subtitle="Ministère de la Justice" date="Février 2020 - Mai 2020">
+              <Skill
+                skills={{
+                  title: '',
+                  values: [
+                    'Java',
+                    'Spring Boot',
+                    'Hibernate',
+                    'PostgreSQL',
+                    'Zuul',
+                    'Spring Data JPA',
+                    'Lombok',
+                    'Angular',
+                    'Angular Material',
+                    'RxJS',
+                    'npm',
+                    'git',
+                    'Docker',
+                    'Docker Compose',
+                    'Openshift',
+                    'Jenkins',
+                    'Gitlab',
+                    'Nexus',
+                    'Confluence',
+                    'Jira',
+                  ],
+                }}
+              />
+              <p class="text-muted-foreground text-justify">
+                Projet de refonte du logiciel de suivi des jeunes pris en charge par le système judiciaire, depuis leur entrée jusqu'à leur
+                sortie ou leur majorité.<br />
+                Le projet a été géré selon la méthodologie Agile (SCRUM) au niveau des équipes de développement. Il comprenait trois équipes
+                : deux dédiées au développement des nouvelles fonctionnalités et une consacrée à la reprise des données. Chaque équipe de développement
+                était composée d'un développeur senior et de trois développeurs juniors. L'ensemble des équipes était supervisé par un chef de
+                projet et un SCRUM Master. Le projet incluait également une équipe de cinq Product Owners (PO) et un Project Manager (PM).<br
+                />
+                Sur le plan technique, l'architecture du projet reposait sur des microservices pour la partie back-end (Java) et une architecture
+                monolithique pour la partie front-end (Angular). Quatre services, dont une passerelle (gateway), étaient mis en place pour la
+                partie back-end.
+              </p>
+            </Card>
+
+            <Card title="IMS" subtitle="Française des Jeux - Gaming Solution (FDJ-GS)" date="Novembre 2019 - Décembre 2019">
+              <Skill
+                skills={{
+                  title: '',
+                  values: [
+                    'Java',
+                    'Hibernate',
+                    'PostgreSQL',
+                    'Spring Data JPA',
+                    'Angular',
+                    'Angular Material',
+                    'RxJS',
+                    'npm',
+                    'git',
+                    'Bitbucket',
+                    'Confluence',
+                    'Jira',
+                  ],
+                }}
+              />
+              <p class="text-muted-foreground text-justify">
+                Projet de développement d'une application de gestion des jeux à gratter.<br />
+                Le projet mobilisait une équipe composée de trois développeurs (deux développeurs et un référent technique) ainsi que d'une Product
+                Owner (PO), sous la supervision d'un chef de projet. La gestion du projet s'appuyait sur la méthodologie Agile (SCRUM).<br
+                />
+                Sur le plan technique, l'application était conçue sous une architecture monolithique, avec une partie back-end en Java et une
+                partie front-end en Angular.
+              </p>
+            </Card>
+
+            <Card title="PORTALIS V3" subtitle="Ministère de la Justice" date="Avril 2018 - Septembre 2019">
+              <Skill
+                skills={{
+                  title: '',
+                  values: [
+                    'Java',
+                    'Spring Boot',
+                    'MyBatis',
+                    'PostgreSQL',
+                    'Zuul',
+                    'Spring Batch',
+                    'Angular',
+                    'Angular Material',
+                    'RxJS',
+                    'Bootstrap',
+                    'npm',
+                    'git',
+                    'Docker',
+                    'Docker Compose',
+                    'Openshift',
+                    'Jenkins',
+                    'Gitlab',
+                    'Nexus',
+                    'Confluence',
+                    'Jira',
+                  ],
+                }}
+              />
+              <p class="text-muted-foreground text-justify">
+                Projet de refonte du logiciel des conseils de prud’hommes.<br />
+                Le projet était géré selon la méthodologie Agile (SCRUM) au sein des équipes de développement. Il comprenait six équipes distinctes
+                : trois équipes dédiées au développement des fonctionnalités, une équipe transverse (incluant des intégrateurs, des UX/UI designers,
+                etc.), une équipe d'architectes et de référents techniques, ainsi qu'une équipe de Product Owners (PO). Chaque équipe de développement
+                était composée d'un développeur senior/référent, de cinq développeurs, et d'un expert fonctionnel, avec un PO attitré par équipe.
+                L'ensemble des équipes était coordonné par un chef de projet, avec un SCRUM Master pour chaque équipe de développement.<br
+                />
+                Sur le plan technique, l'architecture du projet reposait sur des microservices pour la partie back-end (Java) et une architecture
+                monolithique pour la partie front-end (Angular). Le back-end comprenait une quinzaine de services, incluant une passerelle (gateway).
+              </p>
+            </Card>
           </Content>
         </div>
       </div>

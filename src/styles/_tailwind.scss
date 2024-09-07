@@ -6,6 +6,9 @@
   .bg {
     &-accent-200 {
       background-color: rgba(168 177 255 / 1);
+      &\/30 {
+        background-color: #a8b1ff4d;
+      }
     }
 
     &-background {
@@ -17,6 +20,10 @@
       &-tertiary {
         background-color: var(--background-tertiary);
       }
+    }
+
+    &-input {
+      background-color: hsl(var(--input) / 1);
     }
   }
 
@@ -37,5 +44,9 @@
     &-secondary-foreground {
       color: var(--secondary-foreground);
     }
+  }
+
+  .border-border {
+    border-color: hsl(var(--border) / 1);
   }
 }
