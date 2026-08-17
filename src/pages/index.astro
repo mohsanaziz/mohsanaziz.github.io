@@ -66,21 +66,9 @@ import Layout from '@/layouts/Layout.astro';
       <div class="md:col-span-2 md:mr-5">
         <div class="mt-5 rounded-2xl border border-transparent bg-surface-overlay p-5">
           <Content title={cv.about.title}>
-            <p class="text-muted">
-              {
-                cv.about.paragraphs.map((paragraph, index) => (
-                  <>
-                    {paragraph}
-                    {index < cv.about.paragraphs.length - 1 && (
-                      <>
-                        <br />
-                        <br />
-                      </>
-                    )}
-                  </>
-                ))
-              }
-            </p>
+            <div class="space-y-[1lh]">
+              {cv.about.paragraphs.map((paragraph) => <p class="text-muted">{paragraph}</p>)}
+            </div>
           </Content>
 
           <Content title={cv.professionalExperience.title}>
@@ -96,14 +84,11 @@ import Layout from '@/layouts/Layout.astro';
               cv.clientProjects.entries.map((project) => (
                 <Card title={project.title} subtitle={project.subtitle} date={project.date}>
                   <Skill skills={{ values: project.technologies }} />
-                  <p class="text-justify text-muted">
-                    {project.description.map((paragraph, index) => (
-                      <>
-                        {paragraph}
-                        {index < project.description.length - 1 && <br />}
-                      </>
+                  <div class="space-y-0 text-justify">
+                    {project.description.map((paragraph) => (
+                      <p class="text-muted">{paragraph}</p>
                     ))}
-                  </p>
+                  </div>
                 </Card>
               ))
             }
