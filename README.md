@@ -1,6 +1,6 @@
 # CV de Mohsan Aziz
 
-CV en ligne et portfolio personnel de Mohsan Aziz. Le site statique est construit avec [Astro](https://astro.build/) et [Tailwind CSS](https://tailwindcss.com/), puis publié sur GitHub Pages.
+[mohsanaziz.github.io](https://mohsanaziz.github.io/) est le CV en ligne et portfolio personnel de Mohsan Aziz. Le site statique est construit avec [Astro](https://astro.build/) et [Tailwind CSS](https://tailwindcss.com/), puis publié sur GitHub Pages.
 
 ## Développement
 
