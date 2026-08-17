@@ -33,7 +33,7 @@ import Layout from '@/layouts/Layout.astro';
                 {
                   cv.profile.socialLinks.map((socialLink) => (
                     <Link href={socialLink.href} label={socialLink.label}>
-                      <Icon name={socialLink.icon} />
+                      <Icon name={socialLink.icon} class="h-5 w-5" />
                     </Link>
                   ))
                 }
@@ -45,7 +45,7 @@ import Layout from '@/layouts/Layout.astro';
                     cv.profile.contactDetails.map((contactDetail, index) => (
                       <>
                         <Info title={contactDetail.title} info={contactDetail.info}>
-                          <Icon name={contactDetail.icon} />
+                          <Icon name={contactDetail.icon} class="h-5 w-5" />
                         </Info>
                         {index < cv.profile.contactDetails.length - 1 && <div class="border-t border-divider" />}
                       </>
@@ -56,7 +56,7 @@ import Layout from '@/layouts/Layout.astro';
             </div>
 
             <Link href={cv.profile.resume.href} label={cv.profile.resume.label}>
-              <Icon name={cv.profile.resume.icon} />
+              <Icon name={cv.profile.resume.icon} class="me-1 h-6 w-6" />
               {cv.profile.resume.text}
             </Link>
           </div>
@@ -95,7 +95,7 @@ import Layout from '@/layouts/Layout.astro';
             {
               cv.clientProjects.entries.map((project) => (
                 <Card title={project.title} subtitle={project.subtitle} date={project.date}>
-                  <Skill skills={{ title: '', values: project.technologies }} />
+                  <Skill skills={{ values: project.technologies }} />
                   <p class="text-justify text-muted">
                     {project.description.map((paragraph, index) => (
                       <>
