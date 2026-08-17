@@ -3,5 +3,5 @@
   "singleQuote": true,
   "printWidth": 140,
   "plugins": ["prettier-plugin-astro", "prettier-plugin-tailwindcss"],
-  "pluginSearchDirs": false
+  "tailwindStylesheet": "./src/styles/main.css"
 }

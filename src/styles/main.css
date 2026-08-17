@@ -1,0 +1,57 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Satoshi', system-ui, sans-serif;
+  --color-background: light-dark(rgb(229 231 235), rgb(84 84 84));
+  --color-background-secondary: light-dark(rgb(243 243 243), rgb(32 32 32));
+  --color-background-tertiary: light-dark(rgb(255 255 255), rgb(28 28 28));
+  --color-input: light-dark(rgb(var(--legacy-border-light-rgb)), rgb(var(--legacy-border-dark-rgb)));
+  --color-secondary-foreground: light-dark(rgb(0 0 0), rgb(255 255 255));
+  --color-muted-foreground: light-dark(rgb(var(--legacy-muted-light-rgb)), rgb(var(--legacy-muted-dark-rgb)));
+  --color-border: light-dark(rgb(var(--legacy-border-light-rgb)), rgb(var(--legacy-border-dark-rgb)));
+  --color-accent-200: rgb(168 177 255);
+  --color-accent-300: rgb(128 140 255);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+/* Preserve the Tailwind 3 rendering defaults that are absent from v4 Preflight. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: rgb(229 231 235);
+  }
+
+  svg {
+    max-width: 100%;
+  }
+}
+
+:root {
+  /* Indirection keeps CSS minification from rounding the legacy HSL-derived channels. */
+  --legacy-border-light-rgb: 227.9955 227.9955 231.0045;
+  --legacy-border-dark-rgb: 39.044835 39.044835 42.045165;
+  --legacy-muted-light-rgb: 113.08791 113.08791 122.02209;
+  --legacy-muted-dark-rgb: 161.01975 161.01975 169.97025;
+  color-scheme: light dark;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  font-weight: 400;
+  src: url('/fonts/Satoshi.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  font-weight: 500;
+  src: url('/fonts/Satoshi.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  font-weight: 700;
+  src: url('/fonts/Satoshi.woff2') format('woff2');
+}
