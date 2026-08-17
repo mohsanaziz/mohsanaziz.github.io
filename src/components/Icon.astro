@@ -1,0 +1,114 @@
+---
+import type { CvIconName } from '@/data/cv';
+
+interface Props {
+  name: CvIconName;
+}
+
+const { name } = Astro.props;
+---
+
+{
+  name === 'github' && (
+    <svg width="1em" height="1em" viewBox="0 0 24 24" class="h-5 w-5" data-icon="github">
+      <symbol id="ai:local:github">
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"
+        />
+      </symbol>
+      <use xlink:href="#ai:local:github" />
+    </svg>
+  )
+}
+
+{
+  name === 'linkedin' && (
+    <svg width="1em" height="1em" viewBox="0 0 24 24" class="h-5 w-5" data-icon="linkedin">
+      <symbol id="ai:local:linkedin">
+        <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+          <path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm4 5v5m0-8v.01M12 16v-5" />
+          <path d="M16 16v-3a2 2 0 0 0-4 0" />
+        </g>
+      </symbol>
+      <use xlink:href="#ai:local:linkedin" />
+    </svg>
+  )
+}
+
+{
+  name === 'phone' && (
+    <svg width="1em" height="1em" viewBox="0 0 24 24" class="h-5 w-5 max-w-full" data-icon="phone">
+      <symbol id="ai:local:phone">
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2m10 3a2 2 0 0 1 2 2m-2-6a6 6 0 0 1 6 6"
+        />
+      </symbol>
+      <use xlink:href="#ai:local:phone" />
+    </svg>
+  )
+}
+
+{
+  name === 'mail' && (
+    <svg width="1em" height="1em" viewBox="0 0 24 24" class="h-5 w-5 max-w-full" data-icon="mail">
+      <symbol id="ai:local:mail">
+        <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+          <path d="M10 21v-6.5a3.5 3.5 0 0 0-7 0V21h18v-6a4 4 0 0 0-4-4H6.5" />
+          <path d="M12 11V3h4l2 2-2 2h-4m-6 8h1" />
+        </g>
+      </symbol>
+      <use xlink:href="#ai:local:mail" />
+    </svg>
+  )
+}
+
+{
+  name === 'location' && (
+    <svg width="1em" height="1em" viewBox="0 0 24 24" class="h-5 w-5" data-icon="location">
+      <symbol id="ai:local:location">
+        <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+          <path d="M9 12a3 3 0 1 0 6 0 3 3 0 1 0-6 0" />
+          <path d="M4 12a8 8 0 1 0 16 0 8 8 0 1 0-16 0m8-10v2m0 16v2m8-10h2M2 12h2" />
+        </g>
+      </symbol>
+      <use xlink:href="#ai:local:location" />
+    </svg>
+  )
+}
+
+{
+  name === 'cake' && (
+    <svg width="1em" height="1em" viewBox="0 0 24 24" class="h-5 w-5 max-w-full" data-icon="cake">
+      <symbol id="ai:local:cake">
+        <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+          <path d="M3 20h18v-8a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v8z" />
+          <path d="M3 14.803A2.4 2.4 0 0 0 4 15a2.4 2.4 0 0 0 2-1 2.4 2.4 0 0 1 2-1 2.4 2.4 0 0 1 2 1 2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1 2.4 2.4 0 0 1 2-1 2.4 2.4 0 0 1 2 1 2.4 2.4 0 0 0 2 1c.35.007.692-.062 1-.197M12 4l1.465 1.638a2 2 0 1 1-3.015.099L12 4z" />
+        </g>
+      </symbol>
+      <use xlink:href="#ai:local:cake" />
+    </svg>
+  )
+}
+
+{
+  name === 'pdf' && (
+    <svg class="me-1" height="24px" width="24px" viewBox="0 0 512 512" fill="currentColor" data-icon="pdf">
+      <g>
+        <path d="M378.413,0H208.297h-13.182L185.8,9.314L57.02,138.102l-9.314,9.314v13.176v265.514 c0,47.36,38.528,85.895,85.896,85.895h244.811c47.353,0,85.881-38.535,85.881-85.895V85.896C464.294,38.528,425.766,0,378.413,0z M432.497,426.105c0,29.877-24.214,54.091-54.084,54.091H133.602c-29.884,0-54.098-24.214-54.098-54.091V160.591h83.716 c24.885,0,45.077-20.178,45.077-45.07V31.804h170.116c29.87,0,54.084,24.214,54.084,54.092V426.105z" />
+        <path d="M171.947,252.785h-28.529c-5.432,0-8.686,3.533-8.686,8.825v73.754c0,6.388,4.204,10.599,10.041,10.599 c5.711,0,9.914-4.21,9.914-10.599v-22.406c0-0.545,0.279-0.817,0.824-0.817h16.436c20.095,0,32.188-12.226,32.188-29.612 C204.136,264.871,192.182,252.785,171.947,252.785z M170.719,294.888h-15.208c-0.545,0-0.824-0.272-0.824-0.81v-23.23 c0-0.545,0.279-0.816,0.824-0.816h15.208c8.42,0,13.447,5.027,13.447,12.498C184.167,290,179.139,294.888,170.719,294.888z" />
+        <path d="M250.191,252.785h-21.868c-5.432,0-8.686,3.533-8.686,8.825v74.843c0,5.3,3.253,8.693,8.686,8.693h21.868 c19.69,0,31.923-6.249,36.81-21.324c1.76-5.3,2.723-11.681,2.723-24.857c0-13.175-0.964-19.557-2.723-24.856 C282.113,259.034,269.881,252.785,250.191,252.785z M267.856,316.896c-2.318,7.331-8.965,10.459-18.21,10.459h-9.23 c-0.545,0-0.824-0.272-0.824-0.816v-55.146c0-0.545,0.279-0.817,0.824-0.817h9.23c9.245,0,15.892,3.128,18.21,10.46 c0.95,3.128,1.62,8.56,1.62,17.93C269.476,308.336,268.805,313.768,267.856,316.896z" />
+        <path d="M361.167,252.785h-44.812c-5.432,0-8.7,3.533-8.7,8.825v73.754c0,6.388,4.218,10.599,10.055,10.599 c5.697,0,9.914-4.21,9.914-10.599v-26.351c0-0.538,0.265-0.81,0.81-0.81h26.086c5.837,0,9.23-3.532,9.23-8.56 c0-5.028-3.393-8.553-9.23-8.553h-26.086c-0.545,0-0.81-0.272-0.81-0.817v-19.425c0-0.545,0.265-0.816,0.81-0.816h32.733 c5.572,0,9.245-3.666,9.245-8.553C370.411,256.45,366.738,252.785,361.167,252.785z" />
+      </g>
+    </svg>
+  )
+}
