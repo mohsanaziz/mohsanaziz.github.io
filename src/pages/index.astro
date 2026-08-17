@@ -1,429 +1,112 @@
 ---
 import Card from '@/components/Card.astro';
+import Icon from '@/components/Icon.astro';
 import Info from '@/components/Info.astro';
 import Link from '@/components/Link.astro';
 import Skill from '@/components/Skill.astro';
+import { cv } from '@/data/cv';
 import Content from '@/layouts/Content.astro';
 import Layout from '@/layouts/Layout.astro';
 ---
 
-<Layout title="CV - Mohsan AZIZ">
+<Layout title={cv.pageTitle}>
   <main class="flex w-screen flex-col items-center px-5 pt-5 font-sans leading-relaxed md:px-0 lg:max-w-7xl">
-    <!-- <header class="z-20 w-full md:fixed md:px-5 lg:max-w-7xl">
-      <nav class="grid grid-cols-1 md:grid-cols-3">
-        <div
-          class="bg-surface-overlay z-10 col-span-2 col-start-2 mb-5 hidden flex-row justify-between rounded-2xl border border-transparent p-5 shadow-xl md:flex"
-        >
-          <a href="" class="flex-none text-[1.05rem] font-medium">A propos</a>
-          <a href="" class="flex-none text-[1.05rem] font-medium">Expérience</a>
-          <a href="" class="flex-none text-[1.05rem] font-medium">Education</a>
-          <a href="" class="flex-none text-[1.05rem] font-medium">Projets</a>
-          <a href="" class="flex-none text-[1.05rem] font-medium">Compétences</a>
-          <a href="" class="flex-none text-[1.05rem] font-medium">Outils</a>
-        </div>
-      </nav>
-    </header> -->
-
     <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
       <aside class="top-5 flex flex-col items-center justify-center pt-16 md:sticky md:col-span-1 md:h-screen md:pl-5">
         <img
-          src="/images/photo.jpg"
-          alt="profil picture"
+          src={cv.profile.image.src}
+          alt={cv.profile.image.alt}
           class="z-10 h-56 w-auto rounded-3xl bg-accent p-1"
           loading="lazy"
-          width="3840"
-          height="3840"
+          width={cv.profile.image.width}
+          height={cv.profile.image.height}
           decoding="async"
         />
 
         <div class="relative mt-[-6rem] w-full max-w-[400px] rounded-2xl bg-surface-overlay p-5">
           <div class="flex flex-col gap-y-1.5">
             <div class="flex flex-col items-center gap-y-4 pt-24 pb-10">
-              <!-- Name -->
-              <h1 class="text-3xl font-bold">Mohsan AZIZ</h1>
+              <h1 class="text-3xl font-bold">{cv.profile.name}</h1>
+              <h2 class="text-center text-xl">{cv.profile.jobTitle}</h2>
 
-              <!-- Job title -->
-              <h2 class="text-center text-xl">Développeur freelance Angular/Java</h2>
-
-              <!-- Links -->
               <div class="flex flex-row gap-x-4 pt-1 pb-3">
-                <Link href="https://github.com/mohsanaziz" label="github">
-                  <svg width="1em" height="1em" viewBox="0 0 24 24" class="h-5 w-5" data-icon="github">
-                    <symbol id="ai:local:github">
-                      <path
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"
-                      ></path>
-                    </symbol>
-                    <use xlink:href="#ai:local:github"></use>
-                  </svg>
-                </Link>
-
-                <Link href="https://fr.linkedin.com/in/mohsanaziz" label="LinkedIn">
-                  <svg width="1em" height="1em" viewBox="0 0 24 24" class="h-5 w-5" data-icon="linkedin">
-                    <symbol id="ai:local:linkedin">
-                      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-                        <path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm4 5v5m0-8v.01M12 16v-5"></path>
-                        <path d="M16 16v-3a2 2 0 0 0-4 0"></path>
-                      </g>
-                    </symbol>
-                    <use xlink:href="#ai:local:linkedin"></use>
-                  </svg>
-                </Link>
+                {
+                  cv.profile.socialLinks.map((socialLink) => (
+                    <Link href={socialLink.href} label={socialLink.label}>
+                      <Icon name={socialLink.icon} />
+                    </Link>
+                  ))
+                }
               </div>
 
               <div class="relative flex w-full flex-col gap-x-7 gap-y-1 rounded-2xl bg-surface-raised p-5">
                 <div class="flex flex-col gap-y-1.5">
-                  <!-- Phone number -->
-                  <Info title="Téléphone" info="06.28.74.61.76">
-                    <svg width="1em" height="1em" viewBox="0 0 24 24" class="h-5 w-5 max-w-full" data-icon="phone">
-                      <symbol id="ai:local:phone">
-                        <path
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2m10 3a2 2 0 0 1 2 2m-2-6a6 6 0 0 1 6 6"
-                        ></path>
-                      </symbol>
-                      <use xlink:href="#ai:local:phone"></use>
-                    </svg>
-                  </Info>
-
-                  <div class="border-t border-divider"></div>
-
-                  <!-- Email -->
-                  <Info title="Email" info="mohsan.aziz@gmail.com">
-                    <svg width="1em" height="1em" viewBox="0 0 24 24" class="h-5 w-5 max-w-full" data-icon="mail">
-                      <symbol id="ai:local:mail">
-                        <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-                          <path d="M10 21v-6.5a3.5 3.5 0 0 0-7 0V21h18v-6a4 4 0 0 0-4-4H6.5"></path><path d="M12 11V3h4l2 2-2 2h-4m-6 8h1"
-                          ></path>
-                        </g>
-                      </symbol>
-                      <use xlink:href="#ai:local:mail"></use>
-                    </svg>
-                  </Info>
-
-                  <div class="border-t border-divider"></div>
-
-                  <!-- Location -->
-                  <Info title="Location" info="Paris, France">
-                    <svg width="1em" height="1em" viewBox="0 0 24 24" class="h-5 w-5" data-icon="location">
-                      <symbol id="ai:local:location">
-                        <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-                          <path d="M9 12a3 3 0 1 0 6 0 3 3 0 1 0-6 0"></path>
-                          <path d="M4 12a8 8 0 1 0 16 0 8 8 0 1 0-16 0m8-10v2m0 16v2m8-10h2M2 12h2"></path>
-                        </g>
-                      </symbol>
-                      <use xlink:href="#ai:local:location"></use>
-                    </svg>
-                  </Info>
-
-                  <div class="border-t border-divider"></div>
-
-                  <!-- Birthday -->
-                  <Info title="Date de naissance" info="19 Octobre 1989">
-                    <svg width="1em" height="1em" viewBox="0 0 24 24" class="h-5 w-5 max-w-full" data-icon="cake">
-                      <symbol id="ai:local:cake">
-                        <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-                          <path d="M3 20h18v-8a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v8z"></path><path
-                            d="M3 14.803A2.4 2.4 0 0 0 4 15a2.4 2.4 0 0 0 2-1 2.4 2.4 0 0 1 2-1 2.4 2.4 0 0 1 2 1 2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1 2.4 2.4 0 0 1 2-1 2.4 2.4 0 0 1 2 1 2.4 2.4 0 0 0 2 1c.35.007.692-.062 1-.197M12 4l1.465 1.638a2 2 0 1 1-3.015.099L12 4z"
-                          ></path>
-                        </g>
-                      </symbol>
-                      <use xlink:href="#ai:local:cake"></use>
-                    </svg>
-                  </Info>
+                  {
+                    cv.profile.contactDetails.map((contactDetail, index) => (
+                      <>
+                        <Info title={contactDetail.title} info={contactDetail.info}>
+                          <Icon name={contactDetail.icon} />
+                        </Info>
+                        {index < cv.profile.contactDetails.length - 1 && <div class="border-t border-divider" />}
+                      </>
+                    ))
+                  }
                 </div>
               </div>
             </div>
-            <Link href="/cv/CV.pdf" label="CV">
-              <svg class="me-1" height="24px" width="24px" viewBox="0 0 512 512" fill="currentColor" data-icon="pdf">
-                <g>
-                  <path
-                    d="M378.413,0H208.297h-13.182L185.8,9.314L57.02,138.102l-9.314,9.314v13.176v265.514 c0,47.36,38.528,85.895,85.896,85.895h244.811c47.353,0,85.881-38.535,85.881-85.895V85.896C464.294,38.528,425.766,0,378.413,0z M432.497,426.105c0,29.877-24.214,54.091-54.084,54.091H133.602c-29.884,0-54.098-24.214-54.098-54.091V160.591h83.716 c24.885,0,45.077-20.178,45.077-45.07V31.804h170.116c29.87,0,54.084,24.214,54.084,54.092V426.105z"
-                  ></path>
-                  <path
-                    d="M171.947,252.785h-28.529c-5.432,0-8.686,3.533-8.686,8.825v73.754c0,6.388,4.204,10.599,10.041,10.599 c5.711,0,9.914-4.21,9.914-10.599v-22.406c0-0.545,0.279-0.817,0.824-0.817h16.436c20.095,0,32.188-12.226,32.188-29.612 C204.136,264.871,192.182,252.785,171.947,252.785z M170.719,294.888h-15.208c-0.545,0-0.824-0.272-0.824-0.81v-23.23 c0-0.545,0.279-0.816,0.824-0.816h15.208c8.42,0,13.447,5.027,13.447,12.498C184.167,290,179.139,294.888,170.719,294.888z"
-                  ></path>
-                  <path
-                    d="M250.191,252.785h-21.868c-5.432,0-8.686,3.533-8.686,8.825v74.843c0,5.3,3.253,8.693,8.686,8.693h21.868 c19.69,0,31.923-6.249,36.81-21.324c1.76-5.3,2.723-11.681,2.723-24.857c0-13.175-0.964-19.557-2.723-24.856 C282.113,259.034,269.881,252.785,250.191,252.785z M267.856,316.896c-2.318,7.331-8.965,10.459-18.21,10.459h-9.23 c-0.545,0-0.824-0.272-0.824-0.816v-55.146c0-0.545,0.279-0.817,0.824-0.817h9.23c9.245,0,15.892,3.128,18.21,10.46 c0.95,3.128,1.62,8.56,1.62,17.93C269.476,308.336,268.805,313.768,267.856,316.896z"
-                  ></path>
-                  <path
-                    d="M361.167,252.785h-44.812c-5.432,0-8.7,3.533-8.7,8.825v73.754c0,6.388,4.218,10.599,10.055,10.599 c5.697,0,9.914-4.21,9.914-10.599v-26.351c0-0.538,0.265-0.81,0.81-0.81h26.086c5.837,0,9.23-3.532,9.23-8.56 c0-5.028-3.393-8.553-9.23-8.553h-26.086c-0.545,0-0.81-0.272-0.81-0.817v-19.425c0-0.545,0.265-0.816,0.81-0.816h32.733 c5.572,0,9.245-3.666,9.245-8.553C370.411,256.45,366.738,252.785,361.167,252.785z"
-                  ></path>
-                </g>
-              </svg>
-              Version PDF
+
+            <Link href={cv.profile.resume.href} label={cv.profile.resume.label}>
+              <Icon name={cv.profile.resume.icon} />
+              {cv.profile.resume.text}
             </Link>
           </div>
         </div>
       </aside>
 
-      <!-- Main content -->
       <div class="md:col-span-2 md:mr-5">
         <div class="mt-5 rounded-2xl border border-transparent bg-surface-overlay p-5">
-          <!-- About -->
-          <Content title="A propos">
+          <Content title={cv.about.title}>
             <p class="text-muted">
-              Je suis Mohsan AZIZ, développeur freelance spécialisé en Angular et Java, avec une expertise particulière en Angular. Au fil
-              de mes projets, j'ai participé à la refonte et au développement de systèmes d'information complexes, couvrant des domaines
-              variés comme les systèmes judiciaires, administratifs et le secteur commercial.<br /><br />
-
-              L'un de mes projets récents inclut la refonte de l'application des magasins Point P, une solution permettant la gestion de
-              commandes et de devis, avec une intégration à l'ERP SAP via des API externes. Ce projet reposait sur une architecture
-              microservices en Java pour le back-end et une architecture monolithique en Angular pour le front-end, utilisant Bootstrap et
-              NgRx pour la gestion de l'état.<br /><br />
-
-              J'ai également travaillé sur des projets majeurs, tels que la refonte de systèmes de gestion pénale et judiciaire, en
-              utilisant des technologies comme Java (Spring Boot) et Angular, dans des architectures microservices et monolithiques. Je suis
-              habitué à évoluer dans des environnements Agile (SCRUM), au sein d'équipes pluridisciplinaires, et à collaborer avec des
-              Product Owners, chefs de projet, et experts fonctionnels.<br /><br />
-
-              Je mets un point d'honneur à la qualité du code, à l'optimisation des processus de développement, et je suis toujours en quête
-              de nouveaux défis où je peux apporter mon expertise technique, particulièrement en Angular.
+              {
+                cv.about.paragraphs.map((paragraph, index) => (
+                  <>
+                    {paragraph}
+                    {index < cv.about.paragraphs.length - 1 && (
+                      <>
+                        <br />
+                        <br />
+                      </>
+                    )}
+                  </>
+                ))
+              }
             </p>
           </Content>
 
-          <!-- Experiences -->
-          <Content title="Expérience professionnelle">
-            <Card title="SASU AZMOPAK" subtitle="Développeur freelance Angular/Java" date="Novembre 2019 - Aujourd'hui" />
-            <Card title="Sopra Steria" subtitle="Développeur Angular/Java" date="Mai 2016 - Septembre 2019" />
+          <Content title={cv.professionalExperience.title}>
+            {
+              cv.professionalExperience.entries.map((experience) => (
+                <Card title={experience.title} subtitle={experience.subtitle} date={experience.date} />
+              ))
+            }
           </Content>
 
-          <Content title="Projet client">
-            <Card title="ATLAS IHM" subtitle="Saint-Gobain" date="Septembre 2022 - Aujourd'hui">
-              <Skill
-                skills={{
-                  title: '',
-                  values: [
-                    'Java',
-                    'Spring Boot',
-                    'Angular',
-                    'RxJS',
-                    'Ngrx',
-                    'Bootstrap',
-                    'npm',
-                    'git',
-                    'Docker',
-                    'Kubernetes',
-                    'Jenkins',
-                    'Gitlab',
-                    'Confluence',
-                    'Jira',
-                  ],
-                }}
-              />
-              <p class="text-justify text-muted">
-                Projet de refonte de l'application des magasins Point P, visant à permettre la création de commandes et de devis, ainsi que
-                la gestion des commandes auprès de divers fournisseurs.<br />
-                L'application est développée en Java pour le back-end, reposant sur une architecture microservices, qui communique avec des API
-                externes, notamment l'ERP SAP. Le front-end, écrit en Angular, suit une architecture monolithique et utilise Bootstrap ainsi que
-                NgRx pour la gestion de l'état.<br />
-                L'équipe projet est composée de deux tech leads, chacun supervisant sept développeurs, et l'ensemble est coordonné par un chef
-                de projet. La gestion du projet est basée sur une méthodologie semi Agile.
-              </p>
-            </Card>
-
-            <Card title="SPS" subtitle="Ministère de la Justice" date="Mars 2022 - Juin 2022">
-              <Skill
-                skills={{
-                  title: '',
-                  values: [
-                    'Java',
-                    'Spring Boot',
-                    'Hibernate',
-                    'PostgreSQL',
-                    'ElasticSearch',
-                    'Zuul',
-                    'Spring Batch',
-                    'Spring Data JPA',
-                    'Angular',
-                    'Angular Material',
-                    'RxJS',
-                    'Bootstrap',
-                    'npm',
-                    'git',
-                    'Docker',
-                    'Docker Compose',
-                    'Openshift',
-                    'Jenkins',
-                    'Gitlab',
-                    'Nexus',
-                    'Confluence',
-                    'Jira',
-                  ],
-                }}
-              />
-              <p class="text-justify text-muted">
-                Projet de refonte du système de gestion pénale destiné à stocker des documents relatifs aux affaires en cours d'instruction.<br
-                />
-                Le projet comportait une dimension fonctionnelle avec une application web en front-end développée en Angular et une partie back-end
-                réalisée en Java (Spring Boot). Une phase de reprise des données a également été mise en œuvre pour migrer les informations de
-                l'ancienne application vers la nouvelle, à l'aide de Spring Batch.<br />
-                Le projet a été conduit selon la méthodologie Agile (SCRUM), avec une équipe composée d'une dizaine de développeurs, d'un expert
-                fonctionnel, d'un Product Owner (PO) et d'un Project Manager (PM).
-              </p>
-            </Card>
-
-            <Card title="SIAJ" subtitle="Ministère de la Justice" date="Octobre 2020 - Décembre 2021">
-              <Skill
-                skills={{
-                  title: '',
-                  values: [
-                    'Java',
-                    'Spring Boot',
-                    'Hibernate',
-                    'PostgreSQL',
-                    'Zuul',
-                    'Spring Batch',
-                    'Spring Data JPA',
-                    'Angular',
-                    'Angular Material',
-                    'RxJS',
-                    'Bootstrap',
-                    'npm',
-                    'git',
-                    'Docker',
-                    'Docker Compose',
-                    'Openshift',
-                    'Jenkins',
-                    'Gitlab',
-                    'Nexus',
-                    'Confluence',
-                    'Jira',
-                  ],
-                }}
-              />
-              <p class="text-justify text-muted">
-                Projet de refonte du système d'information de l'aide juridictionnelle visant à simplifier la soumission des demandes en
-                ligne.<br />
-                Le projet comprend deux volets : une partie front-office (internet) et une partie back-office (intranet). La partie back-office
-                est développée avec une architecture en microservices (Java), tandis que la partie front-office repose sur une architecture monolithique
-                (Angular). Ces deux composants communiquent via un broker de messages (ActiveMQ) pour l'échange de données.<br />
-                La gestion du projet a été effectuée selon la méthodologie Agile (SCRUM), avec une équipe composée d'une douzaine de développeurs,
-                de trois experts fonctionnels, de cinq Product Owners (PO) et d'un Project Manager (PM).
-              </p>
-            </Card>
-
-            <Card title="PARCOURS" subtitle="Ministère de la Justice" date="Février 2020 - Mai 2020">
-              <Skill
-                skills={{
-                  title: '',
-                  values: [
-                    'Java',
-                    'Spring Boot',
-                    'Hibernate',
-                    'PostgreSQL',
-                    'Zuul',
-                    'Spring Data JPA',
-                    'Lombok',
-                    'Angular',
-                    'Angular Material',
-                    'RxJS',
-                    'npm',
-                    'git',
-                    'Docker',
-                    'Docker Compose',
-                    'Openshift',
-                    'Jenkins',
-                    'Gitlab',
-                    'Nexus',
-                    'Confluence',
-                    'Jira',
-                  ],
-                }}
-              />
-              <p class="text-justify text-muted">
-                Projet de refonte du logiciel de suivi des jeunes pris en charge par le système judiciaire, depuis leur entrée jusqu'à leur
-                sortie ou leur majorité.<br />
-                Le projet a été géré selon la méthodologie Agile (SCRUM) au niveau des équipes de développement. Il comprenait trois équipes :
-                deux dédiées au développement des nouvelles fonctionnalités et une consacrée à la reprise des données. Chaque équipe de développement
-                était composée d'un développeur senior et de trois développeurs juniors. L'ensemble des équipes était supervisé par un chef de
-                projet et un SCRUM Master. Le projet incluait également une équipe de cinq Product Owners (PO) et un Project Manager (PM).<br
-                />
-                Sur le plan technique, l'architecture du projet reposait sur des microservices pour la partie back-end (Java) et une architecture
-                monolithique pour la partie front-end (Angular). Quatre services, dont une passerelle (gateway), étaient mis en place pour la
-                partie back-end.
-              </p>
-            </Card>
-
-            <Card title="IMS" subtitle="Française des Jeux - Gaming Solution (FDJ-GS)" date="Novembre 2019 - Décembre 2019">
-              <Skill
-                skills={{
-                  title: '',
-                  values: [
-                    'Java',
-                    'Hibernate',
-                    'PostgreSQL',
-                    'Spring Data JPA',
-                    'Angular',
-                    'Angular Material',
-                    'RxJS',
-                    'npm',
-                    'git',
-                    'Bitbucket',
-                    'Confluence',
-                    'Jira',
-                  ],
-                }}
-              />
-              <p class="text-justify text-muted">
-                Projet de développement d'une application de gestion des jeux à gratter.<br />
-                Le projet mobilisait une équipe composée de trois développeurs (deux développeurs et un référent technique) ainsi que d'une Product
-                Owner (PO), sous la supervision d'un chef de projet. La gestion du projet s'appuyait sur la méthodologie Agile (SCRUM).<br
-                />
-                Sur le plan technique, l'application était conçue sous une architecture monolithique, avec une partie back-end en Java et une
-                partie front-end en Angular.
-              </p>
-            </Card>
-
-            <Card title="PORTALIS V3" subtitle="Ministère de la Justice" date="Avril 2018 - Septembre 2019">
-              <Skill
-                skills={{
-                  title: '',
-                  values: [
-                    'Java',
-                    'Spring Boot',
-                    'MyBatis',
-                    'PostgreSQL',
-                    'Zuul',
-                    'Spring Batch',
-                    'Angular',
-                    'Angular Material',
-                    'RxJS',
-                    'Bootstrap',
-                    'npm',
-                    'git',
-                    'Docker',
-                    'Docker Compose',
-                    'Openshift',
-                    'Jenkins',
-                    'Gitlab',
-                    'Nexus',
-                    'Confluence',
-                    'Jira',
-                  ],
-                }}
-              />
-              <p class="text-justify text-muted">
-                Projet de refonte du logiciel des conseils de prud’hommes.<br />
-                Le projet était géré selon la méthodologie Agile (SCRUM) au sein des équipes de développement. Il comprenait six équipes distinctes
-                : trois équipes dédiées au développement des fonctionnalités, une équipe transverse (incluant des intégrateurs, des UX/UI designers,
-                etc.), une équipe d'architectes et de référents techniques, ainsi qu'une équipe de Product Owners (PO). Chaque équipe de développement
-                était composée d'un développeur senior/référent, de cinq développeurs, et d'un expert fonctionnel, avec un PO attitré par équipe.
-                L'ensemble des équipes était coordonné par un chef de projet, avec un SCRUM Master pour chaque équipe de développement.<br
-                />
-                Sur le plan technique, l'architecture du projet reposait sur des microservices pour la partie back-end (Java) et une architecture
-                monolithique pour la partie front-end (Angular). Le back-end comprenait une quinzaine de services, incluant une passerelle (gateway).
-              </p>
-            </Card>
+          <Content title={cv.clientProjects.title}>
+            {
+              cv.clientProjects.entries.map((project) => (
+                <Card title={project.title} subtitle={project.subtitle} date={project.date}>
+                  <Skill skills={{ title: '', values: project.technologies }} />
+                  <p class="text-justify text-muted">
+                    {project.description.map((paragraph, index) => (
+                      <>
+                        {paragraph}
+                        {index < project.description.length - 1 && <br />}
+                      </>
+                    ))}
+                  </p>
+                </Card>
+              ))
+            }
           </Content>
         </div>
       </div>
