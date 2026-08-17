@@ -6,8 +6,12 @@
     "node": "24.x"
   },
   "scripts": {
+    "font:download": "node scripts/download-satoshi.mjs",
+    "predev": "npm run font:download",
     "dev": "astro dev",
+    "prestart": "npm run font:download",
     "start": "astro dev",
+    "prebuild": "npm run font:download",
     "build": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro"

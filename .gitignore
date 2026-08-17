@@ -7,6 +7,9 @@ dist/
 # dependencies
 node_modules/
 
+# generated third-party assets
+public/fonts/Satoshi.woff2
+
 # logs
 npm-debug.log*
 yarn-debug.log*
