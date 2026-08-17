@@ -17,7 +17,7 @@
   --color-accent-strong: rgb(128 140 255);
   --color-accent-foreground: rgb(0 0 0);
   --color-accent-text: light-dark(rgb(83 98 196), rgb(168 177 255));
-  --color-accent-text-strong: light-dark(rgb(80 92 204), rgb(128 140 255));
+  --color-accent-text-strong: light-dark(rgb(70 80 185), rgb(128 140 255));
   /* Tailwind 3 serialized a 30% alpha to 77/255; preserve that rendered value. */
   --opacity-30: 30.196078%;
 }
