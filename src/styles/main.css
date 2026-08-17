@@ -10,6 +10,8 @@
   --color-foreground: light-dark(rgb(0 0 0), rgb(255 255 255));
   --color-muted: light-dark(rgb(var(--legacy-muted-light-rgb)), rgb(var(--legacy-muted-dark-rgb)));
   --color-border: light-dark(rgb(var(--legacy-border-light-rgb)), rgb(var(--legacy-border-dark-rgb)));
+  /* Keep the legacy gray-200 separator color in both themes. */
+  --color-divider: rgb(229 231 235);
   --color-accent: rgb(168 177 255);
   --color-accent-strong: rgb(128 140 255);
   /* Tailwind 3 serialized a 30% alpha to 77/255; preserve that rendered value. */
