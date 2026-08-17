@@ -33,6 +33,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Set up Node.js
@@ -98,7 +99,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Summarize post-push failure
-        if: failure() && steps.push.outcome == 'success'
+        if: always() && steps.push.outcome == 'success' && steps.deploy.outcome != 'success'
         env:
           TAG: ${{ steps.version.outputs.tag }}
           PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
