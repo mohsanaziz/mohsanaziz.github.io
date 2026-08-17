@@ -15,7 +15,7 @@ const { skills } = Astro.props;
   <div class:list={[{ 'flex flex-row flex-wrap gap-1': true, 'w-3/4 gap-x-4 gap-y-2': !!skills.title }]}>
     {
       skills.values?.map((skill: string) => (
-        <div class="bg-accent-200/30 border-border hover:bg-input inline-flex cursor-default items-center gap-x-1 rounded-xl border px-2 py-1 text-sm transition-all">
+        <div class="inline-flex cursor-default items-center gap-x-1 rounded-xl border border-border bg-accent-200/30 px-2 py-1 text-sm transition-all hover:bg-input">
           {skill}
         </div>
       ))
