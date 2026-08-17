@@ -21,9 +21,9 @@ Chaque token qui varie selon le thème réunit ses valeurs claire et sombre dans
 
 Trois tokens conservent une indirection de compatibilité : `--color-surface-hover`, `--color-muted` et `--color-border` référencent quatre variables `--legacy-*-rgb` déclarées sur `:root`. Leurs canaux fractionnaires préservent l’anticrénelage obtenu après minification. `--color-surface-hover` et `--color-border` partagent volontairement la même paire de valeurs, tout en restant deux rôles distincts qui pourront diverger. Cette indirection gèle le rendu hérité ; elle n’est pas le modèle à suivre pour de nouveaux tokens.
 
-Le bloc `@theme` conserve aussi deux surcharges globales de parité avec Tailwind 3 : `--opacity-30: 30.196078%` reproduit l’alpha sérialisé à 77/255 pour l’usage actuel de `bg-accent/30`, mais affecte tout modificateur `/30` et l’utilitaire `opacity-30` ; `--shadow-sm` restaure l’ancienne ombre du même nom. Ces valeurs sont des shims de rendu, pas des choix généraux pour de nouveaux usages.
+Le bloc `@theme` conserve une surcharge globale de parité avec Tailwind 3 : `--opacity-30: 30.196078%` reproduit l’alpha sérialisé à 77/255 pour l’usage actuel de `bg-accent/30`, mais affecte tout modificateur `/30` et l’utilitaire `opacity-30`. Cette valeur est un shim de rendu, pas un choix général pour de nouveaux usages.
 
-Le Preflight de Tailwind devient la base de normalisation et le reset maison disparaît. Un `@layer base` rétablit néanmoins deux comportements de Tailwind 3 nécessaires à l’identité visuelle : la couleur de bordure `gray-200` sur le sélecteur universel et les pseudo-éléments associés, ainsi que `max-width: 100%` sur les SVG. La couleur de bordure y reste une constante, y compris en thème sombre, au lieu d’utiliser `--color-border`, dont la valeur varie selon le thème et diffère légèrement en clair.
+Le Preflight de Tailwind devient la base de normalisation et le reset maison disparaît. Les rares éléments qui dépendent encore du rendu de Tailwind 3 l’expriment directement dans leur markup : les séparateurs utilisent explicitement la valeur historique de `gray-200` (`rgb(229 231 235)`), y compris en thème sombre, et seuls les SVG dont la mise en page l’exige portent `max-width: 100%`.
 
 ## Conséquences
 
@@ -34,4 +34,4 @@ Le Preflight de Tailwind devient la base de normalisation et le reset maison dis
 - Les contrôles natifs du navigateur suivent le thème sélectionné grâce à `color-scheme`.
 - La suppression du préprocesseur réduit la chaîne de compilation et garde toute l’architecture des styles lisible dans un seul fichier CSS.
 - La nomenclature sémantique rend le rôle d’une classe compréhensible depuis le markup, mais impose de choisir le rôle d’un nouveau token avant de le nommer.
-- Les variables `--legacy-*-rgb`, les surcharges `--opacity-30` et `--shadow-sm`, ainsi que les règles de compatibilité dans `@layer base`, pourront être retirées lorsqu’un changement autorisera explicitement de rompre la parité avec l’ancien rendu. D’ici là, aucun nouvel usage ne doit dépendre de ces shims sans assumer leur sémantique héritée.
+- Les variables `--legacy-*-rgb` et la surcharge `--opacity-30` pourront être retirées lorsqu’un changement autorisera explicitement de rompre la parité avec l’ancien rendu. D’ici là, aucun nouvel usage ne doit dépendre de ces shims sans assumer leur sémantique héritée.

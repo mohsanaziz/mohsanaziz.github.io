@@ -14,28 +14,10 @@
   --color-accent-strong: rgb(128 140 255);
   /* Tailwind 3 serialized a 30% alpha to 77/255; preserve that rendered value. */
   --opacity-30: 30.196078%;
-  /* Keep Tailwind 3's shadow-sm while the markup still uses that utility name. */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
 :root {
   color-scheme: light dark;
-}
-
-/* Preserve the Tailwind 3 rendering defaults that are absent from v4 Preflight. */
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    /* Tailwind 3's default border color was gray-200. */
-    border-color: rgb(229 231 235);
-  }
-
-  svg {
-    max-width: 100%;
-  }
 }
 
 :root {
