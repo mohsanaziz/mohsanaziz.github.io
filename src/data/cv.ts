@@ -1,15 +1,15 @@
-export type CvIconName = 'cake' | 'github' | 'linkedin' | 'location' | 'mail' | 'pdf' | 'phone';
+import type { IconName } from '@/components/icons';
 
 interface CvLink {
   href: string;
   label: string;
-  icon: CvIconName;
+  icon: IconName;
 }
 
 interface ContactDetail {
   title: string;
   info: string;
-  icon: CvIconName;
+  icon: IconName;
 }
 
 interface CareerEntry {
@@ -57,7 +57,7 @@ export const cv = {
   profile: {
     image: {
       src: '/images/photo.jpg',
-      alt: 'profil picture',
+      alt: 'Photo de Mohsan AZIZ',
       width: 3840,
       height: 3840,
     },
