@@ -29,4 +29,6 @@ npm run preview
 
 ## Déploiement
 
-Le site est déployé sur GitHub Pages par GitHub Actions. La stratégie et la procédure de publication sont documentées dans [l’ADR 0001](docs/adr/0001-release-driven-deployment.md).
+Le site est déployé sur GitHub Pages par GitHub Actions. Une publication courante se lance avec le workflow `Release` depuis l’onglet Actions, sur `main`, en choisissant un incrément `patch`, `minor` ou `major`. La pipeline vérifie le build, publie la version et déclenche le déploiement sans autre intervention.
+
+La stratégie de déploiement est documentée dans [l’ADR 0001](docs/adr/0001-release-driven-deployment.md) et l’automatisation de la release dans [l’ADR 0003](docs/adr/0003-automated-release-pipeline.md).

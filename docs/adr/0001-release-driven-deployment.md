@@ -30,7 +30,9 @@ Le workflow conserve ses deux jobs, les actions utilisées et l’environnement 
 - En cas d’échec, GitHub Pages continue de servir le dernier déploiement réussi.
 - Les déploiements sont sérialisés et peuvent donc attendre qu’un run précédent se termine.
 
-## Procédure de release
+## Procédure de release de secours
+
+La pipeline automatisée décrite dans l’[ADR 0003](0003-automated-release-pipeline.md) est le chemin nominal. La procédure manuelle suivante reste disponible comme chemin de secours.
 
 La release se fait en trois gestes, dans cet ordre :
 
