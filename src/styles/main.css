@@ -3,6 +3,7 @@
 @theme {
   --font-sans: 'Satoshi', system-ui, sans-serif;
   --color-surface: light-dark(rgb(229 231 235), rgb(84 84 84));
+  /* Dark elevation keeps the legacy inverse luminance scale to preserve rendering. */
   --color-surface-raised: light-dark(rgb(243 243 243), rgb(32 32 32));
   --color-surface-overlay: light-dark(rgb(255 255 255), rgb(28 28 28));
   --color-surface-hover: light-dark(rgb(var(--legacy-border-light-rgb)), rgb(var(--legacy-border-dark-rgb)));
