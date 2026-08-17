@@ -12,7 +12,7 @@ import Layout from '@/layouts/Layout.astro';
     <!-- <header class="z-20 w-full md:fixed md:px-5 lg:max-w-7xl">
       <nav class="grid grid-cols-1 md:grid-cols-3">
         <div
-          class="bg-background-tertiary z-10 col-span-2 col-start-2 mb-5 hidden flex-row justify-between rounded-2xl border border-transparent p-5 shadow-xl md:flex"
+          class="bg-surface-overlay z-10 col-span-2 col-start-2 mb-5 hidden flex-row justify-between rounded-2xl border border-transparent p-5 shadow-xl md:flex"
         >
           <a href="" class="flex-none text-[1.05rem] font-medium">A propos</a>
           <a href="" class="flex-none text-[1.05rem] font-medium">Expérience</a>
@@ -29,14 +29,14 @@ import Layout from '@/layouts/Layout.astro';
         <img
           src="/images/photo.jpg"
           alt="profil picture"
-          class="z-10 h-56 w-auto rounded-3xl bg-accent-200 p-1"
+          class="z-10 h-56 w-auto rounded-3xl bg-accent p-1"
           loading="lazy"
           width="3840"
           height="3840"
           decoding="async"
         />
 
-        <div class="relative mt-[-6rem] w-full max-w-[400px] rounded-2xl bg-background-tertiary p-5">
+        <div class="relative mt-[-6rem] w-full max-w-[400px] rounded-2xl bg-surface-overlay p-5">
           <div class="flex flex-col gap-y-1.5">
             <div class="flex flex-col items-center gap-y-4 pt-24 pb-10">
               <!-- Name -->
@@ -76,7 +76,7 @@ import Layout from '@/layouts/Layout.astro';
                 </Link>
               </div>
 
-              <div class="relative flex w-full flex-col gap-x-7 gap-y-1 rounded-2xl bg-background-secondary p-5">
+              <div class="relative flex w-full flex-col gap-x-7 gap-y-1 rounded-2xl bg-surface-raised p-5">
                 <div class="flex flex-col gap-y-1.5">
                   <!-- Phone number -->
                   <Info title="Téléphone" info="06.28.74.61.76">
@@ -168,10 +168,10 @@ import Layout from '@/layouts/Layout.astro';
 
       <!-- Main content -->
       <div class="md:col-span-2 md:mr-5">
-        <div class="mt-5 rounded-2xl border border-transparent bg-background-tertiary p-5">
+        <div class="mt-5 rounded-2xl border border-transparent bg-surface-overlay p-5">
           <!-- About -->
           <Content title="A propos">
-            <p class="text-muted-foreground">
+            <p class="text-muted">
               Je suis Mohsan AZIZ, développeur freelance spécialisé en Angular et Java, avec une expertise particulière en Angular. Au fil
               de mes projets, j'ai participé à la refonte et au développement de systèmes d'information complexes, couvrant des domaines
               variés comme les systèmes judiciaires, administratifs et le secteur commercial.<br /><br />
@@ -220,7 +220,7 @@ import Layout from '@/layouts/Layout.astro';
                   ],
                 }}
               />
-              <p class="text-justify text-muted-foreground">
+              <p class="text-justify text-muted">
                 Projet de refonte de l'application des magasins Point P, visant à permettre la création de commandes et de devis, ainsi que
                 la gestion des commandes auprès de divers fournisseurs.<br />
                 L'application est développée en Java pour le back-end, reposant sur une architecture microservices, qui communique avec des API
@@ -261,7 +261,7 @@ import Layout from '@/layouts/Layout.astro';
                   ],
                 }}
               />
-              <p class="text-justify text-muted-foreground">
+              <p class="text-justify text-muted">
                 Projet de refonte du système de gestion pénale destiné à stocker des documents relatifs aux affaires en cours d'instruction.<br
                 />
                 Le projet comportait une dimension fonctionnelle avec une application web en front-end développée en Angular et une partie back-end
@@ -301,7 +301,7 @@ import Layout from '@/layouts/Layout.astro';
                   ],
                 }}
               />
-              <p class="text-justify text-muted-foreground">
+              <p class="text-justify text-muted">
                 Projet de refonte du système d'information de l'aide juridictionnelle visant à simplifier la soumission des demandes en
                 ligne.<br />
                 Le projet comprend deux volets : une partie front-office (internet) et une partie back-office (intranet). La partie back-office
@@ -340,7 +340,7 @@ import Layout from '@/layouts/Layout.astro';
                   ],
                 }}
               />
-              <p class="text-justify text-muted-foreground">
+              <p class="text-justify text-muted">
                 Projet de refonte du logiciel de suivi des jeunes pris en charge par le système judiciaire, depuis leur entrée jusqu'à leur
                 sortie ou leur majorité.<br />
                 Le projet a été géré selon la méthodologie Agile (SCRUM) au niveau des équipes de développement. Il comprenait trois équipes :
@@ -374,7 +374,7 @@ import Layout from '@/layouts/Layout.astro';
                   ],
                 }}
               />
-              <p class="text-justify text-muted-foreground">
+              <p class="text-justify text-muted">
                 Projet de développement d'une application de gestion des jeux à gratter.<br />
                 Le projet mobilisait une équipe composée de trois développeurs (deux développeurs et un référent technique) ainsi que d'une Product
                 Owner (PO), sous la supervision d'un chef de projet. La gestion du projet s'appuyait sur la méthodologie Agile (SCRUM).<br
@@ -412,7 +412,7 @@ import Layout from '@/layouts/Layout.astro';
                   ],
                 }}
               />
-              <p class="text-justify text-muted-foreground">
+              <p class="text-justify text-muted">
                 Projet de refonte du logiciel des conseils de prud’hommes.<br />
                 Le projet était géré selon la méthodologie Agile (SCRUM) au sein des équipes de développement. Il comprenait six équipes distinctes
                 : trois équipes dédiées au développement des fonctionnalités, une équipe transverse (incluant des intégrateurs, des UX/UI designers,
