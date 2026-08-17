@@ -11,7 +11,7 @@ GitHub ne déclenche pas un nouveau workflow pour la plupart des événements cr
 
 ## Décision
 
-Un workflow `Release`, déclenchable uniquement à la main depuis `main`, devient le chemin nominal de publication. Son seul paramètre est le type d’incrément `patch`, `minor` ou `major`. Le workflow récupère tout l’historique et les tags, installe la version de Node.js déclarée dans `.nvmrc` et les dépendances avec `npm ci`, puis configure l’identité `github-actions[bot]`.
+Un workflow `Release`, déclenchable uniquement à la main depuis `main`, devient le chemin nominal de publication. Son seul paramètre est le type d’incrément `patch`, `minor` ou `major`. Au démarrage effectif du job, le workflow récupère explicitement la tête courante de `main`, tout l’historique et les tags. Une release restée en attente derrière une autre part ainsi de la version que celle-ci vient de publier plutôt que du commit qui était courant à la création du run. Le workflow installe ensuite la version de Node.js déclarée dans `.nvmrc` et les dépendances avec `npm ci`, puis configure l’identité `github-actions[bot]`.
 
 La pipeline exécute les opérations dans cet ordre :
 
@@ -31,9 +31,12 @@ Aucune compensation automatique n’est tentée après le push. Supprimer un tag
 
 - Une release courante ne demande plus de préparer un environnement local ni de saisir un numéro de version.
 - Deux releases ne peuvent pas s’exécuter en parallèle ; elles partagent le groupe de concurrence `release` et une exécution engagée n’est jamais annulée par la suivante.
+- Un merge sur `main` après le checkout peut rendre le push non-fast-forward. Le push atomique laisse alors le commit et le tag distants inchangés ; la release doit être relancée pour repartir de la nouvelle tête de `main`.
 - Le workflow refuse explicitement toute référence autre que `main`.
 - Le push du `GITHUB_TOKEN` ne déclenche pas `check-build.yml`, mais le même build a déjà été exécuté avant le push sur le commit de version.
+- La valeur de `.nvmrc` et le `node-version` utilisé par `withastro/action` dans `deploy.yml` doivent rester identiques. Une montée de version de Node.js doit modifier les deux dans la même livraison pour que le build de garde représente le build déployé.
 - La publication de la release ne déclenche pas elle-même `deploy.yml` ; le dispatch explicite est indispensable.
 - L’environnement `github-pages` doit conserver sa règle de tag `v*`, comme décrit dans l’ADR 0001.
 - Le réglage GitHub **Settings > Actions > General > Workflow permissions** doit continuer à autoriser les permissions d’écriture demandées par le workflow. Ce réglage n’est pas versionné et doit être vérifié si le push, la création de release ou le dispatch est refusé malgré les permissions déclarées dans le fichier.
+- Les protections de branche et les rulesets doivent continuer à autoriser le push direct du `GITHUB_TOKEN` vers `main`. Une règle imposant le passage par une pull request bloque la pipeline avant toute écriture distante et doit donc prévoir une exception pour l’identité du workflow.
 - La procédure manuelle de l’ADR 0001 reste disponible comme chemin de secours.
