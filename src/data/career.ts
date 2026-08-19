@@ -5,6 +5,7 @@ interface PeriodEntry {
 interface ParsedPeriod {
   start: number;
   end: number;
+  isCurrent: boolean;
 }
 
 interface EmployerStart<TEmployer> {
@@ -26,10 +27,14 @@ function normalize(value: string): string {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
+function isCurrentBound(bound: string): boolean {
+  return /^aujourd['’]hui$/.test(normalize(bound));
+}
+
 function parsePeriodBound(bound: string, currentDate = new Date()): number {
   const normalizedBound = normalize(bound);
 
-  if (/^aujourd['’]hui$/.test(normalizedBound)) {
+  if (isCurrentBound(bound)) {
     return currentDate.getFullYear() + currentDate.getMonth() / 12;
   }
 
@@ -54,12 +59,29 @@ function parsePeriod(period: string, currentDate = new Date()): ParsedPeriod {
   return {
     start: parsePeriodBound(match[1], currentDate),
     end: parsePeriodBound(match[2], currentDate),
+    isCurrent: isCurrentBound(match[2]),
   };
 }
 
 function getPeriodDurationInMonths(period: string, currentDate = new Date()): number {
   const { start, end } = parsePeriod(period, currentDate);
   return Math.max(1, Math.round((end - start) * 12));
+}
+
+export function sortByMostRecentPeriod<TEntry extends PeriodEntry>(
+  entries: readonly TEntry[],
+  currentDate = new Date(),
+): readonly TEntry[] {
+  return [...entries].sort((first, second) => {
+    const firstPeriod = parsePeriod(first.date, currentDate);
+    const secondPeriod = parsePeriod(second.date, currentDate);
+
+    return secondPeriod.start - firstPeriod.start || secondPeriod.end - firstPeriod.end;
+  });
+}
+
+export function isCurrentPeriod(period: string, currentDate = new Date()): boolean {
+  return parsePeriod(period, currentDate).isCurrent;
 }
 
 export function formatPeriodDuration(period: string, currentDate = new Date()): string {
@@ -76,7 +98,7 @@ export function formatPeriodDuration(period: string, currentDate = new Date()): 
   return months === 0 ? formattedYears : `${formattedYears} ${months} mois`;
 }
 
-function getEmployerForMission<TEmployer>(
+function resolveEmployerForMission<TEmployer>(
   mission: PeriodEntry,
   employers: readonly EmployerStart<TEmployer>[],
   currentDate = new Date(),
@@ -102,6 +124,21 @@ function getEmployerForMission<TEmployer>(
   return match.employer;
 }
 
+export function getEmployerForMission<TEmployer extends PeriodEntry>(
+  employers: readonly TEmployer[],
+  mission: PeriodEntry,
+  currentDate = new Date(),
+): TEmployer {
+  return resolveEmployerForMission(
+    mission,
+    employers.map((employer) => ({
+      employer,
+      start: parsePeriod(employer.date, currentDate).start,
+    })),
+    currentDate,
+  );
+}
+
 export function countMissionsByEmployer<TEmployer extends PeriodEntry>(
   employers: readonly TEmployer[],
   missions: readonly PeriodEntry[],
@@ -114,7 +151,7 @@ export function countMissionsByEmployer<TEmployer extends PeriodEntry>(
   }));
 
   for (const mission of missions) {
-    const employer = getEmployerForMission(mission, employerStarts, currentDate);
+    const employer = resolveEmployerForMission(mission, employerStarts, currentDate);
     const currentCount = missionCounts.get(employer);
 
     if (currentCount === undefined) {

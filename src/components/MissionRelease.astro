@@ -1,0 +1,29 @@
+---
+import MissionSummary from '@/components/MissionSummary.astro';
+import StatusBadge from '@/components/StatusBadge.astro';
+import type { MissionSummaryData } from '@/data/missions';
+
+interface Props {
+  title: string;
+  summary: MissionSummaryData;
+  description: readonly string[];
+  showStatusBadge?: boolean;
+}
+
+const { title, summary, description, showStatusBadge = false } = Astro.props;
+---
+
+<article class="py-6 first:pt-0 last:pb-0">
+  <header class="flex flex-wrap items-center gap-2">
+    <h3 class="text-lg font-semibold [overflow-wrap:anywhere] text-copy">{title} — {summary.client}</h3>
+    {showStatusBadge && <StatusBadge label={summary.status} />}
+  </header>
+
+  <div class="mt-4 grid min-w-0 grid-cols-1 gap-5 min-[1000px]:grid-cols-[minmax(0,1fr)_15rem] min-[1000px]:gap-6">
+    <div class="max-w-[68ch] space-y-4 leading-7 text-copy-muted">
+      {description.map((paragraph) => <p>{paragraph}</p>)}
+    </div>
+
+    <MissionSummary mission={title} summary={summary} />
+  </div>
+</article>
