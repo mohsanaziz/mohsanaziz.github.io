@@ -8,10 +8,7 @@ interface ContributorLink {
 }
 
 interface Props {
-  image: {
-    src: ImageMetadata;
-    alt: string;
-  };
+  image: ImageMetadata;
   github: ContributorLink;
   linkedin: ContributorLink;
 }
@@ -23,7 +20,7 @@ const { image, github, linkedin } = Astro.props;
   <li>
     <a class="flex w-fit items-center gap-3 rounded-sm text-sm font-medium text-link" href={github.href} target="_blank" rel="noreferrer">
       <Image
-        src={image.src}
+        src={image}
         alt=""
         class="h-7 w-7 shrink-0 rounded-full object-cover"
         width={28}
@@ -36,7 +33,9 @@ const { image, github, linkedin } = Astro.props;
   </li>
   <li>
     <a class="flex w-fit items-center gap-3 rounded-sm text-sm font-medium text-link" href={linkedin.href} target="_blank" rel="noreferrer">
-      <span aria-hidden="true" class="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-[#0a66c2] text-xs font-bold text-white"
+      <span
+        aria-hidden="true"
+        class="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-frame-border bg-panel text-xs font-bold text-copy"
         >in</span
       >
       <span>{linkedin.label}</span>

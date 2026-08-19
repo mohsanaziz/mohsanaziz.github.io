@@ -11,7 +11,6 @@ interface LanguageCategory {
 export interface LanguageShare {
   name: string;
   color: `#${string}`;
-  count: number;
   percentage: number;
 }
 
@@ -90,5 +89,5 @@ export function deriveLanguageShares(projects: readonly ProjectWithTechnologies[
     categoriesByRemainder[index].percentage += 1;
   }
 
-  return shares.map(({ name, color, count, percentage }) => ({ name, color, count, percentage }));
+  return shares.map(({ name, color, percentage }) => ({ name, color, percentage }));
 }

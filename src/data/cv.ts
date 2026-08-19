@@ -8,7 +8,7 @@ interface CvLink {
   icon: IconName;
 }
 
-interface ContactDetail {
+export interface ContactDetail {
   title: string;
   info: string;
   icon: IconName;
