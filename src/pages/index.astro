@@ -8,7 +8,7 @@ import ReleaseAsset from '@/components/ReleaseAsset.astro';
 import RepositoryHeader from '@/components/RepositoryHeader.astro';
 import SectionFrame from '@/components/SectionFrame.astro';
 import Skill from '@/components/Skill.astro';
-import { countMissionsForEmployer, formatPeriodDuration, getCareerDurationInYears } from '@/data/career';
+import { countMissionsByEmployer, formatPeriodDuration, getCareerDurationInYears } from '@/data/career';
 import { cv } from '@/data/cv';
 import { deriveLanguageShares } from '@/data/languages';
 import Content from '@/layouts/Content.astro';
@@ -38,7 +38,19 @@ if (!githubOwner || !linkedinPath || !resumeFileName) {
 const languages = deriveLanguageShares(cv.clientProjects.entries);
 const currentDate = new Date();
 const careerDurationInYears = getCareerDurationInYears(cv.professionalExperience.entries, currentDate);
-const employerCount = cv.professionalExperience.entries.length;
+const employerCount: number = cv.professionalExperience.entries.length;
+const missionCountsByEmployer = countMissionsByEmployer(cv.professionalExperience.entries, cv.clientProjects.entries, currentDate);
+const employersWithMissionCounts = cv.professionalExperience.entries.map((experience) => {
+  const missionCount = missionCountsByEmployer.get(experience);
+
+  if (missionCount === undefined) {
+    throw new Error(`The mission count is missing for ${experience.title}.`);
+  }
+
+  return { experience, missionCount };
+});
+const employerLabel = `${employerCount} ${employerCount === 1 ? 'employeur' : 'employeurs'}`;
+const careerDurationLabel = `${careerDurationInYears} ${careerDurationInYears === 1 ? 'an' : 'ans'}`;
 ---
 
 <Layout title={cv.pageTitle} description={`${cv.profile.name} — ${cv.profile.jobTitle}`}>
@@ -63,22 +75,17 @@ const employerCount = cv.professionalExperience.entries.length;
           </article>
         </SectionFrame>
 
-        <SectionFrame title={cv.professionalExperience.title} counter={`${employerCount} employeurs · ${careerDurationInYears} ans`}>
+        <SectionFrame title={cv.professionalExperience.title} counter={`${employerLabel} · ${careerDurationLabel}`}>
           <div class="grid grid-cols-1 gap-4 min-[700px]:grid-cols-2">
             {
-              cv.professionalExperience.entries.map((experience) => (
+              employersWithMissionCounts.map(({ experience, missionCount }) => (
                 <EmployerCard
                   company={experience.title}
                   role={experience.subtitle}
                   contract={experience.contract}
                   period={experience.date}
                   duration={formatPeriodDuration(experience.date, currentDate)}
-                  missionCount={countMissionsForEmployer(
-                    experience,
-                    cv.professionalExperience.entries,
-                    cv.clientProjects.entries,
-                    currentDate,
-                  )}
+                  missionCount={missionCount}
                 />
               ))
             }

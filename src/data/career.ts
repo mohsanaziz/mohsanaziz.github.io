@@ -7,6 +7,11 @@ interface ParsedPeriod {
   end: number;
 }
 
+interface EmployerStart<TEmployer> {
+  employer: TEmployer;
+  start: number;
+}
+
 const MONTHS = new Map(
   ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'].map(
     (month, index) => [normalize(month), index],
@@ -21,7 +26,7 @@ function normalize(value: string): string {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-export function parsePeriodBound(bound: string, currentDate = new Date()): number {
+function parsePeriodBound(bound: string, currentDate = new Date()): number {
   const normalizedBound = normalize(bound);
 
   if (/^aujourd['’]hui$/.test(normalizedBound)) {
@@ -39,7 +44,7 @@ export function parsePeriodBound(bound: string, currentDate = new Date()): numbe
   return year + month / 12;
 }
 
-export function parsePeriod(period: string, currentDate = new Date()): ParsedPeriod {
+function parsePeriod(period: string, currentDate = new Date()): ParsedPeriod {
   const match = /^(.*?)\s+-\s+(.*?)$/.exec(period.trim());
 
   if (!match?.[1] || !match[2]) {
@@ -52,7 +57,7 @@ export function parsePeriod(period: string, currentDate = new Date()): ParsedPer
   };
 }
 
-export function getPeriodDurationInMonths(period: string, currentDate = new Date()): number {
+function getPeriodDurationInMonths(period: string, currentDate = new Date()): number {
   const { start, end } = parsePeriod(period, currentDate);
   return Math.max(1, Math.round((end - start) * 12));
 }
@@ -71,17 +76,15 @@ export function formatPeriodDuration(period: string, currentDate = new Date()): 
   return months === 0 ? formattedYears : `${formattedYears} ${months} mois`;
 }
 
-export function findEmployerForMission<TEmployer extends PeriodEntry>(
+function getEmployerForMission<TEmployer>(
   mission: PeriodEntry,
-  employers: readonly TEmployer[],
+  employers: readonly EmployerStart<TEmployer>[],
   currentDate = new Date(),
-): TEmployer | undefined {
+): TEmployer {
   const missionStart = parsePeriod(mission.date, currentDate).start;
 
-  return employers.reduce<TEmployer | undefined>((latestEmployer, employer) => {
-    const employerStart = parsePeriod(employer.date, currentDate).start;
-
-    if (employerStart > missionStart) {
+  const match = employers.reduce<EmployerStart<TEmployer> | undefined>((latestEmployer, employer) => {
+    if (employer.start > missionStart) {
       return latestEmployer;
     }
 
@@ -89,18 +92,39 @@ export function findEmployerForMission<TEmployer extends PeriodEntry>(
       return employer;
     }
 
-    const latestStart = parsePeriod(latestEmployer.date, currentDate).start;
-    return employerStart > latestStart ? employer : latestEmployer;
+    return employer.start > latestEmployer.start ? employer : latestEmployer;
   }, undefined);
+
+  if (!match) {
+    throw new Error(`Aucun employeur ne précède la mission datée « ${mission.date} »`);
+  }
+
+  return match.employer;
 }
 
-export function countMissionsForEmployer<TEmployer extends PeriodEntry>(
-  employer: TEmployer,
+export function countMissionsByEmployer<TEmployer extends PeriodEntry>(
   employers: readonly TEmployer[],
   missions: readonly PeriodEntry[],
   currentDate = new Date(),
-): number {
-  return missions.filter((mission) => findEmployerForMission(mission, employers, currentDate) === employer).length;
+): ReadonlyMap<TEmployer, number> {
+  const missionCounts = new Map<TEmployer, number>(employers.map((employer) => [employer, 0]));
+  const employerStarts = employers.map((employer) => ({
+    employer,
+    start: parsePeriod(employer.date, currentDate).start,
+  }));
+
+  for (const mission of missions) {
+    const employer = getEmployerForMission(mission, employerStarts, currentDate);
+    const currentCount = missionCounts.get(employer);
+
+    if (currentCount === undefined) {
+      throw new Error(`Compteur introuvable pour l'employeur rattaché à la mission datée « ${mission.date} »`);
+    }
+
+    missionCounts.set(employer, currentCount + 1);
+  }
+
+  return missionCounts;
 }
 
 export function getCareerDurationInYears(employers: readonly PeriodEntry[], currentDate = new Date()): number {
