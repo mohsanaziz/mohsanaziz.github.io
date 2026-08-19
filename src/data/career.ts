@@ -27,14 +27,14 @@ function normalize(value: string): string {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-function isCurrentBound(bound: string): boolean {
-  return /^aujourd['’]hui$/.test(normalize(bound));
+function isCurrentBound(normalizedBound: string): boolean {
+  return /^aujourd['’]hui$/.test(normalizedBound);
 }
 
 function parsePeriodBound(bound: string, currentDate = new Date()): number {
   const normalizedBound = normalize(bound);
 
-  if (isCurrentBound(bound)) {
+  if (isCurrentBound(normalizedBound)) {
     return currentDate.getFullYear() + currentDate.getMonth() / 12;
   }
 
@@ -59,7 +59,7 @@ function parsePeriod(period: string, currentDate = new Date()): ParsedPeriod {
   return {
     start: parsePeriodBound(match[1], currentDate),
     end: parsePeriodBound(match[2], currentDate),
-    isCurrent: isCurrentBound(match[2]),
+    isCurrent: isCurrentBound(normalize(match[2])),
   };
 }
 
@@ -124,34 +124,26 @@ function resolveEmployerForMission<TEmployer>(
   return match.employer;
 }
 
-export function getEmployerForMission<TEmployer extends PeriodEntry>(
+export function mapMissionsToEmployers<TEmployer extends PeriodEntry, TMission extends PeriodEntry>(
   employers: readonly TEmployer[],
-  mission: PeriodEntry,
+  missions: readonly TMission[],
   currentDate = new Date(),
-): TEmployer {
-  return resolveEmployerForMission(
-    mission,
-    employers.map((employer) => ({
-      employer,
-      start: parsePeriod(employer.date, currentDate).start,
-    })),
-    currentDate,
-  );
-}
-
-export function countMissionsByEmployer<TEmployer extends PeriodEntry>(
-  employers: readonly TEmployer[],
-  missions: readonly PeriodEntry[],
-  currentDate = new Date(),
-): ReadonlyMap<TEmployer, number> {
-  const missionCounts = new Map<TEmployer, number>(employers.map((employer) => [employer, 0]));
+): ReadonlyMap<TMission, TEmployer> {
   const employerStarts = employers.map((employer) => ({
     employer,
     start: parsePeriod(employer.date, currentDate).start,
   }));
 
-  for (const mission of missions) {
-    const employer = resolveEmployerForMission(mission, employerStarts, currentDate);
+  return new Map(missions.map((mission) => [mission, resolveEmployerForMission(mission, employerStarts, currentDate)] as const));
+}
+
+export function countMissionsByEmployer<TEmployer, TMission extends PeriodEntry>(
+  employers: readonly TEmployer[],
+  employersByMission: ReadonlyMap<TMission, TEmployer>,
+): ReadonlyMap<TEmployer, number> {
+  const missionCounts = new Map<TEmployer, number>(employers.map((employer) => [employer, 0]));
+
+  for (const [mission, employer] of employersByMission) {
     const currentCount = missionCounts.get(employer);
 
     if (currentCount === undefined) {

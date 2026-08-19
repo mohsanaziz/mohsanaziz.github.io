@@ -19,7 +19,7 @@ const { title, summary, description, showStatusBadge = false } = Astro.props;
     {showStatusBadge && <StatusBadge label={summary.status} />}
   </header>
 
-  <div class="mt-4 grid min-w-0 grid-cols-1 gap-5 min-[1000px]:grid-cols-[minmax(0,1fr)_15rem] min-[1000px]:gap-6">
+  <div class="mt-4 grid min-w-0 grid-cols-1 gap-5 min-[1200px]:grid-cols-[minmax(0,1fr)_15rem] min-[1200px]:gap-6">
     <div class="max-w-[68ch] space-y-4 leading-7 text-copy-muted">
       {description.map((paragraph) => <p>{paragraph}</p>)}
     </div>

@@ -1,4 +1,5 @@
 ---
+import FactRow from '@/components/FactRow.astro';
 import type { MissionSummaryData } from '@/data/missions';
 
 interface Props {
@@ -15,25 +16,19 @@ const facts = [
   ['Sous', summary.employer],
   ['Version', summary.version],
 ] as const;
+const stackLabel = /^[aeiouyàâäéèêëîïôöùûüÿ]/i.test(mission) ? `Stack d'${mission}` : `Stack de ${mission}`;
 ---
 
-<aside class="overflow-hidden rounded-lg border border-frame-border bg-panel" aria-label={`En résumé pour ${mission}`}>
+<div class="overflow-hidden rounded-lg border border-frame-border bg-panel">
   <h4 class="border-b border-rule px-4 py-3 text-sm font-semibold text-copy">En résumé</h4>
 
   <dl class="divide-y divide-rule px-4 text-sm">
-    {
-      facts.map(([label, value]) => (
-        <div class="grid grid-cols-[4.25rem_minmax(0,1fr)] gap-3 py-2.5">
-          <dt class="text-copy-muted">{label}</dt>
-          <dd class="min-w-0 text-right font-medium [overflow-wrap:anywhere] text-copy">{value}</dd>
-        </div>
-      ))
-    }
+    {facts.map(([label, value]) => <FactRow label={label}>{value}</FactRow>)}
   </dl>
 
   <div class="border-t border-rule px-4 py-3">
     <h5 class="text-xs font-semibold tracking-wide text-copy-muted uppercase">Stack</h5>
-    <ul class="mt-2 flex flex-wrap gap-1.5" aria-label={`Stack de ${mission}`}>
+    <ul class="mt-2 flex flex-wrap gap-1.5" aria-label={stackLabel}>
       {
         summary.technologies.map((technology) => (
           <li class="rounded-full border border-frame-border bg-page px-2 py-1 text-xs leading-none text-copy">{technology}</li>
@@ -41,4 +36,4 @@ const facts = [
       }
     </ul>
   </div>
-</aside>
+</div>
