@@ -10,16 +10,22 @@ import { cv } from '@/data/cv';
 import Content from '@/layouts/Content.astro';
 import Layout from '@/layouts/Layout.astro';
 
-const githubProfile = cv.profile.socialLinks.find(({ icon }) => icon === 'github');
-const location = cv.profile.contactDetails.find(({ icon }) => icon === 'location');
+const githubProfile = cv.profile.socialLinks.find(({ href }) => new URL(href).hostname === 'github.com');
+const profileLocation = cv.profile.contactDetails.find(({ title }) => title === 'Location');
 
-if (!githubProfile || !location) {
+if (!githubProfile || !profileLocation) {
   throw new Error('The repository header and README require the GitHub profile and location from the CV data.');
+}
+
+const githubOwner = new URL(githubProfile.href).pathname.split('/').filter(Boolean).at(0);
+
+if (!githubOwner) {
+  throw new Error('The GitHub profile URL must contain the repository owner.');
 }
 ---
 
 <Layout title={cv.pageTitle} description={`${cv.profile.name} — ${cv.profile.jobTitle}`}>
-  <RepositoryHeader image={cv.profile.image} owner="mohsanaziz" repository="cv" ownerHref={githubProfile.href} />
+  <RepositoryHeader image={cv.profile.image} owner={githubOwner} repository="cv" ownerHref={githubProfile.href} />
 
   <main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
     <div class="grid min-w-0 grid-cols-1 gap-6 min-[1000px]:grid-cols-[minmax(0,1fr)_18rem]">
@@ -28,7 +34,7 @@ if (!githubProfile || !location) {
           <article class="[overflow-wrap:anywhere]">
             <h1 class="text-3xl font-bold tracking-tight text-copy sm:text-4xl">{cv.profile.name}</h1>
             <p class="mt-2 text-base text-copy-muted">
-              {cv.profile.jobTitle}<span aria-hidden="true"> · </span>{location.info}
+              {cv.profile.jobTitle}<span class="sr-only">, </span><span aria-hidden="true"> · </span>{profileLocation.info}
             </p>
 
             <div class="mt-6 border-t border-rule pt-6">
@@ -41,7 +47,7 @@ if (!githubProfile || !location) {
         </SectionFrame>
 
         <!-- These legacy regions remain publishable until their dedicated migration tickets. -->
-        <div class="rounded-2xl border border-transparent bg-surface-overlay p-5 text-foreground">
+        <div class="rounded-2xl border border-transparent bg-surface-overlay p-5 leading-relaxed text-foreground">
           <Content title={cv.professionalExperience.title}>
             {
               cv.professionalExperience.entries.map((experience) => (
@@ -68,7 +74,7 @@ if (!githubProfile || !location) {
       </div>
 
       <!-- The current contact regions move below the main column before their later redesign. -->
-      <aside class="min-w-0 self-start rounded-2xl bg-surface-overlay p-5 text-foreground">
+      <aside class="min-w-0 self-start rounded-2xl bg-surface-overlay p-5 leading-relaxed text-foreground">
         <div class="flex flex-col gap-y-1.5">
           {
             cv.profile.contactDetails.map((contactDetail, index) => (
