@@ -14,6 +14,7 @@
   --color-link-underline: light-dark(transparent, #f4f4f5);
   --color-focus: light-dark(#12507e, #f4f4f5);
   --color-status-success: light-dark(#2f6b34, #4ade80);
+  --color-status-cdi: light-dark(#12507e, #8ec5ff);
 
   /* Legacy tokens remain available to the sections migrated by later tickets. */
   --color-surface: light-dark(rgb(229 231 235), rgb(84 84 84));

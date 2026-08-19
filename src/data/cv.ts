@@ -14,13 +14,19 @@ export interface ContactDetail {
   icon: IconName;
 }
 
-interface CareerEntry {
+interface TimelineEntry {
   title: string;
   subtitle: string;
   date: string;
 }
 
-interface ClientProject extends CareerEntry {
+export type Contract = 'Freelance' | 'CDI';
+
+export interface CareerEntry extends TimelineEntry {
+  contract: Contract;
+}
+
+interface ClientProject extends TimelineEntry {
   technologies: readonly string[];
   description: readonly string[];
 }
@@ -122,11 +128,13 @@ export const cv = {
         title: 'SASU AZMOPAK',
         subtitle: 'Développeur freelance Angular/Java',
         date: "Novembre 2019 - Aujourd'hui",
+        contract: 'Freelance',
       },
       {
         title: 'Sopra Steria',
         subtitle: 'Développeur Angular/Java',
         date: 'Mai 2016 - Septembre 2019',
+        contract: 'CDI',
       },
     ],
   },
