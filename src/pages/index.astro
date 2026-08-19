@@ -1,27 +1,35 @@
 ---
 import Card from '@/components/Card.astro';
-import Icon from '@/components/Icon.astro';
-import Info from '@/components/Info.astro';
-import Link from '@/components/Link.astro';
+import ContactDetails from '@/components/ContactDetails.astro';
+import Contributors from '@/components/Contributors.astro';
+import LanguageBar from '@/components/LanguageBar.astro';
+import ReleaseAsset from '@/components/ReleaseAsset.astro';
 import RepositoryHeader from '@/components/RepositoryHeader.astro';
 import SectionFrame from '@/components/SectionFrame.astro';
 import Skill from '@/components/Skill.astro';
 import { cv } from '@/data/cv';
+import { deriveLanguageShares } from '@/data/languages';
 import Content from '@/layouts/Content.astro';
 import Layout from '@/layouts/Layout.astro';
+import packageMetadata from '../../package.json';
 
 const githubProfile = cv.profile.socialLinks.find(({ href }) => new URL(href).hostname === 'github.com');
+const linkedinProfile = cv.profile.socialLinks.find(({ href }) => new URL(href).hostname.endsWith('linkedin.com'));
 const profileLocation = cv.profile.contactDetails.find(({ title }) => title === 'Location');
 
-if (!githubProfile || !profileLocation) {
-  throw new Error('The repository header and README require the GitHub profile and location from the CV data.');
+if (!githubProfile || !linkedinProfile || !profileLocation) {
+  throw new Error('The page requires the GitHub profile, LinkedIn profile and location from the CV data.');
 }
 
 const githubOwner = new URL(githubProfile.href).pathname.split('/').filter(Boolean).at(0);
+const linkedinPath = new URL(linkedinProfile.href).pathname.split('/').filter(Boolean).join('/');
+const resumeFileName = new URL(cv.profile.resume.href, 'https://mohsanaziz.github.io').pathname.split('/').filter(Boolean).at(-1);
 
-if (!githubOwner) {
-  throw new Error('The GitHub profile URL must contain the repository owner.');
+if (!githubOwner || !linkedinPath || !resumeFileName) {
+  throw new Error('The profile and resume URLs must contain displayable paths.');
 }
+
+const languages = deriveLanguageShares(cv.clientProjects.entries);
 ---
 
 <Layout title={cv.pageTitle} description={`${cv.profile.name} — ${cv.profile.jobTitle}`}>
@@ -73,37 +81,26 @@ if (!githubOwner) {
         </div>
       </div>
 
-      <!-- The current contact regions move below the main column before their later redesign. -->
-      <aside class="min-w-0 self-start rounded-2xl bg-surface-overlay p-5 leading-relaxed text-foreground">
-        <div class="flex flex-col gap-y-1.5">
-          {
-            cv.profile.contactDetails.map((contactDetail, index) => (
-              <>
-                <Info title={contactDetail.title} info={contactDetail.info}>
-                  <Icon name={contactDetail.icon} class="h-5 w-5" />
-                </Info>
-                {index < cv.profile.contactDetails.length - 1 && <div class="border-t border-divider" />}
-              </>
-            ))
-          }
-        </div>
+      <aside class="min-w-0 space-y-6 self-start" aria-label="Informations complémentaires">
+        <SectionFrame title="Contact">
+          <ContactDetails details={cv.profile.contactDetails} />
+        </SectionFrame>
 
-        <div class="mt-5 flex flex-wrap gap-3">
-          {
-            cv.profile.socialLinks.map((socialLink) => (
-              <Link href={socialLink.href} label={socialLink.label}>
-                <Icon name={socialLink.icon} class="h-5 w-5" />
-              </Link>
-            ))
-          }
-        </div>
+        <SectionFrame title="Contributeurs">
+          <Contributors
+            image={cv.profile.image}
+            github={{ href: githubProfile.href, label: githubOwner }}
+            linkedin={{ href: linkedinProfile.href, label: linkedinPath }}
+          />
+        </SectionFrame>
 
-        <div class="mt-5">
-          <Link href={cv.profile.resume.href} label={cv.profile.resume.label}>
-            <Icon name={cv.profile.resume.icon} class="me-1 h-6 w-6" />
-            {cv.profile.resume.text}
-          </Link>
-        </div>
+        <SectionFrame title="Releases" icon="tag">
+          <ReleaseAsset version={`v${packageMetadata.version}`} href={cv.profile.resume.href} fileName={resumeFileName} />
+        </SectionFrame>
+
+        <SectionFrame title="Langages">
+          <LanguageBar languages={languages} />
+        </SectionFrame>
       </aside>
     </div>
   </main>
