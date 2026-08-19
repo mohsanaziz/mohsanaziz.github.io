@@ -5,7 +5,7 @@
 
 ## Amendement du 19 août 2026
 
-La contraction finale de la refonte ([#38](https://github.com/mohsanaziz/mohsanaziz.github.io/issues/38)) retire la palette historique, les variables `--legacy-*-rgb`, la surcharge `--opacity-30`, la valeur unique du séparateur et l’échelle d’élévation sombre inversée. Les passages ci-dessous qui les décrivent sont conservés comme historique de la migration ; l’ADR 0004 définit la palette active.
+La contraction finale de la refonte ([#38](https://github.com/mohsanaziz/mohsanaziz.github.io/issues/38)) retire la palette historique, les variables `--legacy-*-rgb`, la surcharge `--opacity-30`, la valeur unique du séparateur et l’échelle d’élévation sombre inversée. Les passages ci-dessous qui les décrivent sont conservés comme historique de la migration. L’amendement de l’ADR 0004 consigne la fin de cette migration ; `src/styles/main.css` fait foi pour la palette active.
 
 ## Contexte
 
