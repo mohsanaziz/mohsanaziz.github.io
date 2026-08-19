@@ -2,6 +2,18 @@
 
 @theme {
   --font-sans: 'Satoshi', system-ui, sans-serif;
+
+  /* Repository redesign tokens coexist with the legacy palette during the migration. */
+  --color-page: light-dark(#fffefb, #0f0f11);
+  --color-panel: light-dark(#f5f3ee, #18181b);
+  --color-frame-border: light-dark(#d8d3c8, #3a3a40);
+  --color-rule: light-dark(#ebe8e0, #232327);
+  --color-copy: light-dark(#1c1a17, #f4f4f5);
+  --color-copy-muted: light-dark(#5c574e, #a1a1ab);
+  --color-link: light-dark(#12507e, #f4f4f5);
+  --color-link-underline: light-dark(transparent, #f4f4f5);
+
+  /* Legacy tokens remain available to the sections migrated by later tickets. */
   --color-surface: light-dark(rgb(229 231 235), rgb(84 84 84));
   /* Dark elevation keeps the legacy inverse luminance scale to preserve rendering. */
   --color-surface-raised: light-dark(rgb(243 243 243), rgb(32 32 32));
@@ -40,4 +52,23 @@
   font-weight: 300 900;
   font-display: swap;
   font-style: normal;
+}
+
+@layer base {
+  a {
+    text-decoration-line: underline;
+    text-decoration-color: var(--color-link-underline);
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.18em;
+  }
+
+  a:hover,
+  a:focus-visible {
+    text-decoration-color: currentColor;
+  }
+
+  :where(a, button, input, select, textarea, summary):focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: 3px;
+  }
 }

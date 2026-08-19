@@ -9,6 +9,15 @@ export interface IconDefinition {
 }
 
 export const ICONS = {
+  book: {
+    viewBox: '0 0 24 24',
+    paths: ['M4 19.5A2.5 2.5 0 0 1 6.5 17H20', 'M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'],
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    strokeWidth: 2,
+  },
   github: {
     viewBox: '0 0 24 24',
     paths: [
