@@ -18,6 +18,24 @@ export const ICONS = {
     strokeLinejoin: 'round',
     strokeWidth: 2,
   },
+  tag: {
+    viewBox: '0 0 24 24',
+    paths: ['M20.59 13.41 11 3.83V3H4v7h.83l9.58 9.59a2 2 0 0 0 2.82 0l3.36-3.36a2 2 0 0 0 0-2.82z', 'M7.5 6.5h.01'],
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    strokeWidth: 2,
+  },
+  file: {
+    viewBox: '0 0 24 24',
+    paths: ['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', 'M14 2v6h6'],
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    strokeWidth: 2,
+  },
   github: {
     viewBox: '0 0 24 24',
     paths: [

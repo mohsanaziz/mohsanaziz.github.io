@@ -1,0 +1,45 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface ContributorLink {
+  href: string;
+  label: string;
+}
+
+interface Props {
+  image: {
+    src: ImageMetadata;
+    alt: string;
+  };
+  github: ContributorLink;
+  linkedin: ContributorLink;
+}
+
+const { image, github, linkedin } = Astro.props;
+---
+
+<ul class="space-y-3">
+  <li>
+    <a class="flex w-fit items-center gap-3 rounded-sm text-sm font-medium text-link" href={github.href} target="_blank" rel="noreferrer">
+      <Image
+        src={image.src}
+        alt=""
+        class="h-7 w-7 shrink-0 rounded-full object-cover"
+        width={28}
+        height={28}
+        densities={[1, 2]}
+        decoding="async"
+      />
+      <span>{github.label}</span>
+    </a>
+  </li>
+  <li>
+    <a class="flex w-fit items-center gap-3 rounded-sm text-sm font-medium text-link" href={linkedin.href} target="_blank" rel="noreferrer">
+      <span aria-hidden="true" class="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-[#0a66c2] text-xs font-bold text-white"
+        >in</span
+      >
+      <span>{linkedin.label}</span>
+    </a>
+  </li>
+</ul>
