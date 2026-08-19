@@ -7,7 +7,7 @@
 
 L’issue [#38](https://github.com/mohsanaziz/mohsanaziz.github.io/issues/38) clôt la coexistence des deux palettes après la migration de toutes les régions. Les formulations ci-dessous sur les tokens historiques conservés temporairement et le tableau de correspondance décrivent cette phase désormais achevée et sont gardées comme historique de la décision.
 
-La palette active comprend les rôles `page`, `panel`, `frame-border`, `rule`, `copy`, `copy-muted`, `link`, `link-underline`, `focus`, `status-success` et `status-cdi`. La feuille `src/styles/main.css` reste la source de vérité pour leurs valeurs et leurs évolutions.
+L’[ADR 0005](0005-finalize-redesign-color-palette.md) consigne la palette finale, ses valeurs de contraste de référence et la fin de la parité héritée. La feuille `src/styles/main.css` reste la source de vérité pour les valeurs actives.
 
 ## Contexte
 

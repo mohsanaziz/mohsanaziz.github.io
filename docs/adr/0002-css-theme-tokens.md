@@ -1,11 +1,11 @@
 # ADR 0002 — Tokens de thème déclarés en CSS avec `light-dark()`
 
-- Statut : accepté, partiellement remplacé par l’[ADR 0004](0004-normalize-redesign-color-palette.md)
+- Statut : accepté, partiellement remplacé par les ADR [0004](0004-normalize-redesign-color-palette.md) et [0005](0005-finalize-redesign-color-palette.md)
 - Date : 2026-08-17
 
 ## Amendement du 19 août 2026
 
-La contraction finale de la refonte ([#38](https://github.com/mohsanaziz/mohsanaziz.github.io/issues/38)) retire la palette historique, les variables `--legacy-*-rgb`, la surcharge `--opacity-30`, la valeur unique du séparateur et l’échelle d’élévation sombre inversée. Les passages ci-dessous qui les décrivent sont conservés comme historique de la migration. L’amendement de l’ADR 0004 consigne la fin de cette migration ; `src/styles/main.css` fait foi pour la palette active.
+La contraction finale de la refonte ([#38](https://github.com/mohsanaziz/mohsanaziz.github.io/issues/38)) retire la palette historique, les variables `--legacy-*-rgb`, la surcharge `--opacity-30`, la valeur unique du séparateur et l’échelle d’élévation sombre inversée. Les passages ci-dessous qui les décrivent sont conservés comme historique de la migration. L’ADR 0004 documente la transition et l’ADR 0005 consigne la palette finale ainsi que la fin de la parité héritée ; `src/styles/main.css` fait foi pour les valeurs actives.
 
 ## Contexte
 
