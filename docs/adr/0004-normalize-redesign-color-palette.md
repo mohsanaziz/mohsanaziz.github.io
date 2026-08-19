@@ -1,6 +1,6 @@
 # ADR 0004 — Normaliser l’échelle sombre de la palette de refonte
 
-- Statut : accepté
+- Statut : accepté, partiellement remplacé par l’[ADR 0005](0005-finalize-redesign-color-palette.md)
 - Date : 2026-08-19
 
 ## Amendement du 19 août 2026

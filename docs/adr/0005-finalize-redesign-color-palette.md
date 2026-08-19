@@ -41,9 +41,9 @@ Les couleurs d’état sont distinctes des couleurs d’accent décoratif. L’A
 
 Pour cette même raison, les liens sont soulignés en thème sombre : leur couleur seule ne peut pas les distinguer du texte. Le token `--color-link-underline` porte cette variation dans `light-dark()` plutôt qu’une règle de thème dupliquée.
 
-Les puces d’état utilisent un fond teinté à 14 % de leur couleur d’état, une bordure à 45 % et un texte à la couleur d’état pleine. Cette construction répond au seul défaut de contraste rencontré pendant le maquettage : une couleur d’état qui change de luminance entre les deux thèmes ne peut pas conserver la même couleur de texte dans les deux. Le fond teinté et le texte à la couleur pleine sont stables par construction, puisque le fond dérive de la couleur du texte.
+Les puces d’état utilisent un fond teinté à 14 % de leur couleur d’état, une bordure à 45 % et un texte à la couleur d’état pleine. Cette construction répond au seul défaut de contraste rencontré pendant le maquettage : une couleur d’état qui change de luminance entre les deux thèmes ne peut pas conserver la même couleur de texte dans les deux. Sur leur surface de référence `--color-page`, le fond teinté et le texte à la couleur pleine sont stables dans les deux thèmes par construction : le fond final dérive de la couleur du texte et de cette surface constante.
 
-Les ratios WCAG mesurés sur cette construction servent de valeurs de référence à toute évolution ultérieure :
+Les ratios WCAG mesurés sur cette construction, avec le fond des puces composé sur `--color-page`, servent de valeurs de référence à toute évolution ultérieure :
 
 | Couple                    | Clair | Sombre |
 | ------------------------- | ----: | -----: |
@@ -60,7 +60,7 @@ La valeur la plus basse est celle de la puce verte en thème clair, à 5,18. Tou
 
 - La couche de style n’a plus à reproduire le rendu antérieur : les nouvelles valeurs se jugent selon leur rôle, la cohérence de la palette et leur contraste.
 - Les tokens d’état ne doivent pas être remplacés par un accent décoratif ni par le token de lien, même lorsqu’une valeur claire leur est commune.
-- Toute retouche de palette doit remesurer les couples affectés en prenant le tableau ci-dessus comme référence ; une modification de `--color-status-success` clair commence par la puce verte.
+- Toute retouche de palette doit remesurer les couples affectés en prenant le tableau ci-dessus comme référence ; une modification de `--color-status-success` clair commence par la puce verte. Déplacer une puce sur une autre surface impose également une nouvelle mesure du fond composité.
 - Le site continue de suivre la préférence claire ou sombre du système sans JavaScript.
 - Comme le prévoit l’ADR 0002, un futur sélecteur de thème ne dupliquera ni les tokens ni les utilitaires : la couche de style forcera seulement `color-scheme` sur l’élément racine, par exemple avec `:root[data-theme='light'] { color-scheme: light; }` et `:root[data-theme='dark'] { color-scheme: dark; }`. Une éventuelle logique cliente ne servira qu’à choisir et mémoriser cet attribut.
 - Les contrôles natifs continueront de suivre le thème sélectionné grâce à `color-scheme`.
