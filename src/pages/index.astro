@@ -1,17 +1,23 @@
 ---
-import Card from '@/components/Card.astro';
 import ContactDetails from '@/components/ContactDetails.astro';
 import Contributors from '@/components/Contributors.astro';
 import EmployerCard from '@/components/EmployerCard.astro';
 import LanguageBar from '@/components/LanguageBar.astro';
+import MissionRelease from '@/components/MissionRelease.astro';
 import ReleaseAsset from '@/components/ReleaseAsset.astro';
 import RepositoryHeader from '@/components/RepositoryHeader.astro';
 import SectionFrame from '@/components/SectionFrame.astro';
-import Skill from '@/components/Skill.astro';
-import { countMissionsByEmployer, formatPeriodDuration, getCareerDurationInYears } from '@/data/career';
+import {
+  countMissionsByEmployer,
+  formatPeriodDuration,
+  getCareerDurationInYears,
+  getEmployerForMission,
+  isCurrentPeriod,
+  sortByMostRecentPeriod,
+} from '@/data/career';
 import { cv } from '@/data/cv';
 import { deriveLanguageShares } from '@/data/languages';
-import Content from '@/layouts/Content.astro';
+import type { MissionStatus, MissionSummaryData } from '@/data/missions';
 import Layout from '@/layouts/Layout.astro';
 import packageMetadata from '@package';
 
@@ -51,6 +57,28 @@ const employersWithMissionCounts = cv.professionalExperience.entries.map((experi
 });
 const employerLabel = `${employerCount} ${employerCount === 1 ? 'employeur' : 'employeurs'}`;
 const careerDurationLabel = `${careerDurationInYears} ${careerDurationInYears === 1 ? 'an' : 'ans'}`;
+const missions = sortByMostRecentPeriod(cv.clientProjects.entries, currentDate);
+const missionCount = missions.length;
+const missionVersionLabel = `${missionCount} ${missionCount === 1 ? 'version' : 'versions'}`;
+const missionReleases = missions.map((mission, index) => {
+  const current = isCurrentPeriod(mission.date, currentDate);
+  const status: MissionStatus = current ? 'En cours' : 'Livrée';
+  const summary = {
+    client: mission.subtitle,
+    period: mission.date,
+    duration: formatPeriodDuration(mission.date, currentDate),
+    status,
+    employer: getEmployerForMission(cv.professionalExperience.entries, mission, currentDate).title,
+    version: `v${missionCount - index}.0.0`,
+    technologies: mission.technologies,
+  } satisfies MissionSummaryData;
+
+  return {
+    mission,
+    summary,
+    showStatusBadge: index === 0 && current,
+  };
+});
 ---
 
 <Layout title={cv.pageTitle} description={`${cv.profile.name} — ${cv.profile.jobTitle}`}>
@@ -92,23 +120,20 @@ const careerDurationLabel = `${careerDurationInYears} ${careerDurationInYears ==
           </div>
         </SectionFrame>
 
-        <!-- This legacy region remains publishable until its dedicated migration ticket. -->
-        <div class="rounded-2xl border border-transparent bg-surface-overlay p-5 leading-relaxed text-foreground">
-          <Content title={cv.clientProjects.title}>
+        <SectionFrame title={cv.clientProjects.title} counter={missionVersionLabel}>
+          <div class="divide-y divide-rule">
             {
-              cv.clientProjects.entries.map((project) => (
-                <Card title={project.title} subtitle={project.subtitle} date={project.date}>
-                  <Skill skills={{ values: project.technologies }} />
-                  <div class="text-justify text-muted">
-                    {project.description.map((paragraph) => (
-                      <p>{paragraph}</p>
-                    ))}
-                  </div>
-                </Card>
+              missionReleases.map(({ mission, summary, showStatusBadge }) => (
+                <MissionRelease
+                  title={mission.title}
+                  summary={summary}
+                  description={mission.description}
+                  showStatusBadge={showStatusBadge}
+                />
               ))
             }
-          </Content>
-        </div>
+          </div>
+        </SectionFrame>
       </div>
 
       <aside class="min-w-0 space-y-6 self-start" aria-label="Informations complémentaires">
