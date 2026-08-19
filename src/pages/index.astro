@@ -2,11 +2,13 @@
 import Card from '@/components/Card.astro';
 import ContactDetails from '@/components/ContactDetails.astro';
 import Contributors from '@/components/Contributors.astro';
+import EmployerCard from '@/components/EmployerCard.astro';
 import LanguageBar from '@/components/LanguageBar.astro';
 import ReleaseAsset from '@/components/ReleaseAsset.astro';
 import RepositoryHeader from '@/components/RepositoryHeader.astro';
 import SectionFrame from '@/components/SectionFrame.astro';
 import Skill from '@/components/Skill.astro';
+import { countMissionsForEmployer, formatPeriodDuration, getCareerDurationInYears } from '@/data/career';
 import { cv } from '@/data/cv';
 import { deriveLanguageShares } from '@/data/languages';
 import Content from '@/layouts/Content.astro';
@@ -34,6 +36,9 @@ if (!githubOwner || !linkedinPath || !resumeFileName) {
 }
 
 const languages = deriveLanguageShares(cv.clientProjects.entries);
+const currentDate = new Date();
+const careerDurationInYears = getCareerDurationInYears(cv.professionalExperience.entries, currentDate);
+const employerCount = cv.professionalExperience.entries.length;
 ---
 
 <Layout title={cv.pageTitle} description={`${cv.profile.name} — ${cv.profile.jobTitle}`}>
@@ -58,16 +63,30 @@ const languages = deriveLanguageShares(cv.clientProjects.entries);
           </article>
         </SectionFrame>
 
-        <!-- These legacy regions remain publishable until their dedicated migration tickets. -->
-        <div class="rounded-2xl border border-transparent bg-surface-overlay p-5 leading-relaxed text-foreground">
-          <Content title={cv.professionalExperience.title}>
+        <SectionFrame title={cv.professionalExperience.title} counter={`${employerCount} employeurs · ${careerDurationInYears} ans`}>
+          <div class="grid grid-cols-1 gap-4 min-[700px]:grid-cols-2">
             {
               cv.professionalExperience.entries.map((experience) => (
-                <Card title={experience.title} subtitle={experience.subtitle} date={experience.date} />
+                <EmployerCard
+                  company={experience.title}
+                  role={experience.subtitle}
+                  contract={experience.contract}
+                  period={experience.date}
+                  duration={formatPeriodDuration(experience.date, currentDate)}
+                  missionCount={countMissionsForEmployer(
+                    experience,
+                    cv.professionalExperience.entries,
+                    cv.clientProjects.entries,
+                    currentDate,
+                  )}
+                />
               ))
             }
-          </Content>
+          </div>
+        </SectionFrame>
 
+        <!-- This legacy region remains publishable until its dedicated migration ticket. -->
+        <div class="rounded-2xl border border-transparent bg-surface-overlay p-5 leading-relaxed text-foreground">
           <Content title={cv.clientProjects.title}>
             {
               cv.clientProjects.entries.map((project) => (
