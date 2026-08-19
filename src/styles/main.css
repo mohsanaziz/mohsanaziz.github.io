@@ -3,7 +3,6 @@
 @theme {
   --font-sans: 'Satoshi', system-ui, sans-serif;
 
-  /* Repository redesign tokens coexist with the legacy palette during the migration. */
   --color-page: light-dark(#fffefb, #0f0f11);
   --color-panel: light-dark(#f5f3ee, #18181b);
   --color-frame-border: light-dark(#d8d3c8, #3a3a40);
@@ -15,38 +14,10 @@
   --color-focus: light-dark(#12507e, #f4f4f5);
   --color-status-success: light-dark(#2f6b34, #4ade80);
   --color-status-cdi: light-dark(#12507e, #8ec5ff);
-
-  /* Legacy tokens remain available to the sections migrated by later tickets. */
-  --color-surface: light-dark(rgb(229 231 235), rgb(84 84 84));
-  /* Dark elevation keeps the legacy inverse luminance scale to preserve rendering. */
-  --color-surface-raised: light-dark(rgb(243 243 243), rgb(32 32 32));
-  --color-surface-overlay: light-dark(rgb(255 255 255), rgb(28 28 28));
-  --color-surface-hover: light-dark(rgb(var(--legacy-border-light-rgb)), rgb(var(--legacy-border-dark-rgb)));
-  --color-foreground: light-dark(rgb(0 0 0), rgb(255 255 255));
-  --color-muted: light-dark(rgb(var(--legacy-muted-light-rgb)), rgb(var(--legacy-muted-dark-rgb)));
-  --color-border: light-dark(rgb(var(--legacy-border-light-rgb)), rgb(var(--legacy-border-dark-rgb)));
-  /* Keep the legacy gray-200 separator color in both themes. */
-  --color-divider: rgb(229 231 235);
-  /* Background accents keep their legacy palette; text accents adapt for WCAG AA. */
-  --color-accent: rgb(168 177 255);
-  --color-accent-strong: rgb(128 140 255);
-  --color-accent-foreground: rgb(0 0 0);
-  --color-accent-text: light-dark(rgb(83 98 196), rgb(168 177 255));
-  --color-accent-text-strong: light-dark(rgb(70 80 185), rgb(128 140 255));
-  /* Tailwind 3 serialized a 30% alpha to 77/255; preserve that rendered value. */
-  --opacity-30: 30.196078%;
 }
 
 :root {
   color-scheme: light dark;
-}
-
-:root {
-  /* Fractional channels preserve the legacy text antialiasing after minification. */
-  --legacy-border-light-rgb: 227.9955 227.9955 231.0045;
-  --legacy-border-dark-rgb: 39.044835 39.044835 42.045165;
-  --legacy-muted-light-rgb: 113.08791 113.08791 122.02209;
-  --legacy-muted-dark-rgb: 161.01975 161.01975 169.97025;
 }
 
 @font-face {
