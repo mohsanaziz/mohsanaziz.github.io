@@ -17,13 +17,17 @@ const githubProfile = cv.profile.socialLinks.find(({ href }) => new URL(href).ho
 const linkedinProfile = cv.profile.socialLinks.find(({ href }) => new URL(href).hostname.endsWith('linkedin.com'));
 const profileLocation = cv.profile.contactDetails.find(({ title }) => title === 'Location');
 
+function urlPathSegments(href: string): string[] {
+  return new URL(href, Astro.site ?? Astro.url).pathname.split('/').filter(Boolean);
+}
+
 if (!githubProfile || !linkedinProfile || !profileLocation) {
   throw new Error('The page requires the GitHub profile, LinkedIn profile and location from the CV data.');
 }
 
-const githubOwner = new URL(githubProfile.href).pathname.split('/').filter(Boolean).at(0);
-const linkedinPath = new URL(linkedinProfile.href).pathname.split('/').filter(Boolean).join('/');
-const resumeFileName = new URL(cv.profile.resume.href, 'https://mohsanaziz.github.io').pathname.split('/').filter(Boolean).at(-1);
+const githubOwner = urlPathSegments(githubProfile.href).at(0);
+const linkedinPath = urlPathSegments(linkedinProfile.href).join('/');
+const resumeFileName = urlPathSegments(cv.profile.resume.href).at(-1);
 
 if (!githubOwner || !linkedinPath || !resumeFileName) {
   throw new Error('The profile and resume URLs must contain displayable paths.');
@@ -88,7 +92,7 @@ const languages = deriveLanguageShares(cv.clientProjects.entries);
 
         <SectionFrame title="Contributeurs">
           <Contributors
-            image={cv.profile.image}
+            image={cv.profile.image.src}
             github={{ href: githubProfile.href, label: githubOwner }}
             linkedin={{ href: linkedinProfile.href, label: linkedinPath }}
           />
