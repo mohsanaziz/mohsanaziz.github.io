@@ -11,7 +11,7 @@ import { cv } from '@/data/cv';
 import { deriveLanguageShares } from '@/data/languages';
 import Content from '@/layouts/Content.astro';
 import Layout from '@/layouts/Layout.astro';
-import packageMetadata from '../../package.json';
+import packageMetadata from '@package';
 
 const githubProfile = cv.profile.socialLinks.find(({ href }) => new URL(href).hostname === 'github.com');
 const linkedinProfile = cv.profile.socialLinks.find(({ href }) => new URL(href).hostname.endsWith('linkedin.com'));

@@ -42,12 +42,22 @@ const LANGUAGE_CATEGORIES = [
   },
 ] as const satisfies readonly LanguageCategory[];
 
+const UNCOUNTED_TECHNOLOGIES: ReadonlySet<string> = new Set(['Confluence', 'Jira']);
+
 export function deriveLanguageShares(projects: readonly ProjectWithTechnologies[]): readonly LanguageShare[] {
   const categoryByTechnology = new Map<string, number>(
     LANGUAGE_CATEGORIES.flatMap((category, categoryIndex) =>
       category.technologies.map((technology) => [technology, categoryIndex] as const),
     ),
   );
+  const unclassifiedTechnologies = [...new Set(projects.flatMap(({ technologies }) => technologies))].filter(
+    (technology) => !categoryByTechnology.has(technology) && !UNCOUNTED_TECHNOLOGIES.has(technology),
+  );
+
+  if (unclassifiedTechnologies.length > 0) {
+    throw new Error(`Unclassified technologies must be added to the language mapping: ${unclassifiedTechnologies.join(', ')}`);
+  }
+
   const counts = LANGUAGE_CATEGORIES.map(() => 0);
 
   for (const project of projects) {
