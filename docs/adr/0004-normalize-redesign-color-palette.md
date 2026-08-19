@@ -33,5 +33,5 @@ Les deux familles restent déclarées ensemble dans `src/styles/main.css` pendan
 - La refonte peut avancer par régions tout en gardant la page publiable et le rendu historique intact ailleurs.
 - Deux vocabulaires de couleur coexistent temporairement ; leur frontière est le statut migré ou non du composant.
 - Les tickets suivants n’ont pas à redéduire la correspondance entre les palettes.
-- Le dernier ticket de la refonte supprime les tokens historiques, leurs variables de compatibilité et cette période de coexistence.
+- L’issue [#38](https://github.com/mohsanaziz/mohsanaziz.github.io/issues/38) termine la transition en supprimant les tokens historiques, leurs variables de compatibilité et cette période de coexistence.
 - L’ADR 0002 reste la référence pour la déclaration CSS-first, `light-dark()` et `color-scheme`, mais sa convention d’élévation inversée est remplacée par la présente décision pour tout code refondu.
