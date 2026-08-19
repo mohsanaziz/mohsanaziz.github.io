@@ -6,11 +6,10 @@ interface Props {
 }
 
 const { languages } = Astro.props;
-const accessibleSummary = languages.map(({ name, percentage }) => `${name} ${percentage} %`).join(', ');
 ---
 
 <div>
-  <div class="flex h-2.5 overflow-hidden rounded-full bg-panel" role="img" aria-label={`Répartition des langages : ${accessibleSummary}`}>
+  <div class="flex h-2.5 overflow-hidden rounded-full bg-panel" aria-hidden="true">
     {
       languages.map(({ name, color, percentage }) => (
         <span aria-hidden="true" title={`${name} : ${percentage} %`} style={`width: ${percentage}%; background-color: ${color};`} />
