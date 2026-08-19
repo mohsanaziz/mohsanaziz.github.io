@@ -3,75 +3,45 @@ import Card from '@/components/Card.astro';
 import Icon from '@/components/Icon.astro';
 import Info from '@/components/Info.astro';
 import Link from '@/components/Link.astro';
+import RepositoryHeader from '@/components/RepositoryHeader.astro';
+import SectionFrame from '@/components/SectionFrame.astro';
 import Skill from '@/components/Skill.astro';
 import { cv } from '@/data/cv';
 import Content from '@/layouts/Content.astro';
 import Layout from '@/layouts/Layout.astro';
+
+const githubProfile = cv.profile.socialLinks.find(({ icon }) => icon === 'github');
+const location = cv.profile.contactDetails.find(({ icon }) => icon === 'location');
+
+if (!githubProfile || !location) {
+  throw new Error('The repository header and README require the GitHub profile and location from the CV data.');
+}
 ---
 
-<Layout title={cv.pageTitle}>
-  <main class="flex w-screen flex-col items-center px-5 pt-5 font-sans leading-relaxed md:px-0 lg:max-w-7xl">
-    <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-      <aside class="top-5 flex flex-col items-center justify-center pt-16 md:sticky md:col-span-1 md:h-screen md:pl-5">
-        <img
-          src={cv.profile.image.src}
-          alt={cv.profile.image.alt}
-          class="z-10 h-56 w-auto rounded-3xl bg-accent p-1"
-          loading="lazy"
-          width={cv.profile.image.width}
-          height={cv.profile.image.height}
-          decoding="async"
-        />
+<Layout title={cv.pageTitle} description={`${cv.profile.name} — ${cv.profile.jobTitle}`}>
+  <RepositoryHeader image={cv.profile.image} owner="mohsanaziz" repository="cv" ownerHref={githubProfile.href} />
 
-        <div class="relative mt-[-6rem] w-full max-w-[400px] rounded-2xl bg-surface-overlay p-5">
-          <div class="flex flex-col gap-y-1.5">
-            <div class="flex flex-col items-center gap-y-4 pt-24 pb-10">
-              <h1 class="text-3xl font-bold">{cv.profile.name}</h1>
-              <h2 class="text-center text-xl">{cv.profile.jobTitle}</h2>
+  <main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div class="grid min-w-0 grid-cols-1 gap-6 min-[1000px]:grid-cols-[minmax(0,1fr)_18rem]">
+      <div class="min-w-0 space-y-6">
+        <SectionFrame title="README.md" icon="book">
+          <article class="[overflow-wrap:anywhere]">
+            <h1 class="text-3xl font-bold tracking-tight text-copy sm:text-4xl">{cv.profile.name}</h1>
+            <p class="mt-2 text-base text-copy-muted">
+              {cv.profile.jobTitle}<span aria-hidden="true"> · </span>{location.info}
+            </p>
 
-              <div class="flex flex-row gap-x-4 pt-1 pb-3">
-                {
-                  cv.profile.socialLinks.map((socialLink) => (
-                    <Link href={socialLink.href} label={socialLink.label}>
-                      <Icon name={socialLink.icon} class="h-5 w-5" />
-                    </Link>
-                  ))
-                }
-              </div>
-
-              <div class="relative flex w-full flex-col gap-x-7 gap-y-1 rounded-2xl bg-surface-raised p-5">
-                <div class="flex flex-col gap-y-1.5">
-                  {
-                    cv.profile.contactDetails.map((contactDetail, index) => (
-                      <>
-                        <Info title={contactDetail.title} info={contactDetail.info}>
-                          <Icon name={contactDetail.icon} class="h-5 w-5" />
-                        </Info>
-                        {index < cv.profile.contactDetails.length - 1 && <div class="border-t border-divider" />}
-                      </>
-                    ))
-                  }
-                </div>
+            <div class="mt-6 border-t border-rule pt-6">
+              <h2 class="text-xl font-semibold text-copy">{cv.about.title}</h2>
+              <div class="mt-4 flex flex-col gap-4 leading-7 text-copy-muted">
+                {cv.about.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
               </div>
             </div>
+          </article>
+        </SectionFrame>
 
-            <Link href={cv.profile.resume.href} label={cv.profile.resume.label}>
-              <Icon name={cv.profile.resume.icon} class="me-1 h-6 w-6" />
-              {cv.profile.resume.text}
-            </Link>
-          </div>
-        </div>
-      </aside>
-
-      <div class="md:col-span-2 md:mr-5">
-        <div class="mt-5 rounded-2xl border border-transparent bg-surface-overlay p-5">
-          <Content title={cv.about.title}>
-            <!-- One inherited line height preserves the blank line previously created by two <br> elements. -->
-            <div class="flex flex-col gap-y-[1lh] text-muted">
-              {cv.about.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
-            </div>
-          </Content>
-
+        <!-- These legacy regions remain publishable until their dedicated migration tickets. -->
+        <div class="rounded-2xl border border-transparent bg-surface-overlay p-5 text-foreground">
           <Content title={cv.professionalExperience.title}>
             {
               cv.professionalExperience.entries.map((experience) => (
@@ -96,6 +66,39 @@ import Layout from '@/layouts/Layout.astro';
           </Content>
         </div>
       </div>
+
+      <!-- The current contact regions move below the main column before their later redesign. -->
+      <aside class="min-w-0 self-start rounded-2xl bg-surface-overlay p-5 text-foreground">
+        <div class="flex flex-col gap-y-1.5">
+          {
+            cv.profile.contactDetails.map((contactDetail, index) => (
+              <>
+                <Info title={contactDetail.title} info={contactDetail.info}>
+                  <Icon name={contactDetail.icon} class="h-5 w-5" />
+                </Info>
+                {index < cv.profile.contactDetails.length - 1 && <div class="border-t border-divider" />}
+              </>
+            ))
+          }
+        </div>
+
+        <div class="mt-5 flex flex-wrap gap-3">
+          {
+            cv.profile.socialLinks.map((socialLink) => (
+              <Link href={socialLink.href} label={socialLink.label}>
+                <Icon name={socialLink.icon} class="h-5 w-5" />
+              </Link>
+            ))
+          }
+        </div>
+
+        <div class="mt-5">
+          <Link href={cv.profile.resume.href} label={cv.profile.resume.label}>
+            <Icon name={cv.profile.resume.icon} class="me-1 h-6 w-6" />
+            {cv.profile.resume.text}
+          </Link>
+        </div>
+      </aside>
     </div>
   </main>
 </Layout>

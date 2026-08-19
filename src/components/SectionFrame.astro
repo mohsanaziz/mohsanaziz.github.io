@@ -1,0 +1,23 @@
+---
+import Icon from '@/components/Icon.astro';
+import type { IconName } from '@/components/icons';
+
+interface Props {
+  title: string;
+  icon?: IconName;
+  counter?: string;
+}
+
+const { title, icon, counter } = Astro.props;
+---
+
+<section aria-label={title} class="overflow-hidden rounded-xl border border-frame-border bg-page">
+  <div class="flex min-h-11 items-center gap-2 border-b border-rule bg-panel px-4 py-2.5 text-copy">
+    {icon && <Icon name={icon} class="h-4 w-4 shrink-0" />}
+    <span class="min-w-0 truncate text-sm font-semibold">{title}</span>
+    {counter && <span class="ml-auto shrink-0 text-xs text-copy-muted">{counter}</span>}
+  </div>
+  <div class="p-5 sm:p-6">
+    <slot />
+  </div>
+</section>

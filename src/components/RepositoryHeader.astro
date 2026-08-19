@@ -1,0 +1,39 @@
+---
+interface Props {
+  image: {
+    src: string;
+    alt: string;
+    width: number;
+    height: number;
+  };
+  owner: string;
+  repository: string;
+  ownerHref: string;
+}
+
+const { image, owner, repository, ownerHref } = Astro.props;
+---
+
+<header class="border-b border-frame-border bg-panel">
+  <div class="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
+    <img
+      src={image.src}
+      alt={image.alt}
+      class="h-10 w-10 shrink-0 rounded-full object-cover"
+      loading="eager"
+      fetchpriority="high"
+      width={image.width}
+      height={image.height}
+      decoding="async"
+    />
+
+    <div class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+      <p class="min-w-0 text-lg leading-tight text-copy">
+        <a class="rounded-sm font-semibold text-link" href={ownerHref}>{owner}</a>
+        <span aria-hidden="true" class="text-copy-muted"> / </span>
+        <span class="font-semibold">{repository}</span>
+      </p>
+      <span class="shrink-0 rounded-full border border-frame-border px-2 py-0.5 text-xs font-medium text-copy-muted">Public</span>
+    </div>
+  </div>
+</header>
