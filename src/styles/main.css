@@ -12,6 +12,7 @@
   --color-copy-muted: light-dark(#5c574e, #a1a1ab);
   --color-link: light-dark(#12507e, #f4f4f5);
   --color-link-underline: light-dark(transparent, #f4f4f5);
+  --color-focus: light-dark(#12507e, #f4f4f5);
 
   /* Legacy tokens remain available to the sections migrated by later tickets. */
   --color-surface: light-dark(rgb(229 231 235), rgb(84 84 84));
@@ -68,7 +69,7 @@
   }
 
   :where(a, button, input, select, textarea, summary):focus-visible {
-    outline: 2px solid var(--color-link);
+    outline: 2px solid var(--color-focus);
     outline-offset: 3px;
   }
 }

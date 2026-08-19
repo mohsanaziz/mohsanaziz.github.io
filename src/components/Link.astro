@@ -7,7 +7,7 @@ interface Props {
 const { href, label } = Astro.props;
 ---
 
-<a href={href} target="_blank" rel="noreferrer" aria-label={label}>
+<a class="no-underline" href={href} target="_blank" rel="noreferrer" aria-label={label}>
   <div class="flex items-center justify-center rounded-lg bg-accent p-2 text-accent-foreground shadow-xs">
     <slot />
   </div>

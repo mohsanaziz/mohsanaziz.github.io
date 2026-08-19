@@ -1,4 +1,6 @@
+import profilePhoto from '@/assets/photo.jpg';
 import type { IconName } from '@/components/icons';
+import type { ImageMetadata } from 'astro';
 
 interface CvLink {
   href: string;
@@ -27,7 +29,7 @@ interface CvData {
   pageTitle: string;
   profile: {
     image: {
-      src: string;
+      src: ImageMetadata;
       alt: string;
       width: number;
       height: number;
@@ -56,10 +58,10 @@ export const cv = {
   pageTitle: 'CV - Mohsan AZIZ',
   profile: {
     image: {
-      src: '/images/photo.jpg',
+      src: profilePhoto,
       alt: 'Photo de Mohsan AZIZ',
-      width: 3840,
-      height: 3840,
+      width: profilePhoto.width,
+      height: profilePhoto.height,
     },
     name: 'Mohsan AZIZ',
     jobTitle: 'Développeur freelance Angular/Java',
