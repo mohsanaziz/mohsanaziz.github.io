@@ -1,0 +1,12 @@
+---
+interface Props {
+  label: string;
+}
+
+const { label } = Astro.props;
+---
+
+<div class="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 py-2.5">
+  <dt class="text-copy-muted">{label}</dt>
+  <dd class="min-w-0 text-right font-medium [overflow-wrap:anywhere] text-copy"><slot /></dd>
+</div>
