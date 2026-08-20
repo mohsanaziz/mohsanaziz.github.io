@@ -9,6 +9,16 @@ const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const DIST_DIRECTORY = resolve(PROJECT_ROOT, 'dist');
 const PDF_PATH = resolve(DIST_DIRECTORY, 'cv/CV.pdf');
 const PACKAGE_PATH = resolve(PROJECT_ROOT, 'package.json');
+const CSS_PIXELS_PER_MILLIMETER = 96 / 25.4;
+const PRINTABLE_PAGE_SIZE = {
+  width: Math.floor(194 * CSS_PIXELS_PER_MILLIMETER),
+  height: Math.floor(281 * CSS_PIXELS_PER_MILLIMETER),
+};
+const TYPOGRAPHY_TIERS = [
+  { name: 'XL', scale: 1.3 },
+  { name: 'L', scale: 1.15 },
+  { name: 'M', scale: 1 },
+];
 
 const CONTENT_TYPES = new Map([
   ['.css', 'text/css; charset=utf-8'],
@@ -81,6 +91,34 @@ function startBuildServer() {
   });
 }
 
+async function selectTypographyTier(page) {
+  return page.evaluate(
+    ({ printablePageHeight, tiers }) => {
+      const printDocument = document.querySelector('.print-document');
+
+      if (!(printDocument instanceof HTMLElement)) {
+        throw new Error('Unable to find the printable CV document.');
+      }
+
+      let selectedTier = tiers.at(-1);
+
+      for (const tier of tiers) {
+        printDocument.style.setProperty('--print-type-scale', String(tier.scale));
+
+        if (printDocument.getBoundingClientRect().height <= printablePageHeight) {
+          selectedTier = tier;
+          break;
+        }
+      }
+
+      printDocument.dataset.typographyTier = selectedTier.name;
+
+      return selectedTier;
+    },
+    { printablePageHeight: PRINTABLE_PAGE_SIZE.height, tiers: TYPOGRAPHY_TIERS },
+  );
+}
+
 async function generatePdf() {
   const { version } = JSON.parse(await readFile(PACKAGE_PATH, 'utf8'));
   const buildServer = await startBuildServer();
@@ -88,7 +126,7 @@ async function generatePdf() {
 
   try {
     browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext();
+    const context = await browser.newContext({ viewport: PRINTABLE_PAGE_SIZE });
     const page = await context.newPage();
     const loadingErrors = [];
 
@@ -112,6 +150,7 @@ async function generatePdf() {
     }
 
     await page.emulateMedia({ media: 'print' });
+    const typographyTier = await selectTypographyTier(page);
 
     const session = await context.newCDPSession(page);
     const { data } = await session.send('Page.printToPDF', {
@@ -124,11 +163,13 @@ async function generatePdf() {
 
     await mkdir(dirname(PDF_PATH), { recursive: true });
     await writeFile(PDF_PATH, Buffer.from(data, 'base64'));
+
+    return typographyTier;
   } finally {
     await Promise.allSettled([browser?.close(), buildServer.close()]);
   }
 }
 
-await generatePdf();
+const typographyTier = await generatePdf();
 
-console.log(`Generated ${PDF_PATH}`);
+console.log(`Generated ${PDF_PATH} with typography tier ${typographyTier.name} (×${typographyTier.scale})`);

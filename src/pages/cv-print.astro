@@ -120,6 +120,8 @@ const socialProfiles = [
 
 <style>
   .print-document {
+    --print-type-scale: 1;
+
     color-scheme: only light;
     box-sizing: border-box;
     width: min(210mm, 100%);
@@ -128,7 +130,7 @@ const socialProfiles = [
     padding: 8mm;
     background: var(--color-page);
     color: var(--color-copy);
-    font-size: 8px;
+    font-size: calc(8px * var(--print-type-scale));
     line-height: 1.3;
   }
 
@@ -164,7 +166,7 @@ const socialProfiles = [
   }
 
   .frame-header :where(h2, .frame-title) {
-    font-size: 8px;
+    font-size: calc(8px * var(--print-type-scale));
     font-weight: 650;
   }
 
@@ -173,7 +175,7 @@ const socialProfiles = [
   }
 
   .readme-content h1 {
-    font-size: 17px;
+    font-size: calc(17px * var(--print-type-scale));
     line-height: 1.05;
     letter-spacing: -0.025em;
   }
@@ -181,7 +183,7 @@ const socialProfiles = [
   .profile-summary {
     margin-top: 1mm !important;
     color: var(--color-copy-muted);
-    font-size: 8px;
+    font-size: calc(8px * var(--print-type-scale));
   }
 
   .contact-line {
@@ -200,7 +202,7 @@ const socialProfiles = [
 
   .about h2 {
     margin-bottom: 0.8mm !important;
-    font-size: 9px;
+    font-size: calc(9px * var(--print-type-scale));
     font-weight: 650;
   }
 
@@ -236,7 +238,7 @@ const socialProfiles = [
   }
 
   .employer-heading h3 {
-    font-size: 8px;
+    font-size: calc(8px * var(--print-type-scale));
     font-weight: 700;
   }
 
@@ -258,7 +260,7 @@ const socialProfiles = [
     border-width: 1px;
     border-style: solid;
     border-radius: 999px;
-    font-size: 6.5px;
+    font-size: calc(6.5px * var(--print-type-scale));
     font-weight: 650;
     line-height: 1.2;
   }
@@ -285,12 +287,12 @@ const socialProfiles = [
     border: 1px solid var(--color-frame-border);
     border-radius: 3px;
     background: var(--color-panel);
-    font-size: 6.5px;
+    font-size: calc(6.5px * var(--print-type-scale));
     font-weight: 650;
   }
 
   .mission-header h4 {
-    font-size: 8px;
+    font-size: calc(8px * var(--print-type-scale));
     font-weight: 700;
   }
 
