@@ -17,7 +17,7 @@ Le PDF est produit par l’appel CDP `Page.printToPDF` avec les fonds d’impres
 
 Le résultat est écrit directement dans `dist/cv/CV.pdf`. L’ancien asset `public/cv/CV.pdf` est supprimé ; le lien existant continue donc à servir le même chemin sans qu’un PDF généré soit versionné. Toute erreur de serveur, de chargement, de lancement de Chromium ou d’écriture se propage et fait échouer le build.
 
-Le seam d’intégration unique est le fichier PDF généré. Le test ne dépend ni du DOM de `/cv-print` ni des détails internes du générateur. Il ouvre `dist/cv/CV.pdf` avec PDF.js et vérifie sa validité, son format A4, sa pagination actuelle, son pied de page, le contenu attendu et l’ordre employeur-missions du flux texte. Il vérifie également chaque environnement technique sous sa forme complète. Le média d’impression utilise une fonte sans-serif système portable et désactive les ligatures afin que Chromium conserve un mapping Unicode extractible de manière identique sur macOS et Linux.
+Le seam d’intégration unique est le fichier PDF généré. Le test ne dépend ni du DOM de `/cv-print` ni des détails internes du générateur. Il ouvre `dist/cv/CV.pdf` avec PDF.js et vérifie sa validité, son format A4, sa pagination actuelle, son pied de page, le contenu attendu et l’ordre employeur-missions du flux texte. Il vérifie également chaque environnement technique sous sa forme complète. Ces attendus restent une référence explicite au contenu actuel plutôt que d’être dérivés de la source, afin qu’une suppression accidentelle des données et du rendu ne puisse pas se valider elle-même. Le média d’impression utilise des fontes sans-serif et monospace système métriquement compatibles et désactive les ligatures afin que Chromium conserve un mapping Unicode extractible de manière identique sur macOS et Linux.
 
 Les workflows de vérification, de release et de déploiement installent explicitement Chromium avant `npm run build`. Le workflow de vérification exécute ensuite le test d’intégration sur l’artefact effectivement généré.
 
@@ -26,4 +26,5 @@ Les workflows de vérification, de release et de déploiement installent explici
 - Le site et le PDF sont construits depuis les mêmes données ; une release ne peut plus embarquer silencieusement l’ancien asset manuel.
 - `npm run build` requiert une installation Playwright de Chromium et devient volontairement en échec si la génération du PDF échoue.
 - Le PDF reste un fichier statique téléchargeable sans JavaScript à l’URL `/cv/CV.pdf`.
+- Le serveur de développement ne produit pas ce fichier ; le lien de téléchargement se vérifie après un build avec `npm run preview`.
 - Les changements futurs de mise en page sont validés au niveau de l’artefact public et de son flux texte, sans figer l’implémentation de `/cv-print`.

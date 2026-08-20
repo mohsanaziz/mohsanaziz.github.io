@@ -43,6 +43,8 @@ function startBuildServer() {
         throw new Error(`Not a file: ${filePath}`);
       }
 
+      const contents = await readFile(filePath);
+
       response.writeHead(200, {
         'content-length': fileStats.size,
         'content-type': CONTENT_TYPES.get(extname(filePath)) ?? 'application/octet-stream',
@@ -53,7 +55,7 @@ function startBuildServer() {
         return;
       }
 
-      response.end(await readFile(filePath));
+      response.end(contents);
     } catch {
       response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
       response.end('Not found');
@@ -88,9 +90,14 @@ async function generatePdf() {
     browser = await chromium.launch({ headless: true });
     const context = await browser.newContext();
     const page = await context.newPage();
-    const failedRequests = [];
+    const loadingErrors = [];
 
-    page.on('requestfailed', (request) => failedRequests.push(`${request.method()} ${request.url()}: ${request.failure()?.errorText}`));
+    page.on('requestfailed', (request) => loadingErrors.push(`${request.method()} ${request.url()}: ${request.failure()?.errorText}`));
+    page.on('response', (response) => {
+      if (response.status() >= 400) {
+        loadingErrors.push(`${response.request().method()} ${response.url()}: HTTP ${response.status()}`);
+      }
+    });
 
     const response = await page.goto(`${buildServer.origin}/cv-print`, { waitUntil: 'networkidle' });
 
@@ -100,8 +107,8 @@ async function generatePdf() {
 
     await page.evaluate(() => document.fonts.ready.then(() => undefined));
 
-    if (failedRequests.length > 0) {
-      throw new Error(`The printable CV did not load completely:\n${failedRequests.join('\n')}`);
+    if (loadingErrors.length > 0) {
+      throw new Error(`The printable CV did not load completely:\n${loadingErrors.join('\n')}`);
     }
 
     await page.emulateMedia({ media: 'print' });
