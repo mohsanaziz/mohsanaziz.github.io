@@ -1,0 +1,373 @@
+---
+import { mapMissionsToEmployers } from '@/data/career';
+import { cv } from '@/data/cv';
+import { deriveMissionReleases } from '@/data/missions';
+import Layout from '@/layouts/Layout.astro';
+
+const currentDate = new Date();
+const profileLocation = cv.profile.contactDetails.find(({ title }) => title === 'Location');
+const githubProfile = cv.profile.socialLinks.find(({ href }) => new URL(href).hostname === 'github.com');
+const linkedinProfile = cv.profile.socialLinks.find(({ href }) => new URL(href).hostname.endsWith('linkedin.com'));
+
+if (!profileLocation || !githubProfile || !linkedinProfile) {
+  throw new Error('The print page requires the location, GitHub profile and LinkedIn profile from the CV data.');
+}
+
+function profilePath(href: string): string {
+  return new URL(href, Astro.site ?? Astro.url).pathname.replace(/^\//, '').replace(/\/$/, '');
+}
+
+const employersByMission = mapMissionsToEmployers(cv.professionalExperience.entries, cv.clientProjects.entries, currentDate);
+const missionReleases = deriveMissionReleases(cv.clientProjects.entries, employersByMission, currentDate);
+const experienceGroups = cv.professionalExperience.entries.map((employer) => ({
+  employer,
+  employerId: `employer-${employer.title.replace(/\s+/g, '-').toLowerCase()}`,
+  releases: missionReleases.filter(({ mission }) => employersByMission.get(mission) === employer),
+}));
+const contactDetails = cv.profile.contactDetails.filter(({ title }) => title !== 'Location');
+const socialProfiles = [
+  { label: 'GitHub', value: profilePath(githubProfile.href), href: githubProfile.href },
+  { label: 'LinkedIn', value: profilePath(linkedinProfile.href), href: linkedinProfile.href },
+] as const;
+---
+
+<Layout title={`${cv.profile.name} — CV imprimable`} description={`${cv.profile.name} — ${cv.profile.jobTitle}`} robots="noindex, nofollow">
+  <main class="print-document" data-type-scale="M">
+    <section class="print-frame" aria-labelledby="readme-title">
+      <header class="frame-header">
+        <h2 id="readme-title">README.md</h2>
+      </header>
+
+      <div class="readme-content">
+        <h1>{cv.profile.name}</h1>
+        <p class="profile-summary">{cv.profile.jobTitle} <span aria-hidden="true">·</span> {profileLocation.info}</p>
+
+        <ul class="contact-line" aria-label="Coordonnées">
+          {
+            contactDetails.map((detail) => (
+              <li>
+                <strong>{detail.title} :</strong> {detail.info}
+              </li>
+            ))
+          }
+          {
+            socialProfiles.map((profile) => (
+              <li>
+                <strong>{profile.label} :</strong> <a href={profile.href}>{profile.value}</a>
+              </li>
+            ))
+          }
+        </ul>
+
+        <div class="about">
+          <h2>{cv.about.title}</h2>
+          {cv.about.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+      </div>
+    </section>
+
+    <section class="print-frame experience-frame" aria-labelledby="experience-title">
+      <header class="frame-header">
+        <h2 id="experience-title">Expérience &amp; projets client</h2>
+      </header>
+
+      <div class="experience-content">
+        {
+          experienceGroups.map(({ employer, employerId, releases }) => (
+            <section class="employer-group" aria-labelledby={employerId}>
+              <header class="employer-banner">
+                <div class="employer-heading">
+                  <h3 id={employerId}>{employer.title}</h3>
+                  <span class:list={['badge', employer.contract === 'CDI' ? 'badge-cdi' : 'badge-success']}>{employer.contract}</span>
+                </div>
+                <p>{employer.subtitle}</p>
+                <p>{employer.date}</p>
+              </header>
+
+              <div class="missions">
+                {releases.map(({ mission, summary, showStatusBadge }) => (
+                  <article class="mission-release">
+                    <header class="mission-header">
+                      <code>{summary.version}</code>
+                      <h4>{mission.title}</h4>
+                      {showStatusBadge && <span class="badge badge-success">Latest</span>}
+                      <p class="mission-period">{summary.period}</p>
+                    </header>
+
+                    <p class="mission-client">
+                      <strong>Client :</strong> {summary.client}
+                    </p>
+                    <div class="mission-description">
+                      {mission.description.map((paragraph) => (
+                        <p>{paragraph}</p>
+                      ))}
+                    </div>
+                    <p class="mission-environment">
+                      <strong>Environnement :</strong> {summary.technologies.join(', ')}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ))
+        }
+      </div>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .print-document {
+    color-scheme: only light;
+    --paper: #fffefb;
+    --panel: #f5f3ee;
+    --frame-border: #d8d3c8;
+    --rule: #ebe8e0;
+    --copy: #1c1a17;
+    --copy-muted: #5c574e;
+    --link: #12507e;
+    box-sizing: border-box;
+    width: min(210mm, 100%);
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 8mm;
+    background: var(--paper);
+    color: var(--copy);
+    font-size: 8px;
+    line-height: 1.3;
+  }
+
+  .print-document *,
+  .print-document *::before,
+  .print-document *::after {
+    box-sizing: border-box;
+  }
+
+  .print-document :where(h1, h2, h3, h4, p, ul) {
+    margin: 0;
+  }
+
+  .print-document a {
+    color: var(--link);
+  }
+
+  .print-frame {
+    overflow: hidden;
+    border: 1px solid var(--frame-border);
+    border-radius: 6px;
+    background: var(--paper);
+  }
+
+  .print-frame + .print-frame {
+    margin-top: 4mm;
+  }
+
+  .frame-header {
+    padding: 1.3mm 2.5mm;
+    border-bottom: 1px solid var(--rule);
+    background: var(--panel);
+  }
+
+  .frame-header h2 {
+    font-size: 8px;
+    font-weight: 650;
+  }
+
+  .readme-content {
+    padding: 2.4mm;
+  }
+
+  .readme-content h1 {
+    font-size: 17px;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+  }
+
+  .profile-summary {
+    margin-top: 1mm !important;
+    color: var(--copy-muted);
+    font-size: 8px;
+  }
+
+  .contact-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5mm 2.5mm;
+    padding: 1.4mm 0 0;
+    list-style: none;
+  }
+
+  .about {
+    margin-top: 1.7mm;
+    padding-top: 1.7mm;
+    border-top: 1px solid var(--rule);
+  }
+
+  .about h2 {
+    margin-bottom: 0.8mm !important;
+    font-size: 9px;
+    font-weight: 650;
+  }
+
+  .about p + p,
+  .mission-description p + p {
+    margin-top: 0.5mm;
+  }
+
+  .experience-content {
+    padding: 2.4mm;
+  }
+
+  .employer-group + .employer-group {
+    margin-top: 1.8mm;
+  }
+
+  .employer-banner {
+    display: flex;
+    align-items: center;
+    gap: 1.1mm;
+    padding: 1.1mm 1.6mm;
+    border: 1px solid var(--frame-border);
+    border-radius: 4px;
+    background: var(--panel);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .employer-heading {
+    display: flex;
+    align-items: center;
+    gap: 1.1mm;
+  }
+
+  .employer-heading h3 {
+    font-size: 8px;
+    font-weight: 700;
+  }
+
+  .employer-banner > p:first-of-type {
+    color: var(--copy-muted);
+  }
+
+  .employer-banner > p:last-child {
+    margin-left: auto;
+    white-space: nowrap;
+    color: var(--copy-muted);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    padding: 0.2mm 0.9mm;
+    border: 1px solid;
+    border-radius: 999px;
+    font-size: 6.5px;
+    font-weight: 650;
+    line-height: 1.2;
+  }
+
+  .badge-success {
+    border-color: rgb(47 107 52 / 45%);
+    background: rgb(47 107 52 / 14%);
+    color: #2f6b34;
+  }
+
+  .badge-cdi {
+    border-color: rgb(18 80 126 / 45%);
+    background: rgb(18 80 126 / 14%);
+    color: #12507e;
+  }
+
+  .mission-release {
+    padding: 1.5mm 0.8mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .mission-release + .mission-release {
+    border-top: 1px solid var(--rule);
+  }
+
+  .mission-header {
+    display: flex;
+    align-items: center;
+    gap: 1.1mm;
+  }
+
+  .mission-header code {
+    flex: none;
+    padding: 0.3mm 1mm;
+    border: 1px solid var(--frame-border);
+    border-radius: 3px;
+    background: var(--panel);
+    font-size: 6.5px;
+    font-weight: 650;
+  }
+
+  .mission-header h4 {
+    font-size: 8px;
+    font-weight: 700;
+  }
+
+  .mission-period {
+    margin-left: auto !important;
+    white-space: nowrap;
+    color: var(--copy-muted);
+  }
+
+  .mission-client {
+    margin-top: 0.5mm !important;
+    color: var(--copy-muted);
+  }
+
+  .mission-description {
+    margin-top: 0.5mm;
+  }
+
+  .mission-environment {
+    margin-top: 0.6mm !important;
+    color: var(--copy-muted);
+  }
+
+  @media (max-width: 600px) {
+    .print-document {
+      padding: 4mm;
+    }
+
+    .employer-banner,
+    .mission-header {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .employer-banner > p:last-child,
+    .mission-period {
+      width: 100%;
+      margin-left: 0 !important;
+    }
+  }
+
+  @media print {
+    :global(html),
+    :global(body) {
+      background: #fffefb;
+    }
+
+    .print-document {
+      width: auto;
+      min-height: auto;
+      margin: 0;
+      padding: 0;
+    }
+
+    .print-frame {
+      box-decoration-break: clone;
+    }
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+</style>
