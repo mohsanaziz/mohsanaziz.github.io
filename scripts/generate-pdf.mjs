@@ -10,9 +10,12 @@ const DIST_DIRECTORY = resolve(PROJECT_ROOT, 'dist');
 const PDF_PATH = resolve(DIST_DIRECTORY, 'cv/CV.pdf');
 const PACKAGE_PATH = resolve(PROJECT_ROOT, 'package.json');
 const CSS_PIXELS_PER_MILLIMETER = 96 / 25.4;
+const A4_PAGE_SIZE_MILLIMETERS = { width: 210, height: 297 };
+// Keep this value synchronized with the @page margin in src/pages/cv-print.astro.
+const PAGE_MARGIN_MILLIMETERS = 8;
 const PRINTABLE_PAGE_SIZE = {
-  width: Math.floor(194 * CSS_PIXELS_PER_MILLIMETER),
-  height: Math.floor(281 * CSS_PIXELS_PER_MILLIMETER),
+  width: Math.floor((A4_PAGE_SIZE_MILLIMETERS.width - 2 * PAGE_MARGIN_MILLIMETERS) * CSS_PIXELS_PER_MILLIMETER),
+  height: Math.floor((A4_PAGE_SIZE_MILLIMETERS.height - 2 * PAGE_MARGIN_MILLIMETERS) * CSS_PIXELS_PER_MILLIMETER),
 };
 const TYPOGRAPHY_TIERS = [
   { name: 'XL', scale: 1.3 },
@@ -149,6 +152,9 @@ async function generatePdf() {
 
     await page.emulateMedia({ media: 'print' });
     const typographyTier = await selectTypographyTier(page);
+    await page.evaluate((tierName) => {
+      document.title = `${document.title} — palier ${tierName}`;
+    }, typographyTier.name);
 
     const session = await context.newCDPSession(page);
     const { data } = await session.send('Page.printToPDF', {
