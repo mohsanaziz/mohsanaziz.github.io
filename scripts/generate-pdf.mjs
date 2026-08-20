@@ -8,7 +8,12 @@ import { chromium } from 'playwright';
 const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const DIST_DIRECTORY = resolve(PROJECT_ROOT, 'dist');
 const PDF_PATH = resolve(DIST_DIRECTORY, 'cv/CV.pdf');
+const PAGINATION_TEST_PDF_PATH = resolve(DIST_DIRECTORY, 'cv/CV.pagination-test.pdf');
 const PACKAGE_PATH = resolve(PROJECT_ROOT, 'package.json');
+const paginationTest = process.argv.includes('--pagination-test');
+const generationTarget = paginationTest
+  ? { pagePath: '/cv-print?test-volume=pagination', pdfPath: PAGINATION_TEST_PDF_PATH }
+  : { pagePath: '/cv-print', pdfPath: PDF_PATH };
 const CSS_PIXELS_PER_MILLIMETER = 96 / 25.4;
 const A4_PAGE_SIZE_MILLIMETERS = { width: 210, height: 297 };
 // Keep this value synchronized with the @page margin in src/pages/cv-print.astro.
@@ -120,7 +125,7 @@ async function selectTypographyTier(page) {
   );
 }
 
-async function generatePdf() {
+async function generatePdf({ pagePath, pdfPath }) {
   const { version } = JSON.parse(await readFile(PACKAGE_PATH, 'utf8'));
   const buildServer = await startBuildServer();
   let browser;
@@ -138,7 +143,7 @@ async function generatePdf() {
       }
     });
 
-    const response = await page.goto(`${buildServer.origin}/cv-print`, { waitUntil: 'networkidle' });
+    const response = await page.goto(`${buildServer.origin}${pagePath}`, { waitUntil: 'networkidle' });
 
     if (!response?.ok()) {
       throw new Error(`The printable CV returned HTTP ${response?.status() ?? 'unknown'}.`);
@@ -165,15 +170,15 @@ async function generatePdf() {
       printBackground: true,
     });
 
-    await mkdir(dirname(PDF_PATH), { recursive: true });
-    await writeFile(PDF_PATH, Buffer.from(data, 'base64'));
+    await mkdir(dirname(pdfPath), { recursive: true });
+    await writeFile(pdfPath, Buffer.from(data, 'base64'));
 
-    return typographyTier;
+    return { pdfPath, typographyTier };
   } finally {
     await Promise.allSettled([browser?.close(), buildServer.close()]);
   }
 }
 
-const typographyTier = await generatePdf();
+const { pdfPath, typographyTier } = await generatePdf(generationTarget);
 
-console.log(`Generated ${PDF_PATH} with typography tier ${typographyTier.name} (×${typographyTier.scale})`);
+console.log(`Generated ${pdfPath} with typography tier ${typographyTier.name} (×${typographyTier.scale})`);
