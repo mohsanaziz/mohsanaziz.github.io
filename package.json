@@ -12,7 +12,9 @@
     "prestart": "npm run font:download",
     "start": "astro dev",
     "prebuild": "npm run font:download",
-    "build": "astro check && astro build",
+    "build": "astro check && astro build && npm run pdf:generate",
+    "pdf:generate": "node scripts/generate-pdf.mjs",
+    "test": "node --test tests/*.test.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -24,6 +26,8 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "pdfjs-dist": "^6.2.108",
+    "playwright": "^1.62.1",
     "prettier": "^3.9.6",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.8.1"

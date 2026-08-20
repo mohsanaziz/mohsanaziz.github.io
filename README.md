@@ -8,6 +8,7 @@ Le projet nécessite Node.js 24 et npm. Après avoir cloné le dépôt, installe
 
 ```sh
 npm install
+npx playwright install chromium
 npm run dev
 ```
 
@@ -15,10 +16,16 @@ Le site est alors accessible sur `http://localhost:4321`.
 
 ## Build
 
-La commande suivante vérifie le projet avec `astro check`, puis génère le site de production dans `dist/` :
+La commande suivante vérifie le projet avec `astro check`, génère le site de production dans `dist/`, puis produit le CV PDF dans `dist/cv/CV.pdf` avec Chromium :
 
 ```sh
 npm run build
+```
+
+Le test d’intégration s’exécute sur le PDF produit par ce build :
+
+```sh
+npm test
 ```
 
 Le résultat peut être prévisualisé localement après le build :
