@@ -11,24 +11,15 @@ import { countMissionsByEmployer, formatPeriodDuration, getCareerDurationInYears
 import { cv } from '@/data/cv';
 import { deriveLanguageShares } from '@/data/languages';
 import { deriveMissionReleases } from '@/data/missions';
+import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
 import Layout from '@/layouts/Layout.astro';
 import packageMetadata from '@package';
 
-const githubProfile = cv.profile.socialLinks.find(({ href }) => new URL(href).hostname === 'github.com');
-const linkedinProfile = cv.profile.socialLinks.find(({ href }) => new URL(href).hostname.endsWith('linkedin.com'));
-const profileLocation = cv.profile.contactDetails.find(({ title }) => title === 'Location');
-
-function urlPathSegments(href: string): string[] {
-  return new URL(href, Astro.site ?? Astro.url).pathname.split('/').filter(Boolean);
-}
-
-if (!githubProfile || !linkedinProfile || !profileLocation) {
-  throw new Error('The page requires the GitHub profile, LinkedIn profile and location from the CV data.');
-}
+const { githubProfile, linkedinProfile, profileLocation } = resolveProfileDetails(cv.profile);
 
 const githubOwner = urlPathSegments(githubProfile.href).at(0);
 const linkedinPath = urlPathSegments(linkedinProfile.href).join('/');
-const resumeFileName = urlPathSegments(cv.profile.resume.href).at(-1);
+const resumeFileName = urlPathSegments(cv.profile.resume.href, Astro.site ?? Astro.url).at(-1);
 
 if (!githubOwner || !linkedinPath || !resumeFileName) {
   throw new Error('The profile and resume URLs must contain displayable paths.');
