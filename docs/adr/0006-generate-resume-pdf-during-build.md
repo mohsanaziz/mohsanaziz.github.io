@@ -17,7 +17,7 @@ Le PDF est produit par l’appel CDP `Page.printToPDF` avec les fonds d’impres
 
 Le résultat est écrit directement dans `dist/cv/CV.pdf`. L’ancien asset `public/cv/CV.pdf` est supprimé ; le lien existant continue donc à servir le même chemin sans qu’un PDF généré soit versionné. Toute erreur de serveur, de chargement, de lancement de Chromium ou d’écriture se propage et fait échouer le build.
 
-Le seam d’intégration unique est le fichier PDF généré. Le test ne dépend ni du DOM de `/cv-print` ni des détails internes du générateur. Il ouvre `dist/cv/CV.pdf` avec PDF.js et vérifie sa validité, son format A4, sa pagination actuelle, son pied de page, le contenu attendu et l’ordre employeur-missions du flux texte. Il vérifie également chaque environnement technique sous sa forme complète. Les ligatures sont désactivées sur la page d’impression afin de préserver les mots lors de l’extraction ATS.
+Le seam d’intégration unique est le fichier PDF généré. Le test ne dépend ni du DOM de `/cv-print` ni des détails internes du générateur. Il ouvre `dist/cv/CV.pdf` avec PDF.js et vérifie sa validité, son format A4, sa pagination actuelle, son pied de page, le contenu attendu et l’ordre employeur-missions du flux texte. Il vérifie également chaque environnement technique sous sa forme complète. Le média d’impression utilise une fonte sans-serif système portable et désactive les ligatures afin que Chromium conserve un mapping Unicode extractible de manière identique sur macOS et Linux.
 
 Les workflows de vérification, de release et de déploiement installent explicitement Chromium avant `npm run build`. Le workflow de vérification exécute ensuite le test d’intégration sur l’artefact effectivement généré.
 
