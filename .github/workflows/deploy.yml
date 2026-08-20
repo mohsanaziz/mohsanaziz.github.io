@@ -12,10 +12,13 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+# No job receives default permissions; each job declares its own.
+permissions: {}
+
 jobs:
   build:
     permissions:
-      contents: read
+      contents: read # Check out the repository
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -41,8 +44,8 @@ jobs:
   deploy:
     needs: build
     permissions:
-      pages: write
-      id-token: write
+      pages: write # Create the Pages deployment
+      id-token: write # Request the OIDC token required by Pages
     runs-on: ubuntu-latest
     environment:
       name: github-pages
