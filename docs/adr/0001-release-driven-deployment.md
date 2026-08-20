@@ -3,6 +3,19 @@
 - Statut : accepté
 - Date : 2026-08-16
 
+## Amendement du 20 août 2026
+
+Le préfactoring du déploiement décrit par l'issue
+[#48](https://github.com/mohsanaziz/mohsanaziz.github.io/issues/48) remplace
+`withastro/action` par des étapes explicites de préparation de Node.js,
+d'installation, de build et d'upload de l'artefact Pages. La mention ci-dessous
+des « actions utilisées » décrit donc l'état du workflow au moment de l'adoption
+de cet ADR.
+
+Les décisions de déploiement restent inchangées : publication d'une release et
+`workflow_dispatch` comme déclencheurs, deux jobs, concurrence sérialisée dans
+le groupe `pages` et environnement `github-pages`.
+
 ## Contexte
 
 Le workflow GitHub Pages déployait le site à chaque push sur `main`. Un commit et une publication étaient donc le même geste : il était impossible de préparer plusieurs changements sans les rendre immédiatement publics, d’identifier clairement la version en ligne ou de redéployer simplement une version antérieure.

@@ -3,6 +3,16 @@
 - Statut : accepté
 - Date : 2026-08-18
 
+## Amendement du 20 août 2026
+
+Depuis le préfactoring du déploiement décrit par l'issue
+[#48](https://github.com/mohsanaziz/mohsanaziz.github.io/issues/48),
+`deploy.yml` configure Node.js directement à partir de `.nvmrc` au lieu de
+transmettre une version dupliquée à `withastro/action`. Le workflow de release
+et le workflow de déploiement partagent ainsi la même source de vérité ; la
+contrainte de synchronisation mentionnée ci-dessous est conservée comme
+historique de l'implémentation initiale.
+
 ## Contexte
 
 L’[ADR 0001](0001-release-driven-deployment.md) sépare la publication du site des changements intégrés à `main`, mais sa procédure de release reste manuelle. Elle demande de calculer et committer la nouvelle version, de pousser le commit et son tag, puis de publier une release. Ces gestes peuvent être exécutés dans le mauvais ordre ou avec un état local qui ne correspond pas exactement à `main`.
