@@ -8,7 +8,7 @@ import { chromium } from 'playwright';
 const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const DIST_DIRECTORY = resolve(PROJECT_ROOT, 'dist');
 const PDF_PATH = resolve(DIST_DIRECTORY, 'cv/CV.pdf');
-const PAGINATION_TEST_PDF_PATH = resolve(DIST_DIRECTORY, 'cv/CV.pagination-test.pdf');
+const PAGINATION_TEST_PDF_PATH = resolve(PROJECT_ROOT, 'tmp/pagination-test/CV.pdf');
 const PACKAGE_PATH = resolve(PROJECT_ROOT, 'package.json');
 const paginationTest = process.argv.includes('--pagination-test');
 const generationTarget = paginationTest
@@ -125,6 +125,74 @@ async function selectTypographyTier(page) {
   );
 }
 
+async function inflatePaginationTestVolume(page) {
+  await page.evaluate(() => {
+    if (new URLSearchParams(window.location.search).get('test-volume') !== 'pagination') {
+      throw new Error('The pagination test volume parameter is missing.');
+    }
+
+    const experienceContent = document.querySelector('.experience-content');
+
+    if (!(experienceContent instanceof HTMLElement)) {
+      throw new Error('Unable to find the printable experience content.');
+    }
+
+    const sourceGroups = Array.from(experienceContent.querySelectorAll(':scope > .employer-group'));
+
+    if (sourceGroups.length === 0) {
+      throw new Error('Unable to find employer groups for the pagination test.');
+    }
+
+    for (const [groupIndex, sourceGroup] of sourceGroups.entries()) {
+      const testGroup = sourceGroup.cloneNode(true);
+
+      if (!(testGroup instanceof HTMLElement)) continue;
+
+      const employerTestId = String(groupIndex + 1);
+      const employerHeading = testGroup.querySelector('.employer-heading h3');
+      const employerPeriod = testGroup.querySelector('.employer-banner > p:last-child');
+      const employerHeadingId = `pagination-test-employer-${employerTestId}`;
+
+      testGroup.setAttribute('aria-labelledby', employerHeadingId);
+
+      if (employerHeading instanceof HTMLElement) {
+        employerHeading.id = employerHeadingId;
+        employerHeading.append(` [début test pagination employeur ${employerTestId}]`);
+      }
+
+      if (employerPeriod instanceof HTMLElement) {
+        employerPeriod.append(` [fin test pagination employeur ${employerTestId}]`);
+      }
+
+      const missions = testGroup.querySelector('.missions');
+
+      if (missions instanceof HTMLElement) {
+        const sourceMissions = Array.from(missions.querySelectorAll('.mission-release'));
+
+        for (const sourceMission of sourceMissions) {
+          missions.append(sourceMission.cloneNode(true));
+        }
+      }
+
+      for (const [missionIndex, mission] of testGroup.querySelectorAll('.mission-release').entries()) {
+        const missionTestId = `${employerTestId}.${missionIndex + 1}`;
+        const missionHeading = mission.querySelector('.mission-header h4');
+        const missionEnvironment = mission.querySelector('.mission-environment');
+
+        if (missionHeading instanceof HTMLElement) {
+          missionHeading.append(` [début test pagination mission ${missionTestId}]`);
+        }
+
+        if (missionEnvironment instanceof HTMLElement) {
+          missionEnvironment.append(` [fin test pagination mission ${missionTestId}]`);
+        }
+      }
+
+      experienceContent.append(testGroup);
+    }
+  });
+}
+
 async function generatePdf({ pagePath, pdfPath }) {
   const { version } = JSON.parse(await readFile(PACKAGE_PATH, 'utf8'));
   const buildServer = await startBuildServer();
@@ -155,6 +223,10 @@ async function generatePdf({ pagePath, pdfPath }) {
       throw new Error(`The printable CV did not load completely:\n${loadingErrors.join('\n')}`);
     }
 
+    if (paginationTest) {
+      await inflatePaginationTestVolume(page);
+    }
+
     await page.emulateMedia({ media: 'print' });
     const typographyTier = await selectTypographyTier(page);
     await page.evaluate((tierName) => {
@@ -173,12 +245,12 @@ async function generatePdf({ pagePath, pdfPath }) {
     await mkdir(dirname(pdfPath), { recursive: true });
     await writeFile(pdfPath, Buffer.from(data, 'base64'));
 
-    return { pdfPath, typographyTier };
+    return typographyTier;
   } finally {
     await Promise.allSettled([browser?.close(), buildServer.close()]);
   }
 }
 
-const { pdfPath, typographyTier } = await generatePdf(generationTarget);
+const typographyTier = await generatePdf(generationTarget);
 
-console.log(`Generated ${pdfPath} with typography tier ${typographyTier.name} (×${typographyTier.scale})`);
+console.log(`Generated ${generationTarget.pdfPath} with typography tier ${typographyTier.name} (×${typographyTier.scale})`);

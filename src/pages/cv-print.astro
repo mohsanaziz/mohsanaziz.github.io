@@ -116,63 +116,6 @@ const socialProfiles = [
       </div>
     </section>
   </main>
-
-  <script is:inline>
-    if (new URLSearchParams(window.location.search).get('test-volume') === 'pagination') {
-      const experienceContent = document.querySelector('.experience-content');
-
-      if (experienceContent instanceof HTMLElement) {
-        const sourceGroups = Array.from(experienceContent.querySelectorAll(':scope > .employer-group'));
-
-        for (const [groupIndex, sourceGroup] of sourceGroups.entries()) {
-          const testGroup = sourceGroup.cloneNode(true);
-
-          if (!(testGroup instanceof HTMLElement)) continue;
-
-          const employerHeading = testGroup.querySelector('.employer-heading h3');
-          const employerPeriod = testGroup.querySelector('.employer-banner > p:last-child');
-          const employerTestId = `pagination-test-employer-${groupIndex + 1}`;
-
-          testGroup.setAttribute('aria-labelledby', employerTestId);
-
-          if (employerHeading instanceof HTMLElement) {
-            employerHeading.id = employerTestId;
-            employerHeading.textContent = `${employerHeading.textContent} — test pagination ${groupIndex + 1}`;
-          }
-
-          if (employerPeriod instanceof HTMLElement) {
-            employerPeriod.append(` — fin test pagination employeur ${groupIndex + 1}`);
-          }
-
-          const missions = testGroup.querySelector('.missions');
-
-          if (missions instanceof HTMLElement) {
-            const sourceMissions = Array.from(missions.querySelectorAll('.mission-release'));
-
-            for (const sourceMission of sourceMissions) {
-              missions.append(sourceMission.cloneNode(true));
-            }
-          }
-
-          for (const [missionIndex, mission] of testGroup.querySelectorAll('.mission-release').entries()) {
-            const missionTestId = `${groupIndex + 1}.${missionIndex + 1}`;
-            const missionHeading = mission.querySelector('.mission-header h4');
-            const missionEnvironment = mission.querySelector('.mission-environment');
-
-            if (missionHeading instanceof HTMLElement) {
-              missionHeading.textContent = `${missionHeading.textContent} — test pagination ${missionTestId}`;
-            }
-
-            if (missionEnvironment instanceof HTMLElement) {
-              missionEnvironment.append(` — fin test pagination ${missionTestId}`);
-            }
-          }
-
-          experienceContent.append(testGroup);
-        }
-      }
-    }
-  </script>
 </Layout>
 
 <style>
