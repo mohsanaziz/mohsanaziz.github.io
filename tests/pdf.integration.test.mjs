@@ -5,12 +5,14 @@ import test from 'node:test';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 const PDF_PATH = new URL('../dist/cv/CV.pdf', import.meta.url);
-const PAGINATION_TEST_PDF_PATH = new URL('../dist/cv/CV.pagination-test.pdf', import.meta.url);
+const PAGINATION_TEST_PDF_PATH = new URL('../tmp/pagination-test/CV.pdf', import.meta.url);
 const PACKAGE_PATH = new URL('../package.json', import.meta.url);
 const A4_WIDTH_POINTS = 595.28;
 const A4_HEIGHT_POINTS = 841.89;
 const TIER_M_BODY_SIZE_POINTS = 6;
 const TIER_M_PDF_TITLE = 'Mohsan AZIZ — CV imprimable — palier M';
+const MINIMUM_PAGINATION_TEST_MISSIONS = 12;
+let paginationTestPdfPromise;
 
 async function readGeneratedPdf(pdfPath = PDF_PATH) {
   const bytes = await readFile(pdfPath);
@@ -18,6 +20,12 @@ async function readGeneratedPdf(pdfPath = PDF_PATH) {
   const document = await loadingTask.promise;
 
   return { bytes, document };
+}
+
+function readPaginationTestPdf() {
+  paginationTestPdfPromise ??= readGeneratedPdf(PAGINATION_TEST_PDF_PATH);
+
+  return paginationTestPdfPromise;
 }
 
 async function extractPageText(page) {
@@ -53,6 +61,21 @@ function pageNumberContaining(pageTexts, expected) {
   return pageIndex + 1;
 }
 
+function extractPaginationTestMarkers(text) {
+  return Array.from(
+    text.matchAll(/\[(début|fin) test pagination (mission|employeur) (\d+(?:\.\d+)?)\]/g),
+    ([marker, boundary, kind, id]) => ({ marker, boundary, kind, id }),
+  );
+}
+
+function paginationTestMarker(boundary, kind, id) {
+  return `[${boundary} test pagination ${kind} ${id}]`;
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function assertTextSequence(text, expectedSequence) {
   let cursor = 0;
 
@@ -64,90 +87,91 @@ function assertTextSequence(text, expectedSequence) {
 }
 
 test('the inflated CV paginates at the readable M tier', async () => {
-  const { document } = await readGeneratedPdf(PAGINATION_TEST_PDF_PATH);
+  const { document } = await readPaginationTestPdf();
 
   assert.ok(document.numPages > 1, 'Expected the inflated CV to span multiple pages.');
   assert.equal((await document.getMetadata()).info.Title, TIER_M_PDF_TITLE);
+
+  let bodyText;
+
+  for (let pageNumber = 1; pageNumber <= document.numPages && !bodyText; pageNumber += 1) {
+    const { items } = await (await document.getPage(pageNumber)).getTextContent();
+    bodyText = items.find((item) => 'str' in item && item.str.includes('[fin test pagination mission'));
+  }
+
+  assert.ok(bodyText && 'transform' in bodyText, 'Expected representative inflated body copy in the PDF text layer.');
+  assert.ok(Math.abs(Math.hypot(bodyText.transform[2], bodyText.transform[3]) - TIER_M_BODY_SIZE_POINTS) < 0.05);
 });
 
 test('the inflated CV keeps every mission intact and an employer banner with its first mission', async () => {
-  const { document } = await readGeneratedPdf(PAGINATION_TEST_PDF_PATH);
+  const { document } = await readPaginationTestPdf();
   const pageTexts = await extractPageTexts(document);
-  const missionTestIds = ['1.1', '1.2', '1.3', '1.4', '1.5', '1.6', '1.7', '1.8', '1.9', '1.10', '2.1', '2.2'];
+  const markers = extractPaginationTestMarkers(pageTexts.join(' '));
+  const missionTestIds = markers.filter(({ boundary, kind }) => boundary === 'début' && kind === 'mission').map(({ id }) => id);
+  const employerTestIds = markers.filter(({ boundary, kind }) => boundary === 'début' && kind === 'employeur').map(({ id }) => id);
+
+  assert.ok(
+    missionTestIds.length >= MINIMUM_PAGINATION_TEST_MISSIONS,
+    `Expected the stress fixture to contain at least ${MINIMUM_PAGINATION_TEST_MISSIONS} missions.`,
+  );
+  assert.equal(new Set(missionTestIds).size, missionTestIds.length, 'Expected every stress-test mission marker to be unique.');
 
   for (const missionTestId of missionTestIds) {
     assert.equal(
-      pageNumberContaining(pageTexts, `test pagination ${missionTestId}`),
-      pageNumberContaining(pageTexts, `fin test pagination ${missionTestId}`),
+      pageNumberContaining(pageTexts, paginationTestMarker('début', 'mission', missionTestId)),
+      pageNumberContaining(pageTexts, paginationTestMarker('fin', 'mission', missionTestId)),
       `Expected test mission ${missionTestId} to remain on one page.`,
     );
   }
 
-  assert.notEqual(
-    pageNumberContaining(pageTexts, 'test pagination 1.1'),
-    pageNumberContaining(pageTexts, 'test pagination 1.10'),
+  assert.ok(employerTestIds.length > 0, 'Expected the stress fixture to contain employer banners.');
+
+  for (const employerTestId of employerTestIds) {
+    const employerPage = pageNumberContaining(pageTexts, paginationTestMarker('début', 'employeur', employerTestId));
+
+    assert.equal(employerPage, pageNumberContaining(pageTexts, paginationTestMarker('fin', 'employeur', employerTestId)));
+    assert.equal(employerPage, pageNumberContaining(pageTexts, paginationTestMarker('début', 'mission', `${employerTestId}.1`)));
+  }
+
+  assert.ok(
+    employerTestIds.some((employerTestId) => {
+      const missionPages = missionTestIds
+        .filter((missionTestId) => missionTestId.startsWith(`${employerTestId}.`))
+        .map((missionTestId) => pageNumberContaining(pageTexts, paginationTestMarker('début', 'mission', missionTestId)));
+
+      return new Set(missionPages).size > 1;
+    }),
     'Expected the stress fixture to force a page break inside an employer group.',
-  );
-  assert.equal(
-    pageNumberContaining(pageTexts, 'SASU AZMOPAK — test pagination 1'),
-    pageNumberContaining(pageTexts, 'fin test pagination employeur 1'),
-  );
-  assert.equal(
-    pageNumberContaining(pageTexts, 'SASU AZMOPAK — test pagination 1'),
-    pageNumberContaining(pageTexts, 'ATLAS IHM — test pagination 1.1'),
-  );
-  assert.equal(
-    pageNumberContaining(pageTexts, 'Sopra Steria — test pagination 2'),
-    pageNumberContaining(pageTexts, 'fin test pagination employeur 2'),
-  );
-  assert.equal(
-    pageNumberContaining(pageTexts, 'Sopra Steria — test pagination 2'),
-    pageNumberContaining(pageTexts, 'PORTALIS V3 — test pagination 2.1'),
   );
 });
 
 test('the inflated CV carries exact footers and a linear reading flow across pages', async () => {
-  const [{ document }, packageMetadata] = await Promise.all([
-    readGeneratedPdf(PAGINATION_TEST_PDF_PATH),
-    readFile(PACKAGE_PATH, 'utf8').then(JSON.parse),
-  ]);
+  const [{ document }, packageMetadata] = await Promise.all([readPaginationTestPdf(), readFile(PACKAGE_PATH, 'utf8').then(JSON.parse)]);
   const pageTexts = await extractPageTexts(document);
+  const packageVersionPattern = escapeRegExp(packageMetadata.version);
 
   for (const [pageIndex, pageText] of pageTexts.entries()) {
     assert.match(
       pageText,
-      new RegExp(`Généré depuis mohsanaziz\\.github\\.io · v${packageMetadata.version} — page ${pageIndex + 1}/${pageTexts.length}`),
+      new RegExp(`Généré depuis mohsanaziz\\.github\\.io · v${packageVersionPattern} — page ${pageIndex + 1}/${pageTexts.length}`),
     );
   }
 
-  assertTextSequence(pageTexts.join(' '), [
-    'SASU AZMOPAK — test pagination 1',
-    'ATLAS IHM — test pagination 1.1',
-    'fin test pagination 1.1',
-    'SPS — test pagination 1.2',
-    'fin test pagination 1.2',
-    'SIAJ — test pagination 1.3',
-    'fin test pagination 1.3',
-    'PARCOURS — test pagination 1.4',
-    'fin test pagination 1.4',
-    'IMS — test pagination 1.5',
-    'fin test pagination 1.5',
-    'ATLAS IHM — test pagination 1.6',
-    'fin test pagination 1.6',
-    'SPS — test pagination 1.7',
-    'fin test pagination 1.7',
-    'SIAJ — test pagination 1.8',
-    'fin test pagination 1.8',
-    'PARCOURS — test pagination 1.9',
-    'fin test pagination 1.9',
-    'IMS — test pagination 1.10',
-    'fin test pagination 1.10',
-    'Sopra Steria — test pagination 2',
-    'PORTALIS V3 — test pagination 2.1',
-    'fin test pagination 2.1',
-    'PORTALIS V3 — test pagination 2.2',
-    'fin test pagination 2.2',
-  ]);
+  const markers = extractPaginationTestMarkers(pageTexts.join(' '));
+
+  assert.ok(markers.length >= 2 * MINIMUM_PAGINATION_TEST_MISSIONS, 'Expected markers throughout the inflated reading flow.');
+
+  for (let markerIndex = 0; markerIndex < markers.length; markerIndex += 2) {
+    const start = markers[markerIndex];
+    const end = markers[markerIndex + 1];
+
+    assert.equal(start.boundary, 'début', `Expected marker ${markerIndex + 1} to start a printable block.`);
+    assert.deepEqual(
+      end,
+      { ...start, marker: paginationTestMarker('fin', start.kind, start.id), boundary: 'fin' },
+      `Expected ${start.kind} ${start.id} to end before the next printable block.`,
+    );
+  }
 });
 
 test('the current CV reports the readable M tier on one A4 page carrying its source version', async () => {
@@ -168,7 +192,7 @@ test('the current CV reports the readable M tier on one A4 page carrying its sou
   assert.ok(Math.abs(Math.hypot(bodyText.transform[2], bodyText.transform[3]) - TIER_M_BODY_SIZE_POINTS) < 0.05);
 
   const text = await extractPageText(page);
-  assert.match(text, new RegExp(`Généré depuis mohsanaziz\\.github\\.io · v${packageMetadata.version} — page 1/1`));
+  assert.match(text, new RegExp(`Généré depuis mohsanaziz\\.github\\.io · v${escapeRegExp(packageMetadata.version)} — page 1/1`));
   assert.doesNotMatch(text, /test pagination/);
 });
 
