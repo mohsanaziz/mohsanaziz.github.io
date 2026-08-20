@@ -15,6 +15,13 @@ de cet ADR. L'installation emploie désormais `npm ci` plutôt que la commande
 lockfile strict et fait échouer le déploiement si `package.json` et
 `package-lock.json` divergent.
 
+Le resserrement décrit par l'issue
+[#54](https://github.com/mohsanaziz/mohsanaziz.github.io/issues/54) limite
+également les permissions du `GITHUB_TOKEN` au niveau de chaque job. Le job
+`build`, qui exécute les dépendances et scripts du projet, dispose uniquement de
+`contents: read`. Le job `deploy` dispose uniquement de `pages: write` et
+`id-token: write`, nécessaires à `actions/deploy-pages`.
+
 Les décisions de déploiement restent inchangées : publication d'une release et
 `workflow_dispatch` comme déclencheurs, deux jobs, concurrence sérialisée dans
 le groupe `pages` et environnement `github-pages`.
