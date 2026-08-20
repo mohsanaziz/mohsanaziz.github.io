@@ -17,8 +17,10 @@ lockfile strict et fait échouer le déploiement si `package.json` et
 
 Le resserrement décrit par l'issue
 [#54](https://github.com/mohsanaziz/mohsanaziz.github.io/issues/54) limite
-également les permissions du `GITHUB_TOKEN` au niveau de chaque job. Le job
-`build`, qui exécute les dépendances et scripts du projet, dispose uniquement de
+également les permissions du `GITHUB_TOKEN`. Un `permissions: {}` au niveau du
+workflow empêche tout job présent ou futur d'hériter des permissions par défaut
+du dépôt, puis chaque job déclare explicitement ses besoins. Le job `build`, qui
+exécute les dépendances et scripts du projet, dispose uniquement de
 `contents: read`. Le job `deploy` dispose uniquement de `pages: write` et
 `id-token: write`, nécessaires à `actions/deploy-pages`.
 
