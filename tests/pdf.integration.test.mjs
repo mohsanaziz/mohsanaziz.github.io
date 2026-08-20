@@ -84,14 +84,14 @@ test('the generated PDF exposes the profile, contact details and section titles 
   }
 });
 
-test('each employer precedes its missions in the generated PDF reading flow', async () => {
+test('the current employers precede their missions in the generated PDF reading flow', async () => {
   const { document } = await readGeneratedPdf();
   const text = await extractDocumentText(document);
 
   assertTextSequence(text, ['SASU AZMOPAK', 'ATLAS IHM', 'SPS', 'SIAJ', 'PARCOURS', 'IMS', 'Sopra Steria', 'PORTALIS V3']);
 });
 
-test('each mission environment is fully extractable from the generated PDF', async () => {
+test('each current mission environment is fully extractable from the generated PDF', async () => {
   const { document } = await readGeneratedPdf();
   const text = await extractDocumentText(document);
   const expectedMissionEnvironments = [

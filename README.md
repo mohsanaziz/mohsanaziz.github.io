@@ -34,6 +34,8 @@ Le résultat peut être prévisualisé localement après le build :
 npm run preview
 ```
 
+En mode développement, `/cv/CV.pdf` n’existe pas encore et le lien « Version PDF » est donc indisponible. Utilisez `npm run build`, puis `npm run preview`, pour vérifier le téléchargement généré.
+
 ## Déploiement
 
 Le site est déployé sur GitHub Pages par GitHub Actions. Une publication courante se lance avec le workflow `Release` depuis l’onglet Actions, sur `main`, en choisissant un incrément `patch`, `minor` ou `major`. La pipeline vérifie le build, publie la version et déclenche le déploiement sans autre intervention.
