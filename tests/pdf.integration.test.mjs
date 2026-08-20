@@ -53,6 +53,18 @@ async function extractPageTexts(document) {
   return pageTexts;
 }
 
+async function assertDocumentTextSize(document, expectedText, expectedSizePoints) {
+  let textItem;
+
+  for (let pageNumber = 1; pageNumber <= document.numPages && !textItem; pageNumber += 1) {
+    const { items } = await (await document.getPage(pageNumber)).getTextContent();
+    textItem = items.find((item) => 'str' in item && item.str.includes(expectedText));
+  }
+
+  assert.ok(textItem && 'transform' in textItem, `Expected PDF text containing “${expectedText}” in the text layer.`);
+  assert.ok(Math.abs(Math.hypot(textItem.transform[2], textItem.transform[3]) - expectedSizePoints) < 0.05);
+}
+
 function pageNumberContaining(pageTexts, expected) {
   const pageIndex = pageTexts.findIndex((text) => text.includes(expected));
 
@@ -91,16 +103,7 @@ test('the inflated CV paginates at the readable M tier', async () => {
 
   assert.ok(document.numPages > 1, 'Expected the inflated CV to span multiple pages.');
   assert.equal((await document.getMetadata()).info.Title, TIER_M_PDF_TITLE);
-
-  let bodyText;
-
-  for (let pageNumber = 1; pageNumber <= document.numPages && !bodyText; pageNumber += 1) {
-    const { items } = await (await document.getPage(pageNumber)).getTextContent();
-    bodyText = items.find((item) => 'str' in item && item.str.includes('[fin test pagination mission'));
-  }
-
-  assert.ok(bodyText && 'transform' in bodyText, 'Expected representative inflated body copy in the PDF text layer.');
-  assert.ok(Math.abs(Math.hypot(bodyText.transform[2], bodyText.transform[3]) - TIER_M_BODY_SIZE_POINTS) < 0.05);
+  await assertDocumentTextSize(document, '[fin test pagination mission', TIER_M_BODY_SIZE_POINTS);
 });
 
 test('the inflated CV keeps every mission intact and an employer banner with its first mission', async () => {
@@ -186,10 +189,7 @@ test('the current CV reports the readable M tier on one A4 page carrying its sou
   assert.ok(Math.abs(viewport.width - A4_WIDTH_POINTS) < 0.5);
   assert.ok(Math.abs(viewport.height - A4_HEIGHT_POINTS) < 0.5);
 
-  const { items } = await page.getTextContent();
-  const bodyText = items.find((item) => 'str' in item && item.str.includes("Projet de refonte de l'application des magasins Point P"));
-  assert.ok(bodyText && 'transform' in bodyText, 'Expected representative body copy in the PDF text layer.');
-  assert.ok(Math.abs(Math.hypot(bodyText.transform[2], bodyText.transform[3]) - TIER_M_BODY_SIZE_POINTS) < 0.05);
+  await assertDocumentTextSize(document, "Projet de refonte de l'application des magasins Point P", TIER_M_BODY_SIZE_POINTS);
 
   const text = await extractPageText(page);
   assert.match(text, new RegExp(`Généré depuis mohsanaziz\\.github\\.io · v${escapeRegExp(packageMetadata.version)} — page 1/1`));
