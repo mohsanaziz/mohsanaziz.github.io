@@ -9,9 +9,9 @@ Depuis le préfactoring du déploiement décrit par l'issue
 [#48](https://github.com/mohsanaziz/mohsanaziz.github.io/issues/48),
 `deploy.yml` configure Node.js directement à partir de `.nvmrc` au lieu de
 transmettre une version dupliquée à `withastro/action`. Le workflow de release
-et le workflow de déploiement partagent ainsi la même source de vérité ; la
-contrainte de synchronisation mentionnée ci-dessous est conservée comme
-historique de l'implémentation initiale.
+et le workflow de déploiement partagent ainsi la même configuration du runner.
+La contrainte opérationnelle sur la version de Node.js reste active et sa
+formulation est mise à jour dans les conséquences.
 
 ## Contexte
 
@@ -44,7 +44,7 @@ Aucune compensation automatique n’est tentée après le push. Supprimer un tag
 - Un merge sur `main` après le checkout peut rendre le push non-fast-forward. Le push atomique laisse alors le commit et le tag distants inchangés ; la release doit être relancée pour repartir de la nouvelle tête de `main`.
 - Le workflow refuse explicitement toute référence autre que `main`.
 - Le push du `GITHUB_TOKEN` ne déclenche pas `check-build.yml`, mais le même build a déjà été exécuté avant le push sur le commit de version.
-- La valeur de `.nvmrc` et le `node-version` utilisé par `withastro/action` dans `deploy.yml` doivent rester identiques. Une montée de version de Node.js doit modifier les deux dans la même livraison pour que le build de garde représente le build déployé.
+- Les trois workflows lisent la version de Node.js dans `.nvmrc`. Une montée de version doit néanmoins modifier `.nvmrc` et le champ `engines.node` de `package.json` dans la même livraison : `.npmrc` active `engine-strict`, donc une divergence fait échouer `npm ci`, y compris au déploiement. Le README mentionne également la version requise.
 - La publication de la release ne déclenche pas elle-même `deploy.yml` ; le dispatch explicite est indispensable.
 - L’environnement `github-pages` doit conserver sa règle de tag `v*`, comme décrit dans l’ADR 0001.
 - Le réglage GitHub **Settings > Actions > General > Workflow permissions** doit continuer à autoriser les permissions d’écriture demandées par le workflow. Ce réglage n’est pas versionné et doit être vérifié si le push, la création de release ou le dispatch est refusé malgré les permissions déclarées dans le fichier.

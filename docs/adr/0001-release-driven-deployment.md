@@ -10,7 +10,10 @@ Le préfactoring du déploiement décrit par l'issue
 `withastro/action` par des étapes explicites de préparation de Node.js,
 d'installation, de build et d'upload de l'artefact Pages. La mention ci-dessous
 des « actions utilisées » décrit donc l'état du workflow au moment de l'adoption
-de cet ADR.
+de cet ADR. L'installation emploie désormais `npm ci` plutôt que la commande
+`npm install` exécutée par l'action Astro : cet écart volontaire rend le
+lockfile strict et fait échouer le déploiement si `package.json` et
+`package-lock.json` divergent.
 
 Les décisions de déploiement restent inchangées : publication d'une release et
 `workflow_dispatch` comme déclencheurs, deux jobs, concurrence sérialisée dans
