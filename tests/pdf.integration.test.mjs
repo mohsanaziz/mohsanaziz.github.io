@@ -9,6 +9,7 @@ const PACKAGE_PATH = new URL('../package.json', import.meta.url);
 const A4_WIDTH_POINTS = 595.28;
 const A4_HEIGHT_POINTS = 841.89;
 const TIER_M_BODY_SIZE_POINTS = 6;
+const TIER_M_PDF_TITLE = 'Mohsan AZIZ — CV imprimable — palier M';
 
 async function readGeneratedPdf() {
   const bytes = await readFile(PDF_PATH);
@@ -49,11 +50,12 @@ function assertTextSequence(text, expectedSequence) {
   }
 }
 
-test('the current CV uses the readable M tier on one A4 page carrying its source version', async () => {
+test('the current CV reports the readable M tier on one A4 page carrying its source version', async () => {
   const [{ bytes, document }, packageMetadata] = await Promise.all([readGeneratedPdf(), readFile(PACKAGE_PATH, 'utf8').then(JSON.parse)]);
 
   assert.equal(bytes.subarray(0, 5).toString(), '%PDF-');
   assert.equal(document.numPages, 1);
+  assert.equal((await document.getMetadata()).info.Title, TIER_M_PDF_TITLE);
 
   const page = await document.getPage(1);
   const viewport = page.getViewport({ scale: 1 });
@@ -61,8 +63,8 @@ test('the current CV uses the readable M tier on one A4 page carrying its source
   assert.ok(Math.abs(viewport.height - A4_HEIGHT_POINTS) < 0.5);
 
   const { items } = await page.getTextContent();
-  const bodyText = items.find((item) => 'str' in item && item.str === 'ATLAS IHM');
-  assert.ok(bodyText && 'transform' in bodyText, 'Expected a representative mission title in the PDF text layer.');
+  const bodyText = items.find((item) => 'str' in item && item.str.includes("Projet de refonte de l'application des magasins Point P"));
+  assert.ok(bodyText && 'transform' in bodyText, 'Expected representative body copy in the PDF text layer.');
   assert.ok(Math.abs(Math.hypot(bodyText.transform[2], bodyText.transform[3]) - TIER_M_BODY_SIZE_POINTS) < 0.05);
 
   const text = await extractPageText(page);
