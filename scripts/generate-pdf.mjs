@@ -111,8 +111,6 @@ async function selectTypographyTier(page) {
         }
       }
 
-      printDocument.dataset.typographyTier = selectedTier.name;
-
       return selectedTier;
     },
     { printablePageHeight: PRINTABLE_PAGE_SIZE.height, tiers: TYPOGRAPHY_TIERS },
