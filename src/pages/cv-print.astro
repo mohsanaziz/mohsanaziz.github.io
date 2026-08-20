@@ -2,40 +2,31 @@
 import { mapMissionsToEmployers } from '@/data/career';
 import { cv } from '@/data/cv';
 import { deriveMissionReleases } from '@/data/missions';
+import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
 import Layout from '@/layouts/Layout.astro';
 
 const currentDate = new Date();
-const profileLocation = cv.profile.contactDetails.find(({ title }) => title === 'Location');
-const githubProfile = cv.profile.socialLinks.find(({ href }) => new URL(href).hostname === 'github.com');
-const linkedinProfile = cv.profile.socialLinks.find(({ href }) => new URL(href).hostname.endsWith('linkedin.com'));
-
-if (!profileLocation || !githubProfile || !linkedinProfile) {
-  throw new Error('The print page requires the location, GitHub profile and LinkedIn profile from the CV data.');
-}
-
-function profilePath(href: string): string {
-  return new URL(href, Astro.site ?? Astro.url).pathname.replace(/^\//, '').replace(/\/$/, '');
-}
+const { githubProfile, linkedinProfile, profileLocation } = resolveProfileDetails(cv.profile);
 
 const employersByMission = mapMissionsToEmployers(cv.professionalExperience.entries, cv.clientProjects.entries, currentDate);
 const missionReleases = deriveMissionReleases(cv.clientProjects.entries, employersByMission, currentDate);
-const experienceGroups = cv.professionalExperience.entries.map((employer) => ({
+const experienceGroups = cv.professionalExperience.entries.map((employer, index) => ({
   employer,
-  employerId: `employer-${employer.title.replace(/\s+/g, '-').toLowerCase()}`,
+  employerId: `employer-${index}`,
   releases: missionReleases.filter(({ mission }) => employersByMission.get(mission) === employer),
 }));
 const contactDetails = cv.profile.contactDetails.filter(({ title }) => title !== 'Location');
 const socialProfiles = [
-  { label: 'GitHub', value: profilePath(githubProfile.href), href: githubProfile.href },
-  { label: 'LinkedIn', value: profilePath(linkedinProfile.href), href: linkedinProfile.href },
+  { label: 'GitHub', value: urlPathSegments(githubProfile.href).join('/'), href: githubProfile.href },
+  { label: 'LinkedIn', value: urlPathSegments(linkedinProfile.href).join('/'), href: linkedinProfile.href },
 ] as const;
 ---
 
 <Layout title={`${cv.profile.name} — CV imprimable`} description={`${cv.profile.name} — ${cv.profile.jobTitle}`} robots="noindex, nofollow">
-  <main class="print-document" data-type-scale="M">
-    <section class="print-frame" aria-labelledby="readme-title">
+  <main class="print-document">
+    <section class="print-frame" aria-label="README.md">
       <header class="frame-header">
-        <h2 id="readme-title">README.md</h2>
+        <span class="frame-title">README.md</span>
       </header>
 
       <div class="readme-content">
@@ -78,7 +69,16 @@ const socialProfiles = [
               <header class="employer-banner">
                 <div class="employer-heading">
                   <h3 id={employerId}>{employer.title}</h3>
-                  <span class:list={['badge', employer.contract === 'CDI' ? 'badge-cdi' : 'badge-success']}>{employer.contract}</span>
+                  <span
+                    class:list={[
+                      'badge',
+                      employer.contract === 'CDI'
+                        ? 'border-status-cdi/45 bg-status-cdi/14 text-status-cdi'
+                        : 'border-status-success/45 bg-status-success/14 text-status-success',
+                    ]}
+                  >
+                    {employer.contract}
+                  </span>
                 </div>
                 <p>{employer.subtitle}</p>
                 <p>{employer.date}</p>
@@ -90,7 +90,9 @@ const socialProfiles = [
                     <header class="mission-header">
                       <code>{summary.version}</code>
                       <h4>{mission.title}</h4>
-                      {showStatusBadge && <span class="badge badge-success">Latest</span>}
+                      {showStatusBadge && (
+                        <span class="badge border-status-success/45 bg-status-success/14 text-status-success">Latest</span>
+                      )}
                       <p class="mission-period">{summary.period}</p>
                     </header>
 
@@ -119,20 +121,13 @@ const socialProfiles = [
 <style>
   .print-document {
     color-scheme: only light;
-    --paper: #fffefb;
-    --panel: #f5f3ee;
-    --frame-border: #d8d3c8;
-    --rule: #ebe8e0;
-    --copy: #1c1a17;
-    --copy-muted: #5c574e;
-    --link: #12507e;
     box-sizing: border-box;
     width: min(210mm, 100%);
     min-height: 297mm;
     margin: 0 auto;
     padding: 8mm;
-    background: var(--paper);
-    color: var(--copy);
+    background: var(--color-page);
+    color: var(--color-copy);
     font-size: 8px;
     line-height: 1.3;
   }
@@ -148,14 +143,14 @@ const socialProfiles = [
   }
 
   .print-document a {
-    color: var(--link);
+    color: var(--color-link);
   }
 
   .print-frame {
     overflow: hidden;
-    border: 1px solid var(--frame-border);
+    border: 1px solid var(--color-frame-border);
     border-radius: 6px;
-    background: var(--paper);
+    background: var(--color-page);
   }
 
   .print-frame + .print-frame {
@@ -164,11 +159,11 @@ const socialProfiles = [
 
   .frame-header {
     padding: 1.3mm 2.5mm;
-    border-bottom: 1px solid var(--rule);
-    background: var(--panel);
+    border-bottom: 1px solid var(--color-rule);
+    background: var(--color-panel);
   }
 
-  .frame-header h2 {
+  .frame-header :where(h2, .frame-title) {
     font-size: 8px;
     font-weight: 650;
   }
@@ -185,7 +180,7 @@ const socialProfiles = [
 
   .profile-summary {
     margin-top: 1mm !important;
-    color: var(--copy-muted);
+    color: var(--color-copy-muted);
     font-size: 8px;
   }
 
@@ -200,7 +195,7 @@ const socialProfiles = [
   .about {
     margin-top: 1.7mm;
     padding-top: 1.7mm;
-    border-top: 1px solid var(--rule);
+    border-top: 1px solid var(--color-rule);
   }
 
   .about h2 {
@@ -227,9 +222,9 @@ const socialProfiles = [
     align-items: center;
     gap: 1.1mm;
     padding: 1.1mm 1.6mm;
-    border: 1px solid var(--frame-border);
+    border: 1px solid var(--color-frame-border);
     border-radius: 4px;
-    background: var(--panel);
+    background: var(--color-panel);
     break-after: avoid;
     page-break-after: avoid;
   }
@@ -246,13 +241,13 @@ const socialProfiles = [
   }
 
   .employer-banner > p:first-of-type {
-    color: var(--copy-muted);
+    color: var(--color-copy-muted);
   }
 
   .employer-banner > p:last-child {
     margin-left: auto;
     white-space: nowrap;
-    color: var(--copy-muted);
+    color: var(--color-copy-muted);
   }
 
   .badge {
@@ -260,23 +255,12 @@ const socialProfiles = [
     align-items: center;
     flex: none;
     padding: 0.2mm 0.9mm;
-    border: 1px solid;
+    border-width: 1px;
+    border-style: solid;
     border-radius: 999px;
     font-size: 6.5px;
     font-weight: 650;
     line-height: 1.2;
-  }
-
-  .badge-success {
-    border-color: rgb(47 107 52 / 45%);
-    background: rgb(47 107 52 / 14%);
-    color: #2f6b34;
-  }
-
-  .badge-cdi {
-    border-color: rgb(18 80 126 / 45%);
-    background: rgb(18 80 126 / 14%);
-    color: #12507e;
   }
 
   .mission-release {
@@ -286,7 +270,7 @@ const socialProfiles = [
   }
 
   .mission-release + .mission-release {
-    border-top: 1px solid var(--rule);
+    border-top: 1px solid var(--color-rule);
   }
 
   .mission-header {
@@ -298,9 +282,9 @@ const socialProfiles = [
   .mission-header code {
     flex: none;
     padding: 0.3mm 1mm;
-    border: 1px solid var(--frame-border);
+    border: 1px solid var(--color-frame-border);
     border-radius: 3px;
-    background: var(--panel);
+    background: var(--color-panel);
     font-size: 6.5px;
     font-weight: 650;
   }
@@ -313,12 +297,12 @@ const socialProfiles = [
   .mission-period {
     margin-left: auto !important;
     white-space: nowrap;
-    color: var(--copy-muted);
+    color: var(--color-copy-muted);
   }
 
   .mission-client {
     margin-top: 0.5mm !important;
-    color: var(--copy-muted);
+    color: var(--color-copy-muted);
   }
 
   .mission-description {
@@ -327,7 +311,7 @@ const socialProfiles = [
 
   .mission-environment {
     margin-top: 0.6mm !important;
-    color: var(--copy-muted);
+    color: var(--color-copy-muted);
   }
 
   @media (max-width: 600px) {
@@ -351,7 +335,8 @@ const socialProfiles = [
   @media print {
     :global(html),
     :global(body) {
-      background: #fffefb;
+      color-scheme: only light;
+      background: var(--color-page);
     }
 
     .print-document {
@@ -359,6 +344,8 @@ const socialProfiles = [
       min-height: auto;
       margin: 0;
       padding: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     .print-frame {
