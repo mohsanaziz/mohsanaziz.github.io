@@ -8,6 +8,7 @@ const PDF_PATH = new URL('../dist/cv/CV.pdf', import.meta.url);
 const PACKAGE_PATH = new URL('../package.json', import.meta.url);
 const A4_WIDTH_POINTS = 595.28;
 const A4_HEIGHT_POINTS = 841.89;
+const TIER_M_BODY_SIZE_POINTS = 6;
 
 async function readGeneratedPdf() {
   const bytes = await readFile(PDF_PATH);
@@ -48,7 +49,7 @@ function assertTextSequence(text, expectedSequence) {
   }
 }
 
-test('the build artifact is a one-page A4 PDF carrying its source version', async () => {
+test('the current CV uses the readable M tier on one A4 page carrying its source version', async () => {
   const [{ bytes, document }, packageMetadata] = await Promise.all([readGeneratedPdf(), readFile(PACKAGE_PATH, 'utf8').then(JSON.parse)]);
 
   assert.equal(bytes.subarray(0, 5).toString(), '%PDF-');
@@ -58,6 +59,11 @@ test('the build artifact is a one-page A4 PDF carrying its source version', asyn
   const viewport = page.getViewport({ scale: 1 });
   assert.ok(Math.abs(viewport.width - A4_WIDTH_POINTS) < 0.5);
   assert.ok(Math.abs(viewport.height - A4_HEIGHT_POINTS) < 0.5);
+
+  const { items } = await page.getTextContent();
+  const bodyText = items.find((item) => 'str' in item && item.str === 'ATLAS IHM');
+  assert.ok(bodyText && 'transform' in bodyText, 'Expected a representative mission title in the PDF text layer.');
+  assert.ok(Math.abs(Math.hypot(bodyText.transform[2], bodyText.transform[3]) - TIER_M_BODY_SIZE_POINTS) < 0.05);
 
   const text = await extractPageText(page);
   assert.match(text, new RegExp(`Généré depuis mohsanaziz\\.github\\.io · v${packageMetadata.version} — page 1/1`));
