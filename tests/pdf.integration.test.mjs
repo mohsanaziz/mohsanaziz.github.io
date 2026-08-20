@@ -94,16 +94,32 @@ test('each employer precedes its missions in the generated PDF reading flow', as
 test('each mission environment is fully extractable from the generated PDF', async () => {
   const { document } = await readGeneratedPdf();
   const text = await extractDocumentText(document);
-  const expectedEnvironments = [
-    'Environnement : Java, Spring Boot, Angular, RxJS, Ngrx, Bootstrap, npm, git, Docker, Kubernetes, Jenkins, Gitlab, Confluence, Jira',
-    'Environnement : Java, Spring Boot, Hibernate, PostgreSQL, ElasticSearch, Zuul, Spring Batch, Spring Data JPA, Angular, Angular Material, RxJS, Bootstrap, npm, git, Docker, Docker Compose, Openshift, Jenkins, Gitlab, Nexus, Confluence, Jira',
-    'Environnement : Java, Spring Boot, Hibernate, PostgreSQL, Zuul, Spring Batch, Spring Data JPA, Angular, Angular Material, RxJS, Bootstrap, npm, git, Docker, Docker Compose, Openshift, Jenkins, Gitlab, Nexus, Confluence, Jira',
-    'Environnement : Java, Spring Boot, Hibernate, PostgreSQL, Zuul, Spring Data JPA, Lombok, Angular, Angular Material, RxJS, npm, git, Docker, Docker Compose, Openshift, Jenkins, Gitlab, Nexus, Confluence, Jira',
-    'Environnement : Java, Hibernate, PostgreSQL, Spring Data JPA, Angular, Angular Material, RxJS, npm, git, Bitbucket, Confluence, Jira',
-    'Environnement : Java, Spring Boot, MyBatis, PostgreSQL, Zuul, Spring Batch, Angular, Angular Material, RxJS, Bootstrap, npm, git, Docker, Docker Compose, Openshift, Jenkins, Gitlab, Nexus, Confluence, Jira',
+  const expectedMissionEnvironments = [
+    [
+      'ATLAS IHM',
+      'Environnement : Java, Spring Boot, Angular, RxJS, Ngrx, Bootstrap, npm, git, Docker, Kubernetes, Jenkins, Gitlab, Confluence, Jira',
+    ],
+    [
+      'SPS',
+      'Environnement : Java, Spring Boot, Hibernate, PostgreSQL, ElasticSearch, Zuul, Spring Batch, Spring Data JPA, Angular, Angular Material, RxJS, Bootstrap, npm, git, Docker, Docker Compose, Openshift, Jenkins, Gitlab, Nexus, Confluence, Jira',
+    ],
+    [
+      'SIAJ',
+      'Environnement : Java, Spring Boot, Hibernate, PostgreSQL, Zuul, Spring Batch, Spring Data JPA, Angular, Angular Material, RxJS, Bootstrap, npm, git, Docker, Docker Compose, Openshift, Jenkins, Gitlab, Nexus, Confluence, Jira',
+    ],
+    [
+      'PARCOURS',
+      'Environnement : Java, Spring Boot, Hibernate, PostgreSQL, Zuul, Spring Data JPA, Lombok, Angular, Angular Material, RxJS, npm, git, Docker, Docker Compose, Openshift, Jenkins, Gitlab, Nexus, Confluence, Jira',
+    ],
+    [
+      'IMS',
+      'Environnement : Java, Hibernate, PostgreSQL, Spring Data JPA, Angular, Angular Material, RxJS, npm, git, Bitbucket, Confluence, Jira',
+    ],
+    [
+      'PORTALIS V3',
+      'Environnement : Java, Spring Boot, MyBatis, PostgreSQL, Zuul, Spring Batch, Angular, Angular Material, RxJS, Bootstrap, npm, git, Docker, Docker Compose, Openshift, Jenkins, Gitlab, Nexus, Confluence, Jira',
+    ],
   ];
 
-  for (const environment of expectedEnvironments) {
-    assert.ok(text.includes(environment), `Expected the PDF text to contain “${environment}”.`);
-  }
+  assertTextSequence(text, expectedMissionEnvironments.flat());
 });
