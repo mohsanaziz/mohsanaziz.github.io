@@ -1,0 +1,78 @@
+---
+// PROTOTYPE — jetable. Issue #82. Variante A — « Le haut de page ».
+//
+// La reprise littérale : la page d'accueil, à son échelle réelle, recadrée à 1200×630.
+// C'est l'hypothèse que le ticket demande d'éprouver, pas la réponse. Rien n'est grossi
+// pour la vignette : si c'est illisible en 340 px, c'est le résultat de la mesure.
+import Icon from '@/components/Icon.astro';
+import { cv } from '@/data/cv';
+import type { CardContent } from '@/prototype-og/content';
+import { Image } from 'astro:assets';
+
+interface Props {
+  content: CardContent;
+}
+
+const { content } = Astro.props;
+---
+
+<div class="flex h-full w-full flex-col bg-page font-sans text-copy">
+  <header class="shrink-0 border-b border-frame-border bg-panel">
+    <div class="flex items-center gap-3 px-8 py-4">
+      <Image src={cv.profile.image.src} alt="" class="h-10 w-10 shrink-0 rounded-full object-cover" width={80} height={80} />
+      <p class="text-lg leading-tight">
+        <span class="font-semibold text-link">{content.owner}</span>
+        <span class="text-copy-muted"> / </span>
+        <span class="font-semibold">{content.repository}</span>
+      </p>
+      <span class="rounded-full border border-frame-border px-2 py-0.5 text-xs font-medium text-copy-muted">{content.visibility}</span>
+    </div>
+  </header>
+
+  <main class="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_18rem] gap-6 px-8 py-6">
+    <section class="overflow-hidden rounded-xl border border-frame-border bg-page">
+      <div class="flex min-h-11 items-center gap-2 border-b border-rule bg-panel px-4 py-2.5">
+        <Icon name="book" class="h-4 w-4 shrink-0" />
+        <span class="truncate text-sm font-semibold">{content.readme}</span>
+      </div>
+      <div class="p-6">
+        <h1 class="text-4xl font-bold tracking-tight">{content.name}</h1>
+        <p class="mt-2 text-base text-copy-muted">
+          {content.jobTitle && <span lang={content.jobTitleLang ?? undefined}>{content.jobTitle}</span>}
+          {content.jobTitle && <span> · </span>}
+          {content.location}
+        </p>
+        <div class="mt-6 border-t border-rule pt-6">
+          <h2 class="text-xl font-semibold">{content.introTitle}</h2>
+          <p class="mt-4 leading-7 text-copy-muted">{content.intro}</p>
+        </div>
+      </div>
+    </section>
+
+    <aside class="space-y-6">
+      <section class="overflow-hidden rounded-xl border border-frame-border bg-page">
+        <div class="flex min-h-11 items-center gap-2 border-b border-rule bg-panel px-4 py-2.5">
+          <span class="truncate text-sm font-semibold">Contact</span>
+        </div>
+        <div class="space-y-4 p-6">
+          <div class="flex items-center gap-3 text-sm">
+            <Icon name="location" class="h-4 w-4 shrink-0 text-copy-muted" />
+            <span>{content.location}</span>
+          </div>
+          <div class="flex items-center gap-3 text-sm">
+            <Icon name="mail" class="h-4 w-4 shrink-0 text-copy-muted" />
+            <span>mohsan.aziz@gmail.com</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="overflow-hidden rounded-xl border border-frame-border bg-page">
+        <div class="flex min-h-11 items-center gap-2 border-b border-rule bg-panel px-4 py-2.5">
+          <Icon name="tag" class="h-4 w-4 shrink-0" />
+          <span class="truncate text-sm font-semibold">Releases</span>
+        </div>
+        <div class="p-6 text-sm text-copy-muted">CV.pdf</div>
+      </section>
+    </aside>
+  </main>
+</div>

@@ -1,0 +1,47 @@
+---
+// PROTOTYPE — jetable. Issue #82. Variante D — « Métier d'abord ».
+//
+// Hiérarchie inversée : l'intitulé de poste devient le titre, le nom passe sous un filet.
+// Le pari est qu'un lien de CV se vend sur le métier. Aucune photo — en vignette, un visage
+// devient un point, une ligne de texte reste une ligne de texte.
+//
+// Sur `ar-sans`, l'intitulé n'existe pas : la variante n'a plus de titre et promeut le nom
+// à sa place — c'est-à-dire qu'elle se replie sur C, en moins bien, sans photo. C'est le
+// seul endroit du prototype où le repli de #63 ne gêne pas une composition mais la dissout,
+// et c'est une donnée de la décision.
+import type { CardContent } from '@/prototype-og/content';
+
+interface Props {
+  content: CardContent;
+}
+
+const { content } = Astro.props;
+---
+
+<div class="flex h-full w-full flex-col justify-between bg-page px-16 py-14 font-sans text-copy">
+  <div class="min-h-0">
+    {
+      content.jobTitle ? (
+        <p class="text-[92px] leading-[1.02] font-black tracking-tight" lang={content.jobTitleLang ?? undefined}>
+          {content.jobTitle}
+        </p>
+      ) : (
+        <p class="text-[92px] leading-[1.02] font-black tracking-tight [overflow-wrap:anywhere]">{content.name}</p>
+      )
+    }
+  </div>
+
+  <div>
+    <div class="h-[3px] w-full bg-copy"></div>
+    <div class="mt-8 flex items-end justify-between gap-10">
+      <div class="min-w-0">
+        {content.jobTitle && <p class="text-[52px] leading-none font-semibold [overflow-wrap:anywhere]">{content.name}</p>}
+        {content.nameLatin && <p class="text-[30px] leading-none text-copy-muted">{content.nameLatin}</p>}
+        <p class="mt-4 text-[30px] text-copy-muted">{content.location}</p>
+      </div>
+      <p class="shrink-0 text-end font-mono text-[26px] text-copy-muted">
+        {content.owner}/{content.repository}<br />{content.url}
+      </p>
+    </div>
+  </div>
+</div>

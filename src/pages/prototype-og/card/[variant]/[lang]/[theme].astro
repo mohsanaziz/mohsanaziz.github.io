@@ -1,0 +1,32 @@
+---
+// PROTOTYPE — jetable. Issue #82. Voir src/prototype-og/README.md.
+//
+// La carte nue : 1200×630 et rien autour. C'est cette page que le script de capture ouvre,
+// et c'est la forme qu'aurait la route `[...locale]/og-card.astro` arbitrée en #81 — d'où
+// l'absence de `Layout` : une carte n'a ni en-tête, ni marge, ni `min-h-full`.
+import '@/styles/main.css';
+import '@/prototype-og/prototype.css';
+import { CARD_LANGS, type CardLang } from '@/prototype-og/content';
+import { CARD_THEMES, VARIANT_KEYS, type CardTheme, type VariantKey } from '@/prototype-og/context';
+import OgCard from '@/prototype-og/OgCard.astro';
+
+export function getStaticPaths() {
+  return VARIANT_KEYS.flatMap((variant) =>
+    CARD_LANGS.flatMap((lang) => CARD_THEMES.map((theme) => ({ params: { variant, lang, theme } }))),
+  );
+}
+
+const { variant, lang, theme } = Astro.params as { variant: VariantKey; lang: CardLang; theme: CardTheme };
+---
+
+<!doctype html>
+<html lang="fr" style={`color-scheme: ${theme};`}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>PROTOTYPE og:image {variant} {lang} {theme}</title>
+  </head>
+  <body class="m-0 w-[1200px] overflow-hidden bg-page font-sans">
+    <OgCard variant={variant} lang={lang} theme={theme} />
+  </body>
+</html>

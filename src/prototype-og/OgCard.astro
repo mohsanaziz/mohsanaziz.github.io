@@ -1,0 +1,38 @@
+---
+// PROTOTYPE — jetable. Issue #82. Voir src/prototype-og/README.md.
+//
+// L'aiguilleur, et rien d'autre : il pose la racine 1200×630, la locale, la direction et le
+// thème, puis laisse la variante faire ce qu'elle veut de la surface. Aucune mise en page
+// partagée — c'est précisément là-dessus que les quatre doivent avoir le droit de diverger.
+import { cardContent, type CardLang } from '@/prototype-og/content';
+import type { CardTheme, VariantKey } from '@/prototype-og/context';
+import PageEcho from '@/prototype-og/variants/PageEcho.astro';
+import Portrait from '@/prototype-og/variants/Portrait.astro';
+import Repository from '@/prototype-og/variants/Repository.astro';
+import Trade from '@/prototype-og/variants/Trade.astro';
+
+interface Props {
+  variant: VariantKey;
+  lang: CardLang;
+  theme: CardTheme;
+}
+
+const { variant, lang, theme } = Astro.props;
+const content = cardContent(lang);
+---
+
+<!-- `color-scheme` fait le thème : les jetons du site sont des `light-dark()` (ADR 0002), ils
+     se résolvent donc sur le contexte de l'élément, sans dupliquer une palette ici. -->
+<div
+  class="h-[630px] w-[1200px] overflow-hidden bg-page"
+  style={`color-scheme: ${theme};`}
+  lang={content.htmlLang}
+  dir={content.dir}
+  data-og-lang={content.htmlLang}
+  data-og-card={`${variant}-${lang}-${theme}`}
+>
+  {variant === 'A' && <PageEcho content={content} />}
+  {variant === 'B' && <Portrait content={content} />}
+  {variant === 'C' && <Repository content={content} />}
+  {variant === 'D' && <Trade content={content} />}
+</div>

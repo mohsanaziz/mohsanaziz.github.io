@@ -1,0 +1,51 @@
+---
+// PROTOTYPE — jetable. Issue #82. Variante C — « Dépôt ».
+//
+// La métaphore du dépôt réduite à une signature : une barre en tête, une pastille au pied.
+// Entre les deux, le nom occupe tout ce qui reste. Le pari est de garder l'identité du site
+// sans lui payer la moitié de la surface, comme le fait A.
+import Icon from '@/components/Icon.astro';
+import { cv } from '@/data/cv';
+import type { CardContent } from '@/prototype-og/content';
+import { Image } from 'astro:assets';
+
+interface Props {
+  content: CardContent;
+}
+
+const { content } = Astro.props;
+---
+
+<div class="flex h-full w-full flex-col bg-page font-sans text-copy">
+  <div class="flex shrink-0 items-center gap-4 border-b-2 border-frame-border bg-panel px-14 py-6">
+    <Icon name="book" class="h-8 w-8 shrink-0 text-copy-muted" />
+    <p class="font-mono text-[34px] leading-none">
+      <span class="text-copy-muted">{content.owner}</span>
+      <span class="text-copy-muted"> / </span>
+      <span class="font-bold">{content.repository}</span>
+    </p>
+    <span class="ms-auto rounded-full border-2 border-frame-border px-5 py-1.5 text-[24px] font-medium text-copy-muted">
+      {content.visibility}
+    </span>
+  </div>
+
+  <div class="flex min-h-0 flex-1 flex-col justify-center px-14">
+    <p class="text-[124px] leading-[0.92] font-black tracking-tight [overflow-wrap:anywhere]">{content.name}</p>
+
+    {content.nameLatin && <p class="mt-3 text-[36px] leading-none font-medium text-copy-muted">{content.nameLatin}</p>}
+
+    {
+      content.jobTitle && (
+        <p class="mt-6 text-[42px] leading-tight text-copy-muted" lang={content.jobTitleLang ?? undefined}>
+          {content.jobTitle}
+        </p>
+      )
+    }
+  </div>
+
+  <div class="flex shrink-0 items-center gap-5 border-t border-rule px-14 py-7">
+    <Image src={cv.profile.image.src} alt="" class="h-[76px] w-[76px] shrink-0 rounded-full object-cover" width={152} height={152} />
+    <span class="text-[28px] text-copy-muted">{content.location}</span>
+    <span class="ms-auto font-mono text-[26px] text-copy-muted">{content.url}</span>
+  </div>
+</div>

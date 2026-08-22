@@ -1,0 +1,54 @@
+/* PROTOTYPE — jetable. Issue #82. Voir src/prototype-og/README.md.
+   Deux choses seulement : la police arabe arbitrée par #61, et la mécanique de mise à
+   l'échelle de l'écran de contrôle. Le reste de l'allure est dans les variantes. */
+
+/* Noto Sans Arabic v2.012 (#61), servi en TTF variable brut : le prototype juge le rendu,
+   pas le poids réseau. Pas de nastaliq ici — le périmètre est passé à trois locales (#68). */
+@font-face {
+  font-family: 'Prototype Noto Sans Arabic';
+  src: url('/fonts/prototype-og/NotoSansArabic.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: block;
+}
+
+/* On remplace le jeton, pas la déclaration : `font-sans` est posé plus bas dans la cascade.
+   Même forme qu'en #64 et #65. Hors carte arabe, la police n'est pas téléchargée. */
+[data-og-lang='ar'] {
+  --font-sans: 'Prototype Noto Sans Arabic', system-ui, sans-serif;
+}
+
+/* La carte est toujours dessinée à 1200×630 puis réduite : une carte redessinée à
+   400 px mentirait sur ce que Chromium capturera. `--og-scale` porte la réduction. */
+.og-scaler {
+  width: calc(1200px * var(--og-scale));
+  height: calc(630px * var(--og-scale));
+  overflow: hidden;
+  flex: none;
+}
+
+.og-scaler > * {
+  width: 1200px;
+  height: 630px;
+  transform: scale(var(--og-scale));
+  transform-origin: top left;
+}
+
+/* Recadrage carré centré : ce qu'une messagerie qui n'accepte que du 1:1 garde. */
+.og-crop-square {
+  width: calc(630px * var(--og-scale));
+  height: calc(630px * var(--og-scale));
+  overflow: hidden;
+  flex: none;
+}
+
+.og-crop-square > * {
+  width: 1200px;
+  height: 630px;
+  transform: translateX(calc(-285px * var(--og-scale))) scale(var(--og-scale));
+  transform-origin: top left;
+}
+
+/* La barre de bascule flotte au-dessus du contenu : on dégage le bas de page. */
+html:has([data-prototype-switcher]) body {
+  padding-block-end: 11rem;
+}

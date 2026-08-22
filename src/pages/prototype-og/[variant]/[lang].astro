@@ -1,0 +1,206 @@
+---
+// PROTOTYPE — jetable. Issue #82. Voir src/prototype-og/README.md.
+//
+// L'écran de contrôle. Seize pages : quatre compositions × quatre locales (le français,
+// l'anglais et les deux réponses possibles de la carte arabe au repli de #63).
+//
+// La carte est toujours dessinée à 1200×630 puis réduite par `transform: scale()` : une
+// carte redessinée plus petite mentirait sur ce que Chromium capturera. Ce qui varie ici,
+// ce sont les conditions de lecture — plein écran, vignette de fil, recadrage carré, fond
+// de plateforme —, jamais le dessin.
+import '@/styles/main.css';
+import '@/prototype-og/prototype.css';
+import PrototypeOgSwitcher from '@/components/PrototypeOgSwitcher.astro';
+import { cardContent, CARD_LANGS, type CardLang } from '@/prototype-og/content';
+import { VARIANT_KEYS, cardHref, variantOf, type VariantKey } from '@/prototype-og/context';
+import OgCard from '@/prototype-og/OgCard.astro';
+
+export function getStaticPaths() {
+  return VARIANT_KEYS.flatMap((variant) => CARD_LANGS.map((lang) => ({ params: { variant, lang } })));
+}
+
+const { variant: variantKey, lang } = Astro.params as { variant: VariantKey; lang: CardLang };
+const variant = variantOf(variantKey);
+const content = cardContent(lang);
+
+// Largeurs réelles d'affichage, mesurées sur les surfaces que #81 met au-dessus du reste.
+const THUMBNAILS = [
+  { width: 340, label: 'Fil mobile', detail: 'LinkedIn / X sur téléphone — le test qui compte' },
+  { width: 240, label: 'Aperçu de messagerie', detail: 'WhatsApp, Signal, Slack en liste' },
+  { width: 160, label: 'Carte compacte', detail: 'Aperçu réduit, lien cité dans un fil' },
+] as const;
+---
+
+<!doctype html>
+<html lang="fr" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>PROTOTYPE #82 — carte {variant.key} · {content.label}</title>
+  </head>
+
+  <body class="min-h-full bg-zinc-100 font-sans text-zinc-900" style="color-scheme: light;">
+    <main class="mx-auto w-full max-w-[1360px] px-6 py-10">
+      <header class="mb-10 border-b-2 border-zinc-300 pb-6">
+        <p class="font-mono text-xs tracking-widest text-fuchsia-700 uppercase">Prototype jetable · issue #82 · carte og:image 1200×630</p>
+        <h1 class="mt-3 text-3xl font-black">
+          <span class="text-fuchsia-700">{variant.key}</span> — {variant.name}
+          <span class="ms-3 align-middle text-lg font-medium text-zinc-500">{content.label}</span>
+        </h1>
+        <p class="mt-3 max-w-4xl leading-relaxed text-zinc-700">{variant.summary}</p>
+        <p class="mt-2 max-w-4xl leading-relaxed text-zinc-500">{variant.stake}</p>
+        <p class="mt-4 max-w-4xl rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
+          <span class="font-bold">Cette locale :</span>{' '}{content.note}
+        </p>
+        <dl class="mt-4 flex flex-wrap gap-x-8 gap-y-1 font-mono text-xs text-zinc-500">
+          <div><dt class="inline">photo</dt> <dd class="inline font-bold text-zinc-800">{variant.photo}</dd></div>
+          <div><dt class="inline">ce qui domine</dt> <dd class="inline font-bold text-zinc-800">{variant.headline}</dd></div>
+          <div><dt class="inline">direction</dt> <dd class="inline font-bold text-zinc-800">{content.dir}</dd></div>
+          <div>
+            <dt class="inline">carte nue</dt>
+            <dd class="inline">
+              <a class="font-bold text-fuchsia-700 underline" href={cardHref(variant.key, lang, 'light')}>clair</a>
+              <span> · </span>
+              <a class="font-bold text-fuchsia-700 underline" href={cardHref(variant.key, lang, 'dark')}>sombre</a>
+            </dd>
+          </div>
+        </dl>
+      </header>
+
+      <section class="mb-12">
+        <h2 class="mb-1 text-xl font-bold">1. Pleine taille, les deux thèmes</h2>
+        <p class="mb-5 text-sm text-zinc-600">
+          1200×630 réduits de moitié. Le site a des jetons clairs et sombres (ADR 0002) ; une carte, elle, est vue sur le fond de la
+          plateforme — la question est de savoir laquelle des deux on fige au build.
+        </p>
+        <div class="flex flex-wrap gap-6">
+          {
+            (['light', 'dark'] as const).map((theme) => (
+              <figure>
+                <div class="og-scaler rounded-md shadow-lg ring-1 ring-zinc-300" style="--og-scale: 0.5;">
+                  <OgCard variant={variant.key} lang={lang} theme={theme} />
+                </div>
+                <figcaption class="mt-2 font-mono text-xs text-zinc-500">
+                  {theme === 'light' ? 'clair' : 'sombre'} · 600×315 rendu
+                </figcaption>
+              </figure>
+            ))
+          }
+        </div>
+      </section>
+
+      <section class="mb-12">
+        <h2 class="mb-1 text-xl font-bold">2. En vignette</h2>
+        <p class="mb-5 text-sm text-zinc-600">
+          Le test que le ticket appelle « celui qui compte » : la carte réduite à la largeur d'un fil mobile, le nom encore lisible.
+        </p>
+        <div class="flex flex-wrap items-start gap-6">
+          {
+            THUMBNAILS.map(({ width, label, detail }) => (
+              <figure>
+                <div class="og-scaler rounded ring-1 ring-zinc-300" style={`--og-scale: ${width / 1200};`}>
+                  <OgCard variant={variant.key} lang={lang} theme="light" />
+                </div>
+                <figcaption class="mt-2 w-[220px] font-mono text-xs text-zinc-500">
+                  <span class="font-bold text-zinc-800">
+                    {width} px — {label}
+                  </span>
+                  <br />
+                  {detail}
+                </figcaption>
+              </figure>
+            ))
+          }
+          <figure>
+            <div class="og-scaler rounded ring-1 ring-zinc-300" style="--og-scale: 0.2833;">
+              <OgCard variant={variant.key} lang={lang} theme="dark" />
+            </div>
+            <figcaption class="mt-2 w-[220px] font-mono text-xs text-zinc-500">
+              <span class="font-bold text-zinc-800">340 px — fil sombre</span><br />La même vignette, thème sombre
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="mb-12">
+        <h2 class="mb-1 text-xl font-bold">3. Recadrage et zone de sécurité</h2>
+        <p class="mb-5 text-sm text-zinc-600">
+          Les plateformes arrondissent les angles et recadrent. À gauche, la carte avec le gabarit posé dessus : marge de sécurité de 5 %,
+          coins arrondis, et le carré central que garde une messagerie qui n'accepte que du 1:1. À droite, ce carré, réellement recadré.
+        </p>
+        <div class="flex flex-wrap items-start gap-6">
+          <figure class="relative">
+            <div class="og-scaler rounded-md ring-1 ring-zinc-300" style="--og-scale: 0.5;">
+              <OgCard variant={variant.key} lang={lang} theme="light" />
+            </div>
+            <div class="pointer-events-none absolute inset-0 h-[315px] w-[600px]">
+              <div class="absolute inset-[5%] border border-dashed border-fuchsia-600/70"></div>
+              <div class="absolute inset-y-0 start-[23.75%] w-[52.5%] border-x-2 border-sky-600/80 bg-sky-500/10"></div>
+            </div>
+            <figcaption class="mt-2 w-[600px] font-mono text-xs leading-relaxed text-zinc-500">
+              <span class="text-fuchsia-700">— — —</span> marge de sécurité 5 % · <span class="text-sky-700">▮</span> carré central 1:1, seul
+              rescapé d'une messagerie qui ne prend que du carré<br />
+              La carte porte ici le rayon d'angle que les plateformes lui appliquent : ce qui touche le coin est mangé.
+            </figcaption>
+          </figure>
+
+          <figure>
+            <div class="og-crop-square rounded-md ring-1 ring-zinc-300" style="--og-scale: 0.5;">
+              <OgCard variant={variant.key} lang={lang} theme="light" />
+            </div>
+            <figcaption class="mt-2 w-[315px] font-mono text-xs text-zinc-500">
+              <span class="font-bold text-zinc-800">Recadrage 1:1</span><br />Ce qu'il reste quand la plateforme prend le carré
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="mb-12">
+        <h2 class="mb-1 text-xl font-bold">4. Sur fond de plateforme</h2>
+        <p class="mb-5 text-sm text-zinc-600">
+          Une carte n'est jamais vue seule. À gauche, un fil clair à 552 px de large ; à droite, une bulle de messagerie sombre à 300 px. Le
+          fond, le rayon des coins et le bandeau de domaine sont ceux des plateformes, pas ceux du site.
+        </p>
+        <div class="flex flex-wrap items-start gap-8">
+          <div class="w-[600px] rounded-lg bg-white p-4 shadow ring-1 ring-zinc-200">
+            <div class="mb-3 flex items-center gap-3">
+              <div class="h-12 w-12 rounded-full bg-zinc-300"></div>
+              <div>
+                <div class="h-3 w-32 rounded bg-zinc-300"></div>
+                <div class="mt-2 h-2.5 w-20 rounded bg-zinc-200"></div>
+              </div>
+            </div>
+            <div class="mb-3 space-y-2">
+              <div class="h-2.5 w-full rounded bg-zinc-200"></div>
+              <div class="h-2.5 w-4/5 rounded bg-zinc-200"></div>
+            </div>
+            <div class="overflow-hidden rounded-lg border border-zinc-300">
+              <div class="og-scaler" style="--og-scale: 0.46;">
+                <OgCard variant={variant.key} lang={lang} theme="light" />
+              </div>
+              <div class="bg-zinc-50 px-4 py-3">
+                <p class="font-mono text-[11px] tracking-wide text-zinc-500 uppercase">{content.url}</p>
+                <p class="mt-1 truncate text-sm font-semibold text-zinc-900">CV — {content.name}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="w-[360px] rounded-xl bg-zinc-900 p-4">
+            <div class="ms-auto w-[320px] rounded-2xl bg-sky-700 p-2">
+              <div class="overflow-hidden rounded-lg">
+                <div class="og-scaler" style="--og-scale: 0.25;">
+                  <OgCard variant={variant.key} lang={lang} theme="dark" />
+                </div>
+              </div>
+              <p class="mt-2 px-1 pb-1 text-xs text-sky-100">{content.url}</p>
+            </div>
+            <p class="mt-3 text-center font-mono text-[11px] text-zinc-500">bulle de messagerie · 300 px</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <PrototypeOgSwitcher variant={variant.key} lang={lang} />
+  </body>
+</html>

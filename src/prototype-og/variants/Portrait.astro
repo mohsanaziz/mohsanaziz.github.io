@@ -1,0 +1,42 @@
+---
+// PROTOTYPE — jetable. Issue #82. Variante B — « Portrait ».
+//
+// Photo à fond perdu sur toute la hauteur, côté départ ; le nom face à elle, en 104 px.
+// Aucune coquille GitHub : la variante parie que l'identité tient dans le visage et le nom,
+// et qu'une carte partagée n'a pas à répéter la métaphore du site.
+import { cv } from '@/data/cv';
+import type { CardContent } from '@/prototype-og/content';
+import { Image } from 'astro:assets';
+
+interface Props {
+  content: CardContent;
+}
+
+const { content } = Astro.props;
+---
+
+<div class="flex h-full w-full items-stretch bg-page font-sans text-copy">
+  <div class="relative w-[440px] shrink-0 overflow-hidden bg-panel">
+    <Image src={cv.profile.image.src} alt="" class="h-full w-full object-cover object-top" width={880} height={1260} />
+  </div>
+
+  <div class="flex min-w-0 flex-1 flex-col justify-center gap-6 px-16">
+    <p class="text-[104px] leading-[0.95] font-black tracking-tight [overflow-wrap:anywhere]">{content.name}</p>
+
+    {content.nameLatin && <p class="-mt-2 text-[34px] leading-none font-medium text-copy-muted">{content.nameLatin}</p>}
+
+    {
+      content.jobTitle && (
+        <p class="text-[40px] leading-tight font-medium text-copy-muted" lang={content.jobTitleLang ?? undefined}>
+          {content.jobTitle}
+        </p>
+      )
+    }
+
+    <div class="flex items-center gap-4 text-[30px] text-copy-muted">
+      <span>{content.location}</span>
+      <span class="h-px w-10 bg-frame-border"></span>
+      <span class="font-mono text-[26px]">{content.url}</span>
+    </div>
+  </div>
+</div>
