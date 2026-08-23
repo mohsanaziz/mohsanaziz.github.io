@@ -1,26 +1,18 @@
-import { formatPeriodDuration, isCurrentPeriod, sortByMostRecentPeriod } from '@/data/career';
+import { getPeriodDurationInMonths, sortByMostRecentPeriod, type Period } from '@/data/career';
 
 interface MissionEntry {
-  title: string;
-  subtitle: string;
-  date: string;
-  technologies: readonly string[];
+  id: string;
+  period: Period;
 }
 
-interface EmployerEntry {
-  title: string;
-}
-
-export type MissionStatus = 'En cours' | 'Livrée';
+export type MissionStatus = 'current' | 'delivered';
 
 export interface MissionSummaryData {
-  client: string;
-  period: string;
-  duration: string;
+  period: Period;
+  durationInMonths: number;
   status: MissionStatus;
-  employer: string;
-  version: string;
-  technologies: readonly string[];
+  employerId: string;
+  versionNumber: number;
 }
 
 export interface MissionReleaseData<TMission extends MissionEntry> {
@@ -29,32 +21,30 @@ export interface MissionReleaseData<TMission extends MissionEntry> {
   showStatusBadge: boolean;
 }
 
-export function deriveMissionReleases<TMission extends MissionEntry, TEmployer extends EmployerEntry>(
+export function deriveMissionReleases<TMission extends MissionEntry>(
   missions: readonly TMission[],
-  employersByMission: ReadonlyMap<TMission, TEmployer>,
+  employersByMission: ReadonlyMap<string, string>,
   currentDate = new Date(),
 ): readonly MissionReleaseData<TMission>[] {
-  const sortedMissions = sortByMostRecentPeriod(missions, currentDate);
+  const sortedMissions = sortByMostRecentPeriod(missions);
   const missionCount = sortedMissions.length;
 
   return sortedMissions.map((mission, index) => {
-    const current = isCurrentPeriod(mission.date, currentDate);
-    const employer = employersByMission.get(mission);
+    const current = mission.period.end === null;
+    const employerId = employersByMission.get(mission.id);
 
-    if (!employer) {
-      throw new Error(`L'employeur de la mission « ${mission.title} » est introuvable`);
+    if (!employerId) {
+      throw new Error(`No employer is mapped to the mission "${mission.id}"`);
     }
 
     return {
       mission,
       summary: {
-        client: mission.subtitle,
-        period: mission.date,
-        duration: formatPeriodDuration(mission.date, currentDate),
-        status: current ? 'En cours' : 'Livrée',
-        employer: employer.title,
-        version: `v${missionCount - index}.0.0`,
-        technologies: mission.technologies,
+        period: mission.period,
+        durationInMonths: getPeriodDurationInMonths(mission.period, currentDate),
+        status: current ? 'current' : 'delivered',
+        employerId,
+        versionNumber: missionCount - index,
       },
       showStatusBadge: index === 0 && current,
     };

@@ -1,5 +1,6 @@
 import profilePhoto from '@/assets/photo.jpg';
 import type { IconName } from '@/components/icons';
+import type { Period } from '@/data/career';
 import type { ImageMetadata } from 'astro';
 
 interface CvLink {
@@ -8,19 +9,23 @@ interface CvLink {
   icon: IconName;
 }
 
+export type ContactDetailId = 'phone' | 'email' | 'location' | 'birthdate';
+
 export interface ContactDetail {
+  id: ContactDetailId;
   title: string;
   info: string;
   icon: IconName;
 }
 
 interface TimelineEntry {
+  id: string;
   title: string;
   subtitle: string;
-  date: string;
+  period: Period;
 }
 
-export type Contract = 'Freelance' | 'CDI';
+export type Contract = 'freelance' | 'permanent';
 
 export interface CareerEntry extends TimelineEntry {
   contract: Contract;
@@ -85,21 +90,25 @@ export const cv = {
     ],
     contactDetails: [
       {
+        id: 'phone',
         title: 'Téléphone',
         info: '06.28.74.61.76',
         icon: 'phone',
       },
       {
+        id: 'email',
         title: 'Email',
         info: 'mohsan.aziz@gmail.com',
         icon: 'mail',
       },
       {
+        id: 'location',
         title: 'Location',
         info: 'Paris, France',
         icon: 'location',
       },
       {
+        id: 'birthdate',
         title: 'Date de naissance',
         info: '19 Octobre 1989',
         icon: 'cake',
@@ -125,16 +134,18 @@ export const cv = {
     title: 'Expérience professionnelle',
     entries: [
       {
+        id: 'azmopak',
         title: 'SASU AZMOPAK',
         subtitle: 'Développeur freelance Angular/Java',
-        date: "Novembre 2019 - Aujourd'hui",
-        contract: 'Freelance',
+        period: { start: '2019-11', end: null },
+        contract: 'freelance',
       },
       {
+        id: 'sopraSteria',
         title: 'Sopra Steria',
         subtitle: 'Développeur Angular/Java',
-        date: 'Mai 2016 - Septembre 2019',
-        contract: 'CDI',
+        period: { start: '2016-05', end: '2019-09' },
+        contract: 'permanent',
       },
     ],
   },
@@ -142,9 +153,10 @@ export const cv = {
     title: 'Projet client',
     entries: [
       {
+        id: 'atlasIhm',
         title: 'ATLAS IHM',
         subtitle: 'Saint-Gobain',
-        date: "Septembre 2022 - Aujourd'hui",
+        period: { start: '2022-09', end: null },
         technologies: [
           'Java',
           'Spring Boot',
@@ -168,9 +180,10 @@ export const cv = {
         ],
       },
       {
+        id: 'sps',
         title: 'SPS',
         subtitle: 'Ministère de la Justice',
-        date: 'Mars 2022 - Juin 2022',
+        period: { start: '2022-03', end: '2022-06' },
         technologies: [
           'Java',
           'Spring Boot',
@@ -202,9 +215,10 @@ export const cv = {
         ],
       },
       {
+        id: 'siaj',
         title: 'SIAJ',
         subtitle: 'Ministère de la Justice',
-        date: 'Octobre 2020 - Décembre 2021',
+        period: { start: '2020-10', end: '2021-12' },
         technologies: [
           'Java',
           'Spring Boot',
@@ -235,9 +249,10 @@ export const cv = {
         ],
       },
       {
+        id: 'parcours',
         title: 'PARCOURS',
         subtitle: 'Ministère de la Justice',
-        date: 'Février 2020 - Mai 2020',
+        period: { start: '2020-02', end: '2020-05' },
         technologies: [
           'Java',
           'Spring Boot',
@@ -267,9 +282,10 @@ export const cv = {
         ],
       },
       {
+        id: 'ims',
         title: 'IMS',
         subtitle: 'Française des Jeux - Gaming Solution (FDJ-GS)',
-        date: 'Novembre 2019 - Décembre 2019',
+        period: { start: '2019-11', end: '2019-12' },
         technologies: [
           'Java',
           'Hibernate',
@@ -291,9 +307,10 @@ export const cv = {
         ],
       },
       {
+        id: 'portalisV3',
         title: 'PORTALIS V3',
         subtitle: 'Ministère de la Justice',
-        date: 'Avril 2018 - Septembre 2019',
+        period: { start: '2018-04', end: '2019-09' },
         technologies: [
           'Java',
           'Spring Boot',

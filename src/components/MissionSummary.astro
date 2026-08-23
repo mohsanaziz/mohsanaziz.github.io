@@ -1,10 +1,10 @@
 ---
 import FactRow from '@/components/FactRow.astro';
-import type { MissionSummaryData } from '@/data/missions';
+import type { MissionSummaryView } from '@/i18n/format';
 
 interface Props {
   mission: string;
-  summary: MissionSummaryData;
+  summary: MissionSummaryView;
 }
 
 const { mission, summary } = Astro.props;

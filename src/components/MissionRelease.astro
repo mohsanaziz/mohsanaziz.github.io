@@ -1,11 +1,11 @@
 ---
 import MissionSummary from '@/components/MissionSummary.astro';
 import StatusBadge from '@/components/StatusBadge.astro';
-import type { MissionSummaryData } from '@/data/missions';
+import type { MissionSummaryView } from '@/i18n/format';
 
 interface Props {
   title: string;
-  summary: MissionSummaryData;
+  summary: MissionSummaryView;
   description: readonly string[];
   showStatusBadge?: boolean;
 }
