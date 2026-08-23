@@ -1,6 +1,6 @@
 import profilePhoto from '@/assets/photo.jpg';
 import type { IconName } from '@/components/icons';
-import type { Period } from '@/data/career';
+import type { Period } from '@/data/period';
 import type { ImageMetadata } from 'astro';
 
 interface CvLink {
