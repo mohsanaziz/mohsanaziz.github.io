@@ -6,7 +6,7 @@
     "node": "24.x"
   },
   "scripts": {
-    "font:download": "node scripts/download-satoshi.mjs",
+    "font:download": "node scripts/download-fonts.mjs",
     "predev": "npm run font:download",
     "dev": "astro dev",
     "prestart": "npm run font:download",
