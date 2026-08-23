@@ -20,6 +20,12 @@ test("formatPeriod rend une période en cours avec la borne « Aujourd'hui »", 
   assert.equal(formatPeriod({ start: '2019-11', end: null }), "Novembre 2019 - Aujourd'hui");
 });
 
+test('formatPeriod rejette une borne non machine', () => {
+  assert.throws(() => formatPeriod({ start: 'Novembre 2019', end: null }));
+  assert.throws(() => formatPeriod({ start: '2019-13', end: null }));
+  assert.throws(() => formatPeriod({ start: '2019-11', end: '2019-0' }));
+});
+
 test('formatDurationInMonths décline mois, ans et combinaisons', () => {
   assert.equal(formatDurationInMonths(1), '1 mois');
   assert.equal(formatDurationInMonths(11), '11 mois');
