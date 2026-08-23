@@ -1,28 +1,11 @@
-export interface Period {
-  /** Machine month, `YYYY-MM`. */
-  start: string;
-  /** Machine month, `YYYY-MM`, or `null` while the period is ongoing. */
-  end: string | null;
-}
+import { machineMonthToIndex, type Period } from './period.ts';
 
 interface PeriodEntry {
   period: Period;
 }
 
-interface IdentifiedPeriodEntry extends PeriodEntry {
-  id: string;
-}
-
-const MACHINE_MONTH_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/;
-
-function toMonthIndex(bound: string): number {
-  const match = MACHINE_MONTH_PATTERN.exec(bound);
-
-  if (!match) {
-    throw new Error(`Invalid machine month, expected YYYY-MM: "${bound}"`);
-  }
-
-  return Number(match[1]) * 12 + Number(match[2]) - 1;
+interface IdentifiedPeriodEntry<TId extends string> extends PeriodEntry {
+  id: TId;
 }
 
 function currentMonthIndex(currentDate: Date): number {
@@ -30,16 +13,16 @@ function currentMonthIndex(currentDate: Date): number {
 }
 
 function endMonthIndex(period: Period, fallbackMonthIndex: number): number {
-  return period.end === null ? fallbackMonthIndex : toMonthIndex(period.end);
+  return period.end === null ? fallbackMonthIndex : machineMonthToIndex(period.end);
 }
 
 export function getPeriodDurationInMonths(period: Period, currentDate = new Date()): number {
-  return Math.max(1, endMonthIndex(period, currentMonthIndex(currentDate)) - toMonthIndex(period.start));
+  return Math.max(1, endMonthIndex(period, currentMonthIndex(currentDate)) - machineMonthToIndex(period.start));
 }
 
 export function sortByMostRecentPeriod<TEntry extends PeriodEntry>(entries: readonly TEntry[]): readonly TEntry[] {
   return [...entries].sort((first, second) => {
-    const startDifference = toMonthIndex(second.period.start) - toMonthIndex(first.period.start);
+    const startDifference = machineMonthToIndex(second.period.start) - machineMonthToIndex(first.period.start);
 
     return (
       startDifference || endMonthIndex(second.period, Number.POSITIVE_INFINITY) - endMonthIndex(first.period, Number.POSITIVE_INFINITY)
@@ -47,18 +30,18 @@ export function sortByMostRecentPeriod<TEntry extends PeriodEntry>(entries: read
   });
 }
 
-export function mapMissionsToEmployers(
-  employers: readonly IdentifiedPeriodEntry[],
-  missions: readonly IdentifiedPeriodEntry[],
-): ReadonlyMap<string, string> {
+export function mapMissionsToEmployers<TEmployerId extends string, TMissionId extends string>(
+  employers: readonly IdentifiedPeriodEntry<TEmployerId>[],
+  missions: readonly IdentifiedPeriodEntry<TMissionId>[],
+): ReadonlyMap<TMissionId, TEmployerId> {
   const employerStarts = employers.map((employer) => ({
     id: employer.id,
-    start: toMonthIndex(employer.period.start),
+    start: machineMonthToIndex(employer.period.start),
   }));
 
   return new Map(
     missions.map((mission) => {
-      const missionStart = toMonthIndex(mission.period.start);
+      const missionStart = machineMonthToIndex(mission.period.start);
       const employer = employerStarts
         .filter(({ start }) => start <= missionStart)
         .reduce<(typeof employerStarts)[number] | undefined>(
@@ -75,11 +58,11 @@ export function mapMissionsToEmployers(
   );
 }
 
-export function countMissionsByEmployer(
-  employers: readonly { id: string }[],
-  employersByMission: ReadonlyMap<string, string>,
-): ReadonlyMap<string, number> {
-  const missionCounts = new Map<string, number>(employers.map(({ id }) => [id, 0]));
+export function countMissionsByEmployer<TEmployerId extends string, TMissionId extends string>(
+  employers: readonly { id: TEmployerId }[],
+  employersByMission: ReadonlyMap<TMissionId, TEmployerId>,
+): ReadonlyMap<TEmployerId, number> {
+  const missionCounts = new Map<TEmployerId, number>(employers.map(({ id }) => [id, 0]));
 
   for (const [missionId, employerId] of employersByMission) {
     const currentCount = missionCounts.get(employerId);
@@ -100,7 +83,7 @@ export function getCareerDurationInYears(employers: readonly PeriodEntry[], curr
   }
 
   const nowIndex = currentMonthIndex(currentDate);
-  const firstStart = Math.min(...employers.map(({ period }) => toMonthIndex(period.start)));
+  const firstStart = Math.min(...employers.map(({ period }) => machineMonthToIndex(period.start)));
   const lastEnd = Math.max(...employers.map(({ period }) => endMonthIndex(period, nowIndex)));
 
   return Math.floor(Math.max(0, lastEnd - firstStart) / 12);
