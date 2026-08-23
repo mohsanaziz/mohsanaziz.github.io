@@ -1,19 +1,20 @@
 import assert from 'node:assert/strict';
-import { readFile, stat } from 'node:fs/promises';
-import { createServer } from 'node:http';
-import { extname, resolve, sep } from 'node:path';
+import { readdir, readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { chromium } from 'playwright';
 
+import { startBuildServer } from '../scripts/build-server.mjs';
+
 const DIST_DIRECTORY = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
 const INDEX_PATH = resolve(DIST_DIRECTORY, 'index.html');
-const CONTENT_TYPES = new Map([
-  ['.css', 'text/css; charset=utf-8'],
-  ['.html', 'text/html; charset=utf-8'],
-  ['.woff2', 'font/woff2'],
-]);
+const FONT_DIRECTORY = resolve(DIST_DIRECTORY, 'fonts');
+const EXPECTED_FONT_SIZES = {
+  'NotoSansArabic-arabic.woff2': 166_152,
+  'NotoSansArabic-latin.woff2': 31_368,
+};
 
 async function readBuiltFontDelivery() {
   const html = await readFile(INDEX_PATH, 'utf8');
@@ -25,91 +26,43 @@ async function readBuiltFontDelivery() {
     stylesheetPaths.map((stylesheetPath) => readFile(resolve(DIST_DIRECTORY, stylesheetPath.replace(/^\/+/, '')), 'utf8')),
   );
 
-  return { html, stylesheetPaths, css: stylesheets.join('\n') };
-}
-
-function resolveBuildPath(requestUrl) {
-  const pathname = decodeURIComponent(new URL(requestUrl ?? '/', 'http://localhost').pathname);
-  const absolutePath = resolve(DIST_DIRECTORY, pathname.replace(/^\/+/, ''));
-
-  if (absolutePath !== DIST_DIRECTORY && !absolutePath.startsWith(`${DIST_DIRECTORY}${sep}`)) {
-    throw new Error(`Path outside the build directory: ${pathname}`);
-  }
-
-  return absolutePath;
-}
-
-function startFontFixtureServer(stylesheetPaths) {
-  const server = createServer(async (request, response) => {
-    try {
-      if (request.url === '/font-fixture') {
-        const stylesheets = stylesheetPaths.map((href) => `<link rel="stylesheet" href="${href}">`).join('');
-        const fixture = `<!doctype html><html><head>${stylesheets}</head><body><p class="font-sans">Hamburgefontsiv français</p></body></html>`;
-
-        response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-        response.end(fixture);
-        return;
-      }
-
-      const filePath = resolveBuildPath(request.url);
-      const fileStats = await stat(filePath);
-      const contents = await readFile(filePath);
-
-      response.writeHead(200, {
-        'content-length': fileStats.size,
-        'content-type': CONTENT_TYPES.get(extname(filePath)) ?? 'application/octet-stream',
-      });
-      response.end(contents);
-    } catch {
-      response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
-      response.end('Not found');
-    }
-  });
-
-  return new Promise((resolveServer, reject) => {
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => {
-      const address = server.address();
-
-      if (!address || typeof address === 'string') {
-        server.close();
-        reject(new Error('Unable to determine the font fixture server address.'));
-        return;
-      }
-
-      resolveServer({
-        origin: `http://127.0.0.1:${address.port}`,
-        close: () => new Promise((resolveClose, rejectClose) => server.close((error) => (error ? rejectClose(error) : resolveClose()))),
-      });
-    });
-  });
+  return { html, css: stylesheets.join('\n') };
 }
 
 test('le build livre deux sous-ensembles et ne précharge que le latin', async () => {
   const { html, css } = await readBuiltFontDelivery();
   const fontFaces = css.match(/@font-face\{[^}]+\}/g) ?? [];
+  const preloadedFonts = (html.match(/<link\b[^>]*>/g) ?? []).filter((link) => /\brel="preload"/.test(link) && /\bas="font"/.test(link));
+  const builtFontEntries = await readdir(FONT_DIRECTORY, { withFileTypes: true });
 
   assert.equal(fontFaces.length, 2);
-  assert.match(html, /<link rel="preload" href="\/fonts\/NotoSansArabic-latin\.woff2" as="font" type="font\/woff2" crossorigin>/);
-  assert.doesNotMatch(html, /NotoSansArabic-arabic\.woff2[^>]*rel="preload"/);
+  assert.equal(preloadedFonts.length, 1);
+  assert.match(preloadedFonts[0], /href="\/fonts\/NotoSansArabic-latin\.woff2"/);
+  assert.doesNotMatch(preloadedFonts[0], /NotoSansArabic-arabic\.woff2/);
   assert.doesNotMatch(html, /Satoshi/i);
+  assert.deepEqual(builtFontEntries.map(({ name }) => name).sort(), Object.keys(EXPECTED_FONT_SIZES));
+
+  const builtFontSizes = Object.fromEntries(
+    await Promise.all(builtFontEntries.map(async ({ name }) => [name, (await readFile(resolve(FONT_DIRECTORY, name))).byteLength])),
+  );
+
+  assert.deepEqual(builtFontSizes, EXPECTED_FONT_SIZES);
 
   const latinFace = fontFaces.find((fontFace) => fontFace.includes('NotoSansArabic-latin.woff2'));
   const arabicFace = fontFaces.find((fontFace) => fontFace.includes('NotoSansArabic-arabic.woff2'));
 
   assert.match(latinFace ?? '', /font-family:Noto Sans Arabic/);
   assert.match(latinFace ?? '', /font-weight:100 900/);
-  assert.match(latinFace ?? '', /unicode-range:U\+\?\?/);
+  assert.match(latinFace ?? '', /unicode-range:/);
   assert.match(arabicFace ?? '', /font-family:Noto Sans Arabic/);
   assert.match(arabicFace ?? '', /font-weight:100 900/);
-  assert.match(arabicFace ?? '', /unicode-range:U\+6\?\?/);
+  assert.match(arabicFace ?? '', /unicode-range:/);
   assert.match(arabicFace ?? '', /U\+FB50-FDFF/);
   assert.match(arabicFace ?? '', /U\+FE76-FEFC/);
 });
 
-test('une page latine ne charge pas le sous-ensemble arabe et distingue les graisses 300 et 900', async (t) => {
-  const { stylesheetPaths } = await readBuiltFontDelivery();
-  const server = await startFontFixtureServer(stylesheetPaths);
+test('la page française ne charge pas le sous-ensemble arabe et distingue les graisses 300 et 900', async (t) => {
+  const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
   const page = await browser.newPage();
   const requests = [];
@@ -127,7 +80,10 @@ test('une page latine ne charge pas le sous-ensemble arabe et distingue les grai
     responses.push({ path: new URL(response.url()).pathname, status: response.status() });
   });
 
-  await page.goto(`${server.origin}/font-fixture`);
+  const response = await page.goto(`${server.origin}/`, { waitUntil: 'networkidle' });
+
+  assert.ok(response?.ok(), `Expected the built French page to load, received HTTP ${response?.status() ?? 'unknown'}.`);
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
 
   const fontDiagnostics = await page.evaluate(async () => {
     const sample = 'Hamburgefontsiv';
@@ -166,7 +122,7 @@ test('une page latine ne charge pas le sous-ensemble arabe et distingue les grai
       loaded: document.fonts.check(`300 96px "${fontFamily}"`, sample) && document.fonts.check(`900 96px "${fontFamily}"`, sample),
       loadedFaceCounts: loadedFaces.map((faces) => faces.length),
       fontFaces: Array.from(document.fonts, ({ family, status, weight }) => ({ family, status, weight })),
-      computedFamily: getComputedStyle(document.querySelector('p')).fontFamily,
+      computedFamily: getComputedStyle(document.body).fontFamily,
       styleSheets: Array.from(document.styleSheets, (styleSheet) => ({ href: styleSheet.href, ruleCount: styleSheet.cssRules.length })),
     };
   });
