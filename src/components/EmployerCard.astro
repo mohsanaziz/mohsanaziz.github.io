@@ -1,6 +1,7 @@
 ---
 import FactRow from '@/components/FactRow.astro';
 import StatusBadge from '@/components/StatusBadge.astro';
+import { TONE_BY_CONTRACT } from '@/components/status';
 import type { Contract } from '@/data/cv';
 import { CONTRACT_LABELS } from '@/i18n/format';
 
@@ -14,10 +15,6 @@ interface Props {
 }
 
 const { company, role, contract, period, duration, missionCount } = Astro.props;
-const TONE_BY_CONTRACT: Record<Contract, 'success' | 'cdi'> = {
-  freelance: 'success',
-  permanent: 'cdi',
-};
 const monogram = company
   .split(/\s+/)
   .map((word) => /^(\p{L})/u.exec(word)?.[1])

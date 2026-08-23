@@ -1,20 +1,14 @@
 ---
+import { STATUS_CLASSES_BY_TONE, type StatusTone } from '@/components/status';
+
 interface Props {
   label: string;
-  tone?: 'success' | 'cdi';
+  tone?: StatusTone;
 }
 
 const { label, tone = 'success' } = Astro.props;
 ---
 
-<span
-  class:list={[
-    'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold',
-    {
-      'border-status-success/45 bg-status-success/14 text-status-success': tone === 'success',
-      'border-status-cdi/45 bg-status-cdi/14 text-status-cdi': tone === 'cdi',
-    },
-  ]}
->
+<span class:list={['inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold', STATUS_CLASSES_BY_TONE[tone]]}>
   {label}
 </span>

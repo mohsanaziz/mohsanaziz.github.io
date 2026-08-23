@@ -1,4 +1,5 @@
-import { getPeriodDurationInMonths, sortByMostRecentPeriod, type Period } from '@/data/career';
+import { getPeriodDurationInMonths, sortByMostRecentPeriod } from './career.ts';
+import type { Period } from './period.ts';
 
 interface MissionEntry {
   id: string;
@@ -7,25 +8,25 @@ interface MissionEntry {
 
 export type MissionStatus = 'current' | 'delivered';
 
-export interface MissionSummaryData {
+export interface MissionSummaryData<TEmployerId extends string = string> {
   period: Period;
   durationInMonths: number;
   status: MissionStatus;
-  employerId: string;
+  employerId: TEmployerId;
   versionNumber: number;
 }
 
-export interface MissionReleaseData<TMission extends MissionEntry> {
-  mission: TMission;
-  summary: MissionSummaryData;
+export interface MissionReleaseData<TMissionId extends string = string, TEmployerId extends string = string> {
+  missionId: TMissionId;
+  summary: MissionSummaryData<TEmployerId>;
   showStatusBadge: boolean;
 }
 
-export function deriveMissionReleases<TMission extends MissionEntry>(
+export function deriveMissionReleases<TMission extends MissionEntry, TEmployerId extends string>(
   missions: readonly TMission[],
-  employersByMission: ReadonlyMap<string, string>,
+  employersByMission: ReadonlyMap<TMission['id'], TEmployerId>,
   currentDate = new Date(),
-): readonly MissionReleaseData<TMission>[] {
+): readonly MissionReleaseData<TMission['id'], TEmployerId>[] {
   const sortedMissions = sortByMostRecentPeriod(missions);
   const missionCount = sortedMissions.length;
 
@@ -38,7 +39,7 @@ export function deriveMissionReleases<TMission extends MissionEntry>(
     }
 
     return {
-      mission,
+      missionId: mission.id,
       summary: {
         period: mission.period,
         durationInMonths: getPeriodDurationInMonths(mission.period, currentDate),

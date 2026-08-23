@@ -7,9 +7,9 @@ import MissionRelease from '@/components/MissionRelease.astro';
 import ReleaseAsset from '@/components/ReleaseAsset.astro';
 import RepositoryHeader from '@/components/RepositoryHeader.astro';
 import SectionFrame from '@/components/SectionFrame.astro';
-import { countMissionsByEmployer, getCareerDurationInYears, getPeriodDurationInMonths, mapMissionsToEmployers } from '@/data/career';
+import { getPeriodDurationInMonths } from '@/data/career';
 import { cv } from '@/data/cv';
-import { deriveLanguageShares } from '@/data/languages';
+import { derivedCv } from '@/data/derived';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
 import { formatDurationInMonths, formatPeriod } from '@/i18n/format';
 import { buildMissionReleaseViews } from '@/i18n/views';
@@ -26,12 +26,14 @@ if (!githubOwner || !linkedinPath || !resumeFileName) {
   throw new Error('The profile and resume URLs must contain displayable paths.');
 }
 
-const languages = deriveLanguageShares(cv.clientProjects.entries);
-const currentDate = new Date();
-const careerDurationInYears = getCareerDurationInYears(cv.professionalExperience.entries, currentDate);
+const {
+  buildDate: currentDate,
+  careerDurationInYears,
+  languages,
+  missionCountsByEmployer,
+  missionReleases: structuralMissionReleases,
+} = derivedCv;
 const employerCount: number = cv.professionalExperience.entries.length;
-const employersByMission = mapMissionsToEmployers(cv.professionalExperience.entries, cv.clientProjects.entries);
-const missionCountsByEmployer = countMissionsByEmployer(cv.professionalExperience.entries, employersByMission);
 const employersWithMissionCounts = cv.professionalExperience.entries.map((experience) => {
   const missionCount = missionCountsByEmployer.get(experience.id);
 
@@ -45,12 +47,7 @@ const employerLabel = `${employerCount} ${employerCount === 1 ? 'employeur' : 'e
 const careerDurationLabel = `${careerDurationInYears} ${careerDurationInYears === 1 ? 'an' : 'ans'}`;
 const missionCount: number = cv.clientProjects.entries.length;
 const missionVersionLabel = `${missionCount} ${missionCount === 1 ? 'version' : 'versions'}`;
-const missionReleases = buildMissionReleaseViews(
-  cv.professionalExperience.entries,
-  cv.clientProjects.entries,
-  employersByMission,
-  currentDate,
-);
+const missionReleases = buildMissionReleaseViews(cv.professionalExperience.entries, cv.clientProjects.entries, structuralMissionReleases);
 ---
 
 <Layout title={cv.pageTitle} description={`${cv.profile.name} — ${cv.profile.jobTitle}`}>
