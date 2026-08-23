@@ -1,28 +1,20 @@
 ---
 import { mapMissionsToEmployers } from '@/data/career';
 import { cv } from '@/data/cv';
-import { deriveMissionReleases } from '@/data/missions';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
-import { CONTRACT_LABELS, formatMissionSummary, formatPeriod } from '@/i18n/format';
+import { CONTRACT_LABELS, formatPeriod } from '@/i18n/format';
+import { buildMissionReleaseViews } from '@/i18n/views';
 import Layout from '@/layouts/Layout.astro';
 
 const currentDate = new Date();
 const { githubProfile, linkedinProfile, profileLocation } = resolveProfileDetails(cv.profile);
 
 const employersByMission = mapMissionsToEmployers(cv.professionalExperience.entries, cv.clientProjects.entries);
-const employersById = new Map<string, (typeof cv.professionalExperience.entries)[number]>(
-  cv.professionalExperience.entries.map((employer) => [employer.id, employer]),
-);
-const missionReleases = deriveMissionReleases(cv.clientProjects.entries, employersByMission, currentDate).map(
-  ({ mission, summary, showStatusBadge }) => {
-    const employer = employersById.get(summary.employerId);
-
-    if (!employer) {
-      throw new Error(`The employer of the mission ${mission.title} is missing.`);
-    }
-
-    return { mission, employerId: summary.employerId, summary: formatMissionSummary(summary, mission, employer.title), showStatusBadge };
-  },
+const missionReleases = buildMissionReleaseViews(
+  cv.professionalExperience.entries,
+  cv.clientProjects.entries,
+  employersByMission,
+  currentDate,
 );
 const experienceGroups = cv.professionalExperience.entries.map((employer, index) => ({
   employer,
