@@ -27,8 +27,13 @@ export interface MissionSummaryView {
 }
 
 function formatPeriodBound(bound: string): string {
-  const [year, month] = bound.split('-').map(Number);
-  const label = PERIOD_BOUND_FORMATTER.format(new Date(Date.UTC(year, month - 1)));
+  const match = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(bound);
+
+  if (!match) {
+    throw new Error(`Invalid machine month, expected YYYY-MM: "${bound}"`);
+  }
+
+  const label = PERIOD_BOUND_FORMATTER.format(new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1)));
 
   return label.charAt(0).toLocaleUpperCase(LOCALE) + label.slice(1);
 }
