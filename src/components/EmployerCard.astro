@@ -2,6 +2,7 @@
 import FactRow from '@/components/FactRow.astro';
 import StatusBadge from '@/components/StatusBadge.astro';
 import type { Contract } from '@/data/cv';
+import { CONTRACT_LABELS } from '@/i18n/format';
 
 interface Props {
   company: string;
@@ -14,8 +15,8 @@ interface Props {
 
 const { company, role, contract, period, duration, missionCount } = Astro.props;
 const TONE_BY_CONTRACT: Record<Contract, 'success' | 'cdi'> = {
-  Freelance: 'success',
-  CDI: 'cdi',
+  freelance: 'success',
+  permanent: 'cdi',
 };
 const monogram = company
   .split(/\s+/)
@@ -42,7 +43,7 @@ const missionLabel = `${missionCount} ${missionCount === 1 ? 'mission' : 'missio
   </header>
 
   <dl class="mt-5 divide-y divide-rule border-t border-rule text-sm">
-    <FactRow label="Contrat"><StatusBadge label={contract} tone={TONE_BY_CONTRACT[contract]} /></FactRow>
+    <FactRow label="Contrat"><StatusBadge label={CONTRACT_LABELS[contract]} tone={TONE_BY_CONTRACT[contract]} /></FactRow>
     <FactRow label="Période">{period}</FactRow>
     <FactRow label="Durée">{duration}</FactRow>
     <FactRow label="Missions">{missionLabel}</FactRow>

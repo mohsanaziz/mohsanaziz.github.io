@@ -1,156 +1,94 @@
+export interface Period {
+  /** Machine month, `YYYY-MM`. */
+  start: string;
+  /** Machine month, `YYYY-MM`, or `null` while the period is ongoing. */
+  end: string | null;
+}
+
 interface PeriodEntry {
-  date: string;
+  period: Period;
 }
 
-interface ParsedPeriod {
-  start: number;
-  end: number;
-  isCurrent: boolean;
+interface IdentifiedPeriodEntry extends PeriodEntry {
+  id: string;
 }
 
-interface EmployerStart<TEmployer> {
-  employer: TEmployer;
-  start: number;
-}
+const MACHINE_MONTH_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/;
 
-const MONTHS = new Map(
-  ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'].map(
-    (month, index) => [normalize(month), index],
-  ),
-);
+function toMonthIndex(bound: string): number {
+  const match = MACHINE_MONTH_PATTERN.exec(bound);
 
-function normalize(value: string): string {
-  return value
-    .trim()
-    .toLocaleLowerCase('fr')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-}
-
-function isCurrentBound(normalizedBound: string): boolean {
-  return /^aujourd['’]hui$/.test(normalizedBound);
-}
-
-function parsePeriodBound(bound: string, currentDate = new Date()): number {
-  const normalizedBound = normalize(bound);
-
-  if (isCurrentBound(normalizedBound)) {
-    return currentDate.getFullYear() + currentDate.getMonth() / 12;
+  if (!match) {
+    throw new Error(`Invalid machine month, expected YYYY-MM: "${bound}"`);
   }
 
-  const match = /^(\p{L}+)\s+(\d{4})$/u.exec(normalizedBound);
-  const month = match?.[1] ? MONTHS.get(match[1]) : undefined;
-  const year = match?.[2] ? Number(match[2]) : Number.NaN;
-
-  if (month === undefined || !Number.isInteger(year)) {
-    throw new Error(`Borne de période invalide : « ${bound} »`);
-  }
-
-  return year + month / 12;
+  return Number(match[1]) * 12 + Number(match[2]) - 1;
 }
 
-function parsePeriod(period: string, currentDate = new Date()): ParsedPeriod {
-  const match = /^(.*?)\s+-\s+(.*?)$/.exec(period.trim());
-
-  if (!match?.[1] || !match[2]) {
-    throw new Error(`Période invalide : « ${period} »`);
-  }
-
-  return {
-    start: parsePeriodBound(match[1], currentDate),
-    end: parsePeriodBound(match[2], currentDate),
-    isCurrent: isCurrentBound(normalize(match[2])),
-  };
+function currentMonthIndex(currentDate: Date): number {
+  return currentDate.getFullYear() * 12 + currentDate.getMonth();
 }
 
-function getPeriodDurationInMonths(period: string, currentDate = new Date()): number {
-  const { start, end } = parsePeriod(period, currentDate);
-  return Math.max(1, Math.round((end - start) * 12));
+function endMonthIndex(period: Period, fallbackMonthIndex: number): number {
+  return period.end === null ? fallbackMonthIndex : toMonthIndex(period.end);
 }
 
-export function sortByMostRecentPeriod<TEntry extends PeriodEntry>(
-  entries: readonly TEntry[],
-  currentDate = new Date(),
-): readonly TEntry[] {
+export function getPeriodDurationInMonths(period: Period, currentDate = new Date()): number {
+  return Math.max(1, endMonthIndex(period, currentMonthIndex(currentDate)) - toMonthIndex(period.start));
+}
+
+export function sortByMostRecentPeriod<TEntry extends PeriodEntry>(entries: readonly TEntry[]): readonly TEntry[] {
   return [...entries].sort((first, second) => {
-    const firstPeriod = parsePeriod(first.date, currentDate);
-    const secondPeriod = parsePeriod(second.date, currentDate);
+    const startDifference = toMonthIndex(second.period.start) - toMonthIndex(first.period.start);
 
-    return secondPeriod.start - firstPeriod.start || secondPeriod.end - firstPeriod.end;
+    return (
+      startDifference || endMonthIndex(second.period, Number.POSITIVE_INFINITY) - endMonthIndex(first.period, Number.POSITIVE_INFINITY)
+    );
   });
 }
 
-export function isCurrentPeriod(period: string, currentDate = new Date()): boolean {
-  return parsePeriod(period, currentDate).isCurrent;
-}
-
-export function formatPeriodDuration(period: string, currentDate = new Date()): string {
-  const totalMonths = getPeriodDurationInMonths(period, currentDate);
-
-  if (totalMonths < 12) {
-    return `${totalMonths} mois`;
-  }
-
-  const years = Math.floor(totalMonths / 12);
-  const months = totalMonths % 12;
-  const formattedYears = `${years} ${years === 1 ? 'an' : 'ans'}`;
-
-  return months === 0 ? formattedYears : `${formattedYears} ${months} mois`;
-}
-
-function resolveEmployerForMission<TEmployer>(
-  mission: PeriodEntry,
-  employers: readonly EmployerStart<TEmployer>[],
-  currentDate = new Date(),
-): TEmployer {
-  const missionStart = parsePeriod(mission.date, currentDate).start;
-
-  const match = employers.reduce<EmployerStart<TEmployer> | undefined>((latestEmployer, employer) => {
-    if (employer.start > missionStart) {
-      return latestEmployer;
-    }
-
-    if (!latestEmployer) {
-      return employer;
-    }
-
-    return employer.start > latestEmployer.start ? employer : latestEmployer;
-  }, undefined);
-
-  if (!match) {
-    throw new Error(`Aucun employeur ne précède la mission datée « ${mission.date} »`);
-  }
-
-  return match.employer;
-}
-
-export function mapMissionsToEmployers<TEmployer extends PeriodEntry, TMission extends PeriodEntry>(
-  employers: readonly TEmployer[],
-  missions: readonly TMission[],
-  currentDate = new Date(),
-): ReadonlyMap<TMission, TEmployer> {
+export function mapMissionsToEmployers(
+  employers: readonly IdentifiedPeriodEntry[],
+  missions: readonly IdentifiedPeriodEntry[],
+): ReadonlyMap<string, string> {
   const employerStarts = employers.map((employer) => ({
-    employer,
-    start: parsePeriod(employer.date, currentDate).start,
+    id: employer.id,
+    start: toMonthIndex(employer.period.start),
   }));
 
-  return new Map(missions.map((mission) => [mission, resolveEmployerForMission(mission, employerStarts, currentDate)] as const));
+  return new Map(
+    missions.map((mission) => {
+      const missionStart = toMonthIndex(mission.period.start);
+      const employer = employerStarts
+        .filter(({ start }) => start <= missionStart)
+        .reduce<(typeof employerStarts)[number] | undefined>(
+          (latestEmployer, candidate) => (latestEmployer && latestEmployer.start >= candidate.start ? latestEmployer : candidate),
+          undefined,
+        );
+
+      if (!employer) {
+        throw new Error(`No employer starts before the mission "${mission.id}"`);
+      }
+
+      return [mission.id, employer.id] as const;
+    }),
+  );
 }
 
-export function countMissionsByEmployer<TEmployer, TMission extends PeriodEntry>(
-  employers: readonly TEmployer[],
-  employersByMission: ReadonlyMap<TMission, TEmployer>,
-): ReadonlyMap<TEmployer, number> {
-  const missionCounts = new Map<TEmployer, number>(employers.map((employer) => [employer, 0]));
+export function countMissionsByEmployer(
+  employers: readonly { id: string }[],
+  employersByMission: ReadonlyMap<string, string>,
+): ReadonlyMap<string, number> {
+  const missionCounts = new Map<string, number>(employers.map(({ id }) => [id, 0]));
 
-  for (const [mission, employer] of employersByMission) {
-    const currentCount = missionCounts.get(employer);
+  for (const [missionId, employerId] of employersByMission) {
+    const currentCount = missionCounts.get(employerId);
 
     if (currentCount === undefined) {
-      throw new Error(`Compteur introuvable pour l'employeur rattaché à la mission datée « ${mission.date} »`);
+      throw new Error(`Unknown employer "${employerId}" for the mission "${missionId}"`);
     }
 
-    missionCounts.set(employer, currentCount + 1);
+    missionCounts.set(employerId, currentCount + 1);
   }
 
   return missionCounts;
@@ -161,9 +99,9 @@ export function getCareerDurationInYears(employers: readonly PeriodEntry[], curr
     return 0;
   }
 
-  const periods = employers.map(({ date }) => parsePeriod(date, currentDate));
-  const firstStart = Math.min(...periods.map(({ start }) => start));
-  const lastEnd = Math.max(...periods.map(({ end }) => end));
+  const nowIndex = currentMonthIndex(currentDate);
+  const firstStart = Math.min(...employers.map(({ period }) => toMonthIndex(period.start)));
+  const lastEnd = Math.max(...employers.map(({ period }) => endMonthIndex(period, nowIndex)));
 
-  return Math.floor(Math.max(0, Math.round((lastEnd - firstStart) * 12)) / 12);
+  return Math.floor(Math.max(0, lastEnd - firstStart) / 12);
 }
