@@ -33,6 +33,8 @@
     U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* Google includes shared joiners and punctuation in its Arabic subset. Keep them for Arabic shaping;
+   the real French-page browser test guards against activating this face without Arabic content. */
 @font-face {
   font-family: 'Noto Sans Arabic';
   src: url('/fonts/NotoSansArabic-arabic.woff2') format('woff2');
