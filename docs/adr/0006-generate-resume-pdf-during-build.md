@@ -1,6 +1,6 @@
 # ADR 0006 — Générer le PDF du CV pendant le build
 
-- Statut : accepté
+- Statut : accepté, partiellement remplacé par l’[ADR 0007](0007-i18n-rtl.md)
 - Date : 2026-08-20
 
 ## Contexte
