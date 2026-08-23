@@ -7,11 +7,12 @@ import MissionRelease from '@/components/MissionRelease.astro';
 import ReleaseAsset from '@/components/ReleaseAsset.astro';
 import RepositoryHeader from '@/components/RepositoryHeader.astro';
 import SectionFrame from '@/components/SectionFrame.astro';
-import { countMissionsByEmployer, formatPeriodDuration, getCareerDurationInYears, mapMissionsToEmployers } from '@/data/career';
+import { countMissionsByEmployer, getCareerDurationInYears, getPeriodDurationInMonths, mapMissionsToEmployers } from '@/data/career';
 import { cv } from '@/data/cv';
 import { deriveLanguageShares } from '@/data/languages';
 import { deriveMissionReleases } from '@/data/missions';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
+import { formatDurationInMonths, formatMissionSummary, formatPeriod } from '@/i18n/format';
 import Layout from '@/layouts/Layout.astro';
 import packageMetadata from '@package';
 
@@ -29,10 +30,10 @@ const languages = deriveLanguageShares(cv.clientProjects.entries);
 const currentDate = new Date();
 const careerDurationInYears = getCareerDurationInYears(cv.professionalExperience.entries, currentDate);
 const employerCount: number = cv.professionalExperience.entries.length;
-const employersByMission = mapMissionsToEmployers(cv.professionalExperience.entries, cv.clientProjects.entries, currentDate);
+const employersByMission = mapMissionsToEmployers(cv.professionalExperience.entries, cv.clientProjects.entries);
 const missionCountsByEmployer = countMissionsByEmployer(cv.professionalExperience.entries, employersByMission);
 const employersWithMissionCounts = cv.professionalExperience.entries.map((experience) => {
-  const missionCount = missionCountsByEmployer.get(experience);
+  const missionCount = missionCountsByEmployer.get(experience.id);
 
   if (missionCount === undefined) {
     throw new Error(`The mission count is missing for ${experience.title}.`);
@@ -44,7 +45,20 @@ const employerLabel = `${employerCount} ${employerCount === 1 ? 'employeur' : 'e
 const careerDurationLabel = `${careerDurationInYears} ${careerDurationInYears === 1 ? 'an' : 'ans'}`;
 const missionCount: number = cv.clientProjects.entries.length;
 const missionVersionLabel = `${missionCount} ${missionCount === 1 ? 'version' : 'versions'}`;
-const missionReleases = deriveMissionReleases(cv.clientProjects.entries, employersByMission, currentDate);
+const employersById = new Map<string, (typeof cv.professionalExperience.entries)[number]>(
+  cv.professionalExperience.entries.map((employer) => [employer.id, employer]),
+);
+const missionReleases = deriveMissionReleases(cv.clientProjects.entries, employersByMission, currentDate).map(
+  ({ mission, summary, showStatusBadge }) => {
+    const employer = employersById.get(summary.employerId);
+
+    if (!employer) {
+      throw new Error(`The employer of the mission ${mission.title} is missing.`);
+    }
+
+    return { mission, summary: formatMissionSummary(summary, mission, employer.title), showStatusBadge };
+  },
+);
 ---
 
 <Layout title={cv.pageTitle} description={`${cv.profile.name} — ${cv.profile.jobTitle}`}>
@@ -77,8 +91,8 @@ const missionReleases = deriveMissionReleases(cv.clientProjects.entries, employe
                   company={experience.title}
                   role={experience.subtitle}
                   contract={experience.contract}
-                  period={experience.date}
-                  duration={formatPeriodDuration(experience.date, currentDate)}
+                  period={formatPeriod(experience.period)}
+                  duration={formatDurationInMonths(getPeriodDurationInMonths(experience.period, currentDate))}
                   missionCount={missionCount}
                 />
               ))

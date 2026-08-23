@@ -1,5 +1,5 @@
 interface ContactDetail {
-  title: string;
+  id: string;
 }
 
 interface SocialLink {
@@ -18,7 +18,7 @@ export function resolveProfileDetails<TContactDetail extends ContactDetail, TSoc
   linkedinProfile: TSocialLink;
   profileLocation: TContactDetail;
 } {
-  const profileLocation = profile.contactDetails.find(({ title }) => title === 'Location');
+  const profileLocation = profile.contactDetails.find(({ id }) => id === 'location');
   const githubProfile = profile.socialLinks.find(({ href }) => new URL(href).hostname === 'github.com');
   const linkedinProfile = profile.socialLinks.find(({ href }) => new URL(href).hostname.endsWith('linkedin.com'));
 

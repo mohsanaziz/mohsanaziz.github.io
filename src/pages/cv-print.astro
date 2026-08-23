@@ -3,19 +3,33 @@ import { mapMissionsToEmployers } from '@/data/career';
 import { cv } from '@/data/cv';
 import { deriveMissionReleases } from '@/data/missions';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
+import { CONTRACT_LABELS, formatMissionSummary, formatPeriod } from '@/i18n/format';
 import Layout from '@/layouts/Layout.astro';
 
 const currentDate = new Date();
 const { githubProfile, linkedinProfile, profileLocation } = resolveProfileDetails(cv.profile);
 
-const employersByMission = mapMissionsToEmployers(cv.professionalExperience.entries, cv.clientProjects.entries, currentDate);
-const missionReleases = deriveMissionReleases(cv.clientProjects.entries, employersByMission, currentDate);
+const employersByMission = mapMissionsToEmployers(cv.professionalExperience.entries, cv.clientProjects.entries);
+const employersById = new Map<string, (typeof cv.professionalExperience.entries)[number]>(
+  cv.professionalExperience.entries.map((employer) => [employer.id, employer]),
+);
+const missionReleases = deriveMissionReleases(cv.clientProjects.entries, employersByMission, currentDate).map(
+  ({ mission, summary, showStatusBadge }) => {
+    const employer = employersById.get(summary.employerId);
+
+    if (!employer) {
+      throw new Error(`The employer of the mission ${mission.title} is missing.`);
+    }
+
+    return { mission, employerId: summary.employerId, summary: formatMissionSummary(summary, mission, employer.title), showStatusBadge };
+  },
+);
 const experienceGroups = cv.professionalExperience.entries.map((employer, index) => ({
   employer,
-  employerId: `employer-${index}`,
-  releases: missionReleases.filter(({ mission }) => employersByMission.get(mission) === employer),
+  headingId: `employer-${index}`,
+  releases: missionReleases.filter((release) => release.employerId === employer.id),
 }));
-const contactDetails = cv.profile.contactDetails.filter(({ title }) => title !== 'Location');
+const contactDetails = cv.profile.contactDetails.filter(({ id }) => id !== 'location');
 const socialProfiles = [
   { label: 'GitHub', value: urlPathSegments(githubProfile.href).join('/'), href: githubProfile.href },
   { label: 'LinkedIn', value: urlPathSegments(linkedinProfile.href).join('/'), href: linkedinProfile.href },
@@ -64,24 +78,24 @@ const socialProfiles = [
 
       <div class="experience-content">
         {
-          experienceGroups.map(({ employer, employerId, releases }) => (
-            <section class="employer-group" aria-labelledby={employerId}>
+          experienceGroups.map(({ employer, headingId, releases }) => (
+            <section class="employer-group" aria-labelledby={headingId}>
               <header class="employer-banner">
                 <div class="employer-heading">
-                  <h3 id={employerId}>{employer.title}</h3>
+                  <h3 id={headingId}>{employer.title}</h3>
                   <span
                     class:list={[
                       'badge',
-                      employer.contract === 'CDI'
+                      employer.contract === 'permanent'
                         ? 'border-status-cdi/45 bg-status-cdi/14 text-status-cdi'
                         : 'border-status-success/45 bg-status-success/14 text-status-success',
                     ]}
                   >
-                    {employer.contract}
+                    {CONTRACT_LABELS[employer.contract]}
                   </span>
                 </div>
                 <p>{employer.subtitle}</p>
-                <p>{employer.date}</p>
+                <p>{formatPeriod(employer.period)}</p>
               </header>
 
               <div class="missions">
