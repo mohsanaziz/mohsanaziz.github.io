@@ -140,3 +140,34 @@ test('la page française ne charge pas le sous-ensemble arabe et distingue les g
   );
   assert.ok(!requests.some(({ path }) => path === '/fonts/NotoSansArabic-arabic.woff2'));
 });
+
+test('le sous-ensemble arabe est chargé sur /ar/ et sur elle seule', async (t) => {
+  const server = await startBuildServer(DIST_DIRECTORY);
+  const browser = await chromium.launch();
+
+  t.after(async () => {
+    await browser.close();
+    await server.close();
+  });
+
+  for (const path of ['/', '/en/', '/ar/']) {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const fontRequests = [];
+
+    page.on('request', (request) => {
+      if (request.resourceType() === 'font') fontRequests.push(new URL(request.url()).pathname);
+    });
+
+    await page.goto(`${server.origin}${path}`, { waitUntil: 'networkidle' });
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+
+    assert.equal(
+      fontRequests.includes('/fonts/NotoSansArabic-arabic.woff2'),
+      path === '/ar/',
+      `Expected Arabic font delivery only on /ar/, received ${JSON.stringify({ path, fontRequests })}.`,
+    );
+
+    await context.close();
+  }
+});
