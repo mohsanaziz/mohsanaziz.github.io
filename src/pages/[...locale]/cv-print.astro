@@ -4,8 +4,11 @@ import { cv } from '@/data/cv';
 import { derivedCv } from '@/data/derived';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
 import { CONTRACT_LABELS, formatPeriod } from '@/i18n/format';
+import { localeStaticPaths } from '@/i18n/routing';
 import { buildMissionReleaseViews } from '@/i18n/views';
 import Layout from '@/layouts/Layout.astro';
+
+export const getStaticPaths = localeStaticPaths;
 
 const { githubProfile, linkedinProfile, profileLocation } = resolveProfileDetails(cv.profile);
 

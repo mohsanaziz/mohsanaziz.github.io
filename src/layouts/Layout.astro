@@ -1,4 +1,6 @@
 ---
+import { isLocale } from '@/i18n/locales';
+import { localeDirection } from '@/i18n/routing';
 import '@/styles/main.css';
 
 interface Props {
@@ -8,10 +10,18 @@ interface Props {
 }
 
 const { title, description, robots } = Astro.props;
+const locale = Astro.currentLocale;
+
+if (!isLocale(locale)) {
+  throw new Error(`The layout is rendered for an unknown locale: ${locale}.`);
+}
+
+// `dir` is only emitted for right-to-left locales so that the left-to-right pages keep their exact markup.
+const direction = localeDirection(locale);
 ---
 
 <!doctype html>
-<html lang="fr" class="h-full scroll-smooth">
+<html lang={locale} dir={direction === 'rtl' ? direction : undefined} class="h-full scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
