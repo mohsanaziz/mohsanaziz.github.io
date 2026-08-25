@@ -1,53 +1,58 @@
 ---
+import { GITHUB_LEXICON } from '@/components/lexicon';
 import { STATUS_CLASSES_BY_TONE, TONE_BY_CONTRACT } from '@/components/status';
-import { cv } from '@/data/cv';
 import { derivedCv } from '@/data/derived';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
-import { CONTRACT_LABELS, formatPeriod } from '@/i18n/format';
 import { localeStaticPaths } from '@/i18n/routing';
-import { buildMissionReleaseViews } from '@/i18n/views';
+import { useTranslations } from '@/i18n/translate';
+import { buildMissionReleaseViews, cvView } from '@/i18n/views';
 import Layout from '@/layouts/Layout.astro';
 
 export const getStaticPaths = localeStaticPaths;
 
-const { githubProfile, linkedinProfile, profileLocation } = resolveProfileDetails(cv.profile);
+const translate = useTranslations(Astro.currentLocale);
+const { print } = translate.messages;
+const cv = cvView(translate.locale);
 
-const missionReleases = buildMissionReleaseViews(cv.professionalExperience.entries, cv.clientProjects.entries, derivedCv.missionReleases);
+const { profileLocation } = resolveProfileDetails(cv.profile);
+
+const missionReleases = buildMissionReleaseViews(translate, cv, derivedCv.missionReleases);
 const experienceGroups = cv.professionalExperience.entries.map((employer, index) => ({
   employer,
   headingId: `employer-${index}`,
   releases: missionReleases.filter((release) => release.employerId === employer.id),
 }));
 const contactDetails = cv.profile.contactDetails.filter(({ id }) => id !== 'location');
-const socialProfiles = [
-  { label: 'GitHub', value: urlPathSegments(githubProfile.href).join('/'), href: githubProfile.href },
-  { label: 'LinkedIn', value: urlPathSegments(linkedinProfile.href).join('/'), href: linkedinProfile.href },
-] as const;
+const socialProfiles = cv.profile.socialLinks.map((link) => ({
+  label: link.label,
+  value: urlPathSegments(link.href).join('/'),
+  href: link.href,
+}));
 ---
 
-<Layout title={`${cv.profile.name} — CV imprimable`} description={`${cv.profile.name} — ${cv.profile.jobTitle}`} robots="noindex, nofollow">
+<Layout title={cv.metadata.printablePageTitle} description={cv.metadata.pageDescription} robots="noindex, nofollow">
   <main class="print-document">
-    <section class="print-frame" aria-label="README.md">
+    <section class="print-frame" aria-label={GITHUB_LEXICON.readme}>
       <header class="frame-header">
-        <span class="frame-title">README.md</span>
+        <span class="frame-title">{GITHUB_LEXICON.readme}</span>
       </header>
 
       <div class="readme-content">
         <h1>{cv.profile.name}</h1>
         <p class="profile-summary">{cv.profile.jobTitle} <span aria-hidden="true">·</span> {profileLocation.info}</p>
 
-        <ul class="contact-line" aria-label="Coordonnées">
+        <ul class="contact-line" aria-label={print.contactDetails}>
           {
             contactDetails.map((detail) => (
               <li>
-                <strong>{detail.title} :</strong> {detail.info}
+                <strong>{translate.fieldLabel(detail.title)}</strong> {detail.info}
               </li>
             ))
           }
           {
             socialProfiles.map((profile) => (
               <li>
-                <strong>{profile.label} :</strong> <a href={profile.href}>{profile.value}</a>
+                <strong>{translate.fieldLabel(profile.label)}</strong> <a href={profile.href}>{profile.value}</a>
               </li>
             ))
           }
@@ -62,7 +67,7 @@ const socialProfiles = [
 
     <section class="print-frame experience-frame" aria-labelledby="experience-title">
       <header class="frame-header">
-        <h2 id="experience-title">Expérience &amp; projets client</h2>
+        <h2 id="experience-title">{print.experienceAndClientProjects}</h2>
       </header>
 
       <div class="experience-content">
@@ -71,13 +76,13 @@ const socialProfiles = [
             <section class="employer-group" aria-labelledby={headingId}>
               <header class="employer-banner">
                 <div class="employer-heading">
-                  <h3 id={headingId}>{employer.title}</h3>
+                  <h3 id={headingId}>{employer.name}</h3>
                   <span class:list={['badge', STATUS_CLASSES_BY_TONE[TONE_BY_CONTRACT[employer.contract]]]}>
-                    {CONTRACT_LABELS[employer.contract]}
+                    {translate.contract(employer.contract)}
                   </span>
                 </div>
-                <p>{employer.subtitle}</p>
-                <p>{formatPeriod(employer.period)}</p>
+                <p>{employer.jobTitle}</p>
+                <p>{translate.period(employer.period)}</p>
               </header>
 
               <div class="missions">
@@ -85,15 +90,15 @@ const socialProfiles = [
                   <article class="mission-release">
                     <header class="mission-header">
                       <code>{summary.version}</code>
-                      <h4>{mission.title}</h4>
+                      <h4>{mission.name}</h4>
                       {showStatusBadge && (
-                        <span class="badge border-status-success/45 bg-status-success/14 text-status-success">Latest</span>
+                        <span class="badge border-status-success/45 bg-status-success/14 text-status-success">{GITHUB_LEXICON.latest}</span>
                       )}
                       <p class="mission-period">{summary.period}</p>
                     </header>
 
                     <p class="mission-client">
-                      <strong>Client :</strong> {summary.client}
+                      <strong>{translate.fieldLabel(print.client)}</strong> {summary.client}
                     </p>
                     <div class="mission-description">
                       {mission.description.map((paragraph) => (
@@ -101,7 +106,7 @@ const socialProfiles = [
                       ))}
                     </div>
                     <p class="mission-environment">
-                      <strong>Environnement :</strong> {summary.technologies.join(', ')}
+                      <strong>{translate.fieldLabel(print.environment)}</strong> {summary.technologies.join(', ')}
                     </p>
                   </article>
                 ))}
