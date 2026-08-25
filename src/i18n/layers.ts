@@ -55,10 +55,17 @@ function mergeWithFallback<TValue>(fallback: TValue, partial: PartialLocaleCv | 
   return merged as TValue;
 }
 
+// Partial layers are completed once at module initialization. Keeping the resolved value typed as a
+// LocaleLayer makes it impossible for localeLayer() to expose an incomplete CV at compile time.
+const RESOLVED_ARABIC_LAYER = {
+  messages: ar.messages,
+  cv: mergeWithFallback(fr.cv, ar.cv),
+} as const satisfies LocaleLayer;
+
 // The CV content, unlike the messages, is read through its schema: the merge needs completeness, not literals.
 export function localeLayer(locale: Locale): { readonly messages: Messages; readonly cv: LocaleCv } {
   if (locale === 'ar') {
-    return { messages: ar.messages, cv: mergeWithFallback(fr.cv, ar.cv) };
+    return RESOLVED_ARABIC_LAYER;
   }
 
   return LOCALE_LAYERS[locale].layer;

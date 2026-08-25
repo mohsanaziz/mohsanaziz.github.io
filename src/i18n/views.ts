@@ -13,7 +13,8 @@ import type { Period } from '../data/period.ts';
 import type { LocaleCv } from './content.ts';
 import { formatDigits } from './format.ts';
 import { localeLayer } from './layers.ts';
-import type { Locale } from './locales.ts';
+import { localeFormatting, type Locale } from './locales.ts';
+import { resumeFileName, resumePath } from './routing.ts';
 import type { Translator } from './translate.ts';
 
 // The invariant core and a locale layer meet here, and nowhere else: pages and components read view models
@@ -77,11 +78,19 @@ export interface MissionReleaseView {
   showStatusBadge: boolean;
 }
 
+export interface ReleaseAssetView {
+  version: string;
+  href: string;
+  fileName: string;
+}
+
 function resolveClient(client: ClientReference, institutions: LocaleCv['institutions']): string {
   return 'institution' in client ? institutions[client.institution] : client.organisation;
 }
 
 function localizeDisplayStrings<TValue>(locale: Locale, value: TValue): TValue {
+  if (localeFormatting(locale).numberingSystem === 'latn') return value;
+
   if (typeof value === 'string') {
     return formatDigits(locale, value) as TValue;
   }
@@ -97,7 +106,11 @@ function localizeDisplayStrings<TValue>(locale: Locale, value: TValue): TValue {
   return value;
 }
 
-function phoneHref(info: string): string {
+function contactHref(id: ContactDetailId, info: string): string | undefined {
+  if (id === 'email') return `mailto:${info}`;
+
+  if (id !== 'phone') return undefined;
+
   const digits = info.replace(/\D/g, '');
   const internationalNumber = digits.startsWith('0') ? `+33${digits.slice(1)}` : `+${digits}`;
 
@@ -124,12 +137,14 @@ export function cvView(locale: Locale): CvView {
           throw new Error(`The contact detail "${detail.id}" has no information in the "${locale}" layer.`);
         }
 
+        const href = contactHref(detail.id, info);
+
         return {
           id: detail.id,
           title: text.title,
           info: formatDigits(locale, info),
           icon: detail.icon,
-          ...(detail.id === 'phone' ? { href: phoneHref(info) } : {}),
+          ...(href === undefined ? {} : { href }),
         };
       }),
       resume: { ...cv.profile.resume, text: content.profile.resume.text },
@@ -164,6 +179,14 @@ export function cvView(locale: Locale): CvView {
         };
       }),
     },
+  };
+}
+
+export function releaseAssetView(locale: Locale, packageVersion: string): ReleaseAssetView {
+  return {
+    version: formatDigits(locale, `v${packageVersion}`),
+    href: resumePath(locale),
+    fileName: resumeFileName(locale),
   };
 }
 
