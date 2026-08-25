@@ -13,6 +13,7 @@ test('formatPeriod rend une période close dans la locale courante via Intl', ()
   assert.equal(french.period({ start: '2016-05', end: '2019-09' }), 'Mai 2016 - Septembre 2019');
   assert.equal(french.period({ start: '2020-02', end: '2021-12' }), 'Février 2020 - Décembre 2021');
   assert.equal(english.period({ start: '2016-05', end: '2019-09' }), 'May 2016 - September 2019');
+  assert.equal(arabic.period({ start: '2016-05', end: '2019-09' }), 'مايو ٢٠١٦ - سبتمبر ٢٠١٩');
 });
 
 test('formatPeriod rend une période en cours avec la borne du calque', () => {

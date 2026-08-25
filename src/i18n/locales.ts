@@ -12,6 +12,22 @@ export const LOCALE_ENDONYMS = {
   ar: 'العربية',
 } as const satisfies Record<Locale, string>;
 
+interface LocaleFormatting {
+  readonly intlLocale: string;
+  readonly numberingSystem: 'latn' | 'arab';
+}
+
+const LOCALE_FORMATTING = {
+  fr: { intlLocale: 'fr', numberingSystem: 'latn' },
+  en: { intlLocale: 'en', numberingSystem: 'latn' },
+  // Pin both choices instead of relying on the build machine's Arabic defaults.
+  ar: { intlLocale: 'ar-u-ca-gregory-nu-arab', numberingSystem: 'arab' },
+} as const satisfies Record<Locale, LocaleFormatting>;
+
+export function localeFormatting(locale: Locale): LocaleFormatting {
+  return LOCALE_FORMATTING[locale];
+}
+
 export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
 }
