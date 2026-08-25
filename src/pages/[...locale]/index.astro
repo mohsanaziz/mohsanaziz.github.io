@@ -83,7 +83,7 @@ const missionReleases = buildMissionReleaseViews(translate, cv, structuralMissio
 
             <div class="mt-6 border-t border-rule pt-6">
               <h2 class="text-xl font-semibold text-copy">{cv.about.title}</h2>
-              <div class={`mt-4 flex flex-col gap-4 ${translate.locale === 'ar' ? 'leading-[2.112]' : 'leading-7'} text-copy-muted`}>
+              <div class="cv-prose mt-4 flex flex-col gap-4 leading-7 text-copy-muted">
                 {cv.about.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
               </div>
             </div>
