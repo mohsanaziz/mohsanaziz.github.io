@@ -17,7 +17,7 @@ const options = LOCALES.map((locale) => {
   return {
     locale,
     endonym: LOCALE_ENDONYMS[locale],
-    direction: currentLocale === 'ar' && direction === 'ltr' ? undefined : direction,
+    direction: currentLocale === 'ar' && direction === 'ltr' ? 'auto' : direction,
     href: getRelativeLocaleUrl(locale),
     current: locale === currentLocale,
     isDefault: locale === DEFAULT_LOCALE,
