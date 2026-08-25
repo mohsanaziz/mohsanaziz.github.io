@@ -11,15 +11,19 @@ import { useTranslations } from '@/i18n/translate';
 const translate = useTranslations(Astro.currentLocale);
 const currentLocale = translate.locale;
 const { languageSelector } = translate.messages;
-const options = LOCALES.map((locale) => ({
-  locale,
-  endonym: LOCALE_ENDONYMS[locale],
-  direction: localeDirection(locale),
-  href: getRelativeLocaleUrl(locale),
-  current: locale === currentLocale,
-  isDefault: locale === DEFAULT_LOCALE,
-  interfaceOnly: localeContentCoverage(locale) === 'interface-only',
-}));
+const options = LOCALES.map((locale) => {
+  const direction = localeDirection(locale);
+
+  return {
+    locale,
+    endonym: LOCALE_ENDONYMS[locale],
+    direction: currentLocale === 'ar' && direction === 'ltr' ? undefined : direction,
+    href: getRelativeLocaleUrl(locale),
+    current: locale === currentLocale,
+    isDefault: locale === DEFAULT_LOCALE,
+    interfaceOnly: localeContentCoverage(locale) === 'interface-only',
+  };
+});
 const current = { endonym: LOCALE_ENDONYMS[currentLocale], direction: localeDirection(currentLocale) };
 ---
 

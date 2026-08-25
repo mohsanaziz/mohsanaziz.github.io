@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { cv } from '../src/data/cv.ts';
+import * as ar from '../src/i18n/ar.ts';
 import * as en from '../src/i18n/en.ts';
 import * as fr from '../src/i18n/fr.ts';
 import { localeContentCoverage, localeLayer } from '../src/i18n/layers.ts';
@@ -117,6 +118,37 @@ test('les coordonnées invariantes viennent du noyau, les autres du calque', () 
   assert.equal(detailOf(cvView('en'), 'birthdate')?.info, '19 October 1989');
 });
 
-test('la locale arabe retombe sur le calque français en attendant le sien', () => {
-  assert.deepEqual(localeLayer('ar'), localeLayer('fr'));
+test('le calque arabe traduit l’interface et complète son contenu partiel depuis le français', () => {
+  const arabic = localeLayer('ar');
+
+  assert.equal(ar.cv.about?.paragraphs, undefined, 'Expected prose to stay absent from the partial Arabic layer.');
+  assert.equal(arabic.messages.labels.period, 'الفترة');
+  assert.equal(arabic.cv.about.title, 'نبذة');
+  assert.deepEqual(arabic.cv.about.paragraphs, fr.cv.about.paragraphs);
+});
+
+test('la vue arabe localise les chiffres affichés tout en conservant les cibles ASCII', () => {
+  const arabic = cvView('ar');
+  const phone = arabic.profile.contactDetails.find(({ id }) => id === 'phone');
+  const birthdate = arabic.profile.contactDetails.find(({ id }) => id === 'birthdate');
+  const portalis = arabic.clientProjects.entries.find(({ id }) => id === 'portalisV3');
+
+  assert.deepEqual(
+    {
+      name: arabic.profile.name,
+      alternateName: arabic.profile.alternateName,
+      phone,
+      birthdate: birthdate?.info,
+      project: portalis?.name,
+      fallbackParagraph: arabic.about.paragraphs[0],
+    },
+    {
+      name: 'محسن عزيز',
+      alternateName: 'Mohsan AZIZ',
+      phone: { id: 'phone', title: 'الهاتف', info: '٠٦.٢٨.٧٤.٦١.٧٦', icon: 'phone', href: 'tel:+33628746176' },
+      birthdate: '١٩ Octobre ١٩٨٩',
+      project: 'PORTALIS V٣',
+      fallbackParagraph: fr.cv.about.paragraphs[0],
+    },
+  );
 });

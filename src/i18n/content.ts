@@ -36,3 +36,12 @@ export interface LocaleCv {
     readonly entries: { readonly [Id in ClientProjectId]: NameOverride & { readonly description: readonly string[] } };
   };
 }
+
+type DeepPartial<TValue> = TValue extends readonly unknown[]
+  ? TValue
+  : TValue extends object
+    ? { readonly [Key in keyof TValue]?: DeepPartial<TValue[Key]> }
+    : TValue;
+
+/** A locale may override any CV leaf while inheriting every omitted value from French. */
+export type PartialLocaleCv = DeepPartial<LocaleCv>;

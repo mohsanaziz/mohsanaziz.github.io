@@ -7,6 +7,7 @@ import { cvView, buildMissionReleaseViews } from '../src/i18n/views.ts';
 
 const french = useTranslations('fr');
 const english = useTranslations('en');
+const arabic = useTranslations('ar');
 
 test('formatPeriod rend une période close dans la locale courante via Intl', () => {
   assert.equal(french.period({ start: '2016-05', end: '2019-09' }), 'Mai 2016 - Septembre 2019');
@@ -47,7 +48,18 @@ test('les jetons de contrat et de statut sont traduits par table, pas par libell
 });
 
 test('formatVersion rend un numéro structurel en étiquette de version', () => {
-  assert.equal(formatVersion(6), 'v6.0.0');
+  assert.equal(formatVersion('fr', 6), 'v6.0.0');
+});
+
+test('le traducteur arabe rend la version avec des chiffres arabes', () => {
+  assert.equal(arabic.version(6), 'v٦.٠.٠');
+});
+
+test('les six catégories de pluriel arabes rendent leurs formes avec des chiffres arabes', () => {
+  assert.deepEqual(
+    [0, 1, 2, 3, 11, 100].map((count) => arabic.count('version', count)),
+    ['٠ إصدار', '١ إصدار', '٢ إصداران', '٣ إصدارات', '١١ إصدارًا', '١٠٠ إصدار'],
+  );
 });
 
 test('buildMissionReleaseViews assemble la vue affichable d’un résumé structurel', () => {
