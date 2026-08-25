@@ -107,6 +107,7 @@ test('le sélecteur relie les trois pages publiques avec des endonymes accessibl
       const endonymOf = (element) => element.querySelector('[lang][dir]');
 
       return {
+        accessibleLabel: details.querySelector('summary .sr-only')?.textContent,
         summaryEndonym: endonymOf(details.querySelector('summary'))?.textContent?.trim(),
         title: details.querySelector(':scope > div > p')?.textContent?.trim(),
         options: Array.from(details.querySelectorAll('a[hreflang]'), (link) => {
@@ -127,7 +128,9 @@ test('le sélecteur relie les trois pages publiques avec des endonymes accessibl
       };
     });
 
-    const messages = useTranslations(locale).messages.languageSelector;
+    const translate = useTranslations(locale);
+    const messages = translate.messages.languageSelector;
+    assert.equal(selector.accessibleLabel, `${translate.fieldLabel(messages.switchLanguage)} `);
     assert.equal(selector.summaryEndonym, expectedOptions.find((option) => option.locale === locale)?.endonym);
     assert.equal(selector.title, messages.switchLanguage);
     assert.deepEqual(
