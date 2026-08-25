@@ -5,6 +5,13 @@ export type Locale = (typeof LOCALES)[number];
 
 export const DEFAULT_LOCALE = 'fr' satisfies Locale;
 
+// Locale-owned labels are invariant across the page displaying them and reusable outside the selector.
+export const LOCALE_ENDONYMS = {
+  fr: 'Français',
+  en: 'English',
+  ar: 'العربية',
+} as const satisfies Record<Locale, string>;
+
 export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
 }

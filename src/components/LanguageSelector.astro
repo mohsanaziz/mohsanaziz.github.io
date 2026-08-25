@@ -2,32 +2,25 @@
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import Icon from '@/components/Icon.astro';
 import { GITHUB_LEXICON } from '@/components/lexicon';
-import { DEFAULT_LOCALE, LOCALES, requireLocale, type Locale } from '@/i18n/locales';
+import ShellBadge from '@/components/ShellBadge.astro';
+import { localeContentCoverage } from '@/i18n/layers';
+import { DEFAULT_LOCALE, LOCALE_ENDONYMS, LOCALES } from '@/i18n/locales';
 import { localeDirection } from '@/i18n/routing';
 import { useTranslations } from '@/i18n/translate';
 
-const ENDONYMS = {
-  fr: 'Français',
-  en: 'English',
-  ar: 'العربية',
-} as const satisfies Record<Locale, string>;
-
-const currentLocale = requireLocale(Astro.currentLocale);
-const { languageSelector } = useTranslations(currentLocale).messages;
+const translate = useTranslations(Astro.currentLocale);
+const currentLocale = translate.locale;
+const { languageSelector } = translate.messages;
 const options = LOCALES.map((locale) => ({
   locale,
-  endonym: ENDONYMS[locale],
+  endonym: LOCALE_ENDONYMS[locale],
   direction: localeDirection(locale),
   href: getRelativeLocaleUrl(locale),
   current: locale === currentLocale,
   isDefault: locale === DEFAULT_LOCALE,
-  interfaceOnly: locale === 'ar',
+  interfaceOnly: localeContentCoverage(locale) === 'interface-only',
 }));
-const current = options.find((option) => option.current);
-
-if (!current) {
-  throw new Error(`The language selector has no option for the current locale “${currentLocale}”.`);
-}
+const current = { endonym: LOCALE_ENDONYMS[currentLocale], direction: localeDirection(currentLocale) };
 ---
 
 <details class="relative">
@@ -35,8 +28,8 @@ if (!current) {
     class="flex cursor-pointer list-none items-center gap-2 rounded-md border border-frame-border bg-page px-3 py-1.5 text-sm font-medium text-copy [&::-webkit-details-marker]:hidden"
   >
     <Icon name="branch" class="size-4 shrink-0 text-copy-muted" />
-    <span class="sr-only">{languageSelector.switchLanguage}: </span>
-    <span lang={current.locale} dir={current.direction}>{current.endonym}</span>
+    <span class="sr-only">{translate.fieldLabel(languageSelector.switchLanguage)} </span>
+    <span lang={currentLocale} dir={current.direction}>{current.endonym}</span>
     <Icon name="chevronDown" class="size-3 shrink-0 text-copy-muted" />
   </summary>
 
@@ -65,16 +58,8 @@ if (!current) {
                 </span>
               </span>
 
-              {option.isDefault && (
-                <span class="shrink-0 rounded-full border border-frame-border px-2 py-0.5 text-[0.7rem] font-medium text-copy-muted">
-                  {GITHUB_LEXICON.default}
-                </span>
-              )}
-              {option.interfaceOnly && (
-                <span class="shrink-0 rounded-full border border-frame-border px-2 py-0.5 text-[0.7rem] font-medium text-copy-muted">
-                  {languageSelector.interfaceOnly}
-                </span>
-              )}
+              {option.isDefault && <ShellBadge>{GITHUB_LEXICON.default}</ShellBadge>}
+              {option.interfaceOnly && <ShellBadge>{languageSelector.interfaceOnly}</ShellBadge>}
             </a>
           </li>
         ))
