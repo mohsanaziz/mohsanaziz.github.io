@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import { GITHUB_LEXICON } from '@/components/lexicon';
+import LanguageSelector from '@/components/LanguageSelector.astro';
 
 interface Props {
   image: {
@@ -38,6 +39,10 @@ const { image, owner, repository, ownerHref } = Astro.props;
       <span class="shrink-0 rounded-full border border-frame-border px-2 py-0.5 text-xs font-medium text-copy-muted"
         >{GITHUB_LEXICON.visibility}</span
       >
+    </div>
+
+    <div class="ms-auto shrink-0">
+      <LanguageSelector />
     </div>
   </div>
 </header>

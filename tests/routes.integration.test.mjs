@@ -84,6 +84,142 @@ test('aucune page ne livre de JavaScript ni de redirection meta refresh', async 
   }
 });
 
+test('le sélecteur relie les trois pages publiques avec des endonymes accessibles et reste absent des pages d’impression', async (t) => {
+  const server = await startBuildServer(DIST_DIRECTORY);
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+
+  t.after(async () => {
+    await browser.close();
+    await server.close();
+  });
+
+  const expectedOptions = [
+    { locale: 'fr', href: '/', endonym: 'Français', dir: 'ltr' },
+    { locale: 'en', href: '/en/', endonym: 'English', dir: 'ltr' },
+    { locale: 'ar', href: '/ar/', endonym: 'العربية', dir: 'rtl' },
+  ];
+
+  for (const locale of LOCALES) {
+    await page.goto(`${server.origin}${localeUrlSegment(locale) ? `/${locale}/` : '/'}`);
+
+    const selector = await page.locator('header details').evaluate((details) => {
+      const endonymOf = (element) => element.querySelector('[lang][dir]');
+
+      return {
+        summaryEndonym: endonymOf(details.querySelector('summary'))?.textContent?.trim(),
+        title: details.querySelector(':scope > div > p')?.textContent?.trim(),
+        options: Array.from(details.querySelectorAll('a[hreflang]'), (link) => {
+          const endonym = endonymOf(link);
+
+          return {
+            href: link.getAttribute('href'),
+            hreflang: link.getAttribute('hreflang'),
+            linkLang: link.getAttribute('lang'),
+            linkDir: link.getAttribute('dir'),
+            endonym: endonym?.textContent?.trim(),
+            endonymLang: endonym?.getAttribute('lang'),
+            endonymDir: endonym?.getAttribute('dir'),
+            current: link.getAttribute('aria-current'),
+            badges: Array.from(link.querySelectorAll(':scope > .rounded-full'), (badge) => badge.textContent?.trim()),
+          };
+        }),
+      };
+    });
+
+    const messages = useTranslations(locale).messages.languageSelector;
+    assert.equal(selector.summaryEndonym, expectedOptions.find((option) => option.locale === locale)?.endonym);
+    assert.equal(selector.title, messages.switchLanguage);
+    assert.deepEqual(
+      selector.options.map(({ href, hreflang, linkLang, linkDir, endonym, endonymLang, endonymDir, current }) => ({
+        href,
+        hreflang,
+        linkLang,
+        linkDir,
+        endonym,
+        endonymLang,
+        endonymDir,
+        current,
+      })),
+      expectedOptions.map((option) => ({
+        href: option.href,
+        hreflang: option.locale,
+        linkLang: null,
+        linkDir: null,
+        endonym: option.endonym,
+        endonymLang: option.locale,
+        endonymDir: option.dir,
+        current: option.locale === locale ? 'page' : null,
+      })),
+    );
+    assert.deepEqual(
+      selector.options.map(({ badges }) => badges),
+      [['default'], [], [messages.interfaceOnly]],
+    );
+
+    await page.locator('header summary').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('header details').getAttribute('open'), '');
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('hreflang')), 'fr');
+
+    await page.goto(`${server.origin}${localeUrlSegment(locale) ? `/${locale}/` : '/'}cv-print/`);
+    assert.equal(await page.locator('header details').count(), 0);
+  }
+});
+
+test('à 390 px le panneau reste dans le viewport côté end et seule la pastille Public revient à la ligne', async (t) => {
+  const server = await startBuildServer(DIST_DIRECTORY);
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+
+  t.after(async () => {
+    await browser.close();
+    await server.close();
+  });
+
+  for (const { path, direction } of [
+    { path: '/', direction: 'ltr' },
+    { path: '/ar/', direction: 'rtl' },
+  ]) {
+    await page.goto(`${server.origin}${path}`);
+    await page.locator('header summary').click();
+
+    const geometry = await page.locator('header details').evaluate((details) => {
+      const edges = (element) => {
+        const { top, left, right, bottom } = element.getBoundingClientRect();
+
+        return { top, left, right, bottom };
+      };
+      const summary = details.querySelector('summary');
+      const panel = details.querySelector(':scope > div');
+      const headerRow = details.parentElement?.parentElement;
+      const repositoryLine = headerRow?.querySelector('p');
+      const publicBadge = repositoryLine?.parentElement?.querySelector(':scope > span');
+
+      if (!summary || !panel || !repositoryLine || !publicBadge) throw new Error('Unable to find the language selector geometry.');
+
+      return {
+        summary: edges(summary),
+        panel: edges(panel),
+        repositoryLine: edges(repositoryLine),
+        publicBadge: edges(publicBadge),
+      };
+    });
+
+    assert.ok(geometry.panel.left >= 0, `Expected ${path} panel left edge inside the viewport.`);
+    assert.ok(geometry.panel.right <= 390, `Expected ${path} panel right edge inside the viewport.`);
+    assert.ok(geometry.publicBadge.top >= geometry.repositoryLine.bottom, `Expected ${path} Public badge on the second line.`);
+    assert.ok(geometry.summary.top < geometry.publicBadge.top, `Expected ${path} language button to stay on the first line.`);
+
+    if (direction === 'ltr') {
+      assert.ok(Math.abs(geometry.panel.right - geometry.summary.right) <= 1, 'Expected the LTR panel to be anchored on its right edge.');
+    } else {
+      assert.ok(Math.abs(geometry.panel.left - geometry.summary.left) <= 1, 'Expected the RTL panel to be anchored on its left edge.');
+    }
+  }
+});
+
 test('sur /ar/ la colonne latérale passe à gauche et les compteurs et valeurs de fait rejoignent le bord opposé', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
