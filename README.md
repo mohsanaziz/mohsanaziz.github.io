@@ -12,7 +12,7 @@ npx playwright install chromium
 npm run dev
 ```
 
-Le site est alors accessible sur `http://localhost:4321`.
+Le site est alors accessible sur `http://localhost:4321`. Il sert une URL par locale : `/` en français, `/en/` et `/ar/` (cette dernière de droite à gauche), sans `/fr/` ni redirection. Les locales sont déclarées une seule fois dans `src/i18n/locales.ts`, et les pages sont produites par les routes `src/pages/[...locale]/`.
 
 ## Build
 

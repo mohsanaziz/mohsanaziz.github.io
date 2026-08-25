@@ -49,7 +49,7 @@ interface CvData {
     jobTitle: string;
     socialLinks: readonly CvLink[];
     contactDetails: readonly ContactDetail[];
-    resume: CvLink & { text: string };
+    resume: Omit<CvLink, 'href'> & { text: string };
   };
   about: {
     title: string;
@@ -115,7 +115,6 @@ export const cv = {
       },
     ],
     resume: {
-      href: '/cv/CV.pdf',
       label: 'CV',
       text: 'Version PDF',
       icon: 'pdf',

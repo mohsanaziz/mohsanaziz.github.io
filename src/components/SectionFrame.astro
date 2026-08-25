@@ -15,7 +15,7 @@ const { title, icon, counter } = Astro.props;
   <div class="flex min-h-11 items-center gap-2 border-b border-rule bg-panel px-4 py-2.5 text-copy">
     {icon && <Icon name={icon} class="h-4 w-4 shrink-0" />}
     <span class="min-w-0 truncate text-sm font-semibold">{title}</span>
-    {counter && <span class="ml-auto shrink-0 text-xs text-copy-muted">{counter}</span>}
+    {counter && <span class="ms-auto shrink-0 text-xs text-copy-muted">{counter}</span>}
   </div>
   <div class="p-5 sm:p-6">
     <slot />
