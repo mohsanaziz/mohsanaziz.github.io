@@ -43,6 +43,8 @@ interface ClientProjectEntry extends TimelineEntry {
 
 interface CvCore {
   profile: {
+    /** The portrait, named by its asset file; `src/data/images.ts` resolves it to Astro image metadata. */
+    image: { source: string };
     name: string;
     socialLinks: readonly CvLink[];
     contactDetails: readonly ContactPoint[];
@@ -58,6 +60,7 @@ interface CvCore {
 
 export const cv = {
   profile: {
+    image: { source: 'photo.jpg' },
     name: 'Mohsan AZIZ',
     socialLinks: [
       {
@@ -274,6 +277,8 @@ export const cv = {
     ],
   },
 } as const satisfies CvCore;
+
+export type ImageSource = (typeof cv.profile.image)['source'];
 
 export type EmployerId = (typeof cv.professionalExperience.entries)[number]['id'];
 

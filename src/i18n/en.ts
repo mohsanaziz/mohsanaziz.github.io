@@ -5,9 +5,9 @@
 // employer and technology names remain unchanged in the invariant core.
 
 import type { LocaleCv } from './content.ts';
-import type { LocaleMessages } from './messages.ts';
+import { defineMessages } from './messages.ts';
 
-export const messages = {
+export const messages = defineMessages({
   navigation: {
     additionalInformation: 'Additional information',
   },
@@ -71,7 +71,7 @@ export const messages = {
     client: 'Client',
     environment: 'Environment',
   },
-} as const satisfies LocaleMessages;
+});
 
 export const cv = {
   metadata: {
