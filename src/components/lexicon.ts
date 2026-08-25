@@ -5,6 +5,7 @@ export const GITHUB_LEXICON = {
   readme: 'README.md',
   repository: 'cv',
   visibility: 'Public',
+  default: 'default',
   releases: 'Releases',
   latest: 'Latest',
   languages: 'Languages',
