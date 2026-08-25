@@ -1,0 +1,84 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Icon from '@/components/Icon.astro';
+import { GITHUB_LEXICON } from '@/components/lexicon';
+import { DEFAULT_LOCALE, LOCALES, requireLocale, type Locale } from '@/i18n/locales';
+import { localeDirection } from '@/i18n/routing';
+import { useTranslations } from '@/i18n/translate';
+
+const ENDONYMS = {
+  fr: 'Français',
+  en: 'English',
+  ar: 'العربية',
+} as const satisfies Record<Locale, string>;
+
+const currentLocale = requireLocale(Astro.currentLocale);
+const { languageSelector } = useTranslations(currentLocale).messages;
+const options = LOCALES.map((locale) => ({
+  locale,
+  endonym: ENDONYMS[locale],
+  direction: localeDirection(locale),
+  href: getRelativeLocaleUrl(locale),
+  current: locale === currentLocale,
+  isDefault: locale === DEFAULT_LOCALE,
+  interfaceOnly: locale === 'ar',
+}));
+const current = options.find((option) => option.current);
+
+if (!current) {
+  throw new Error(`The language selector has no option for the current locale “${currentLocale}”.`);
+}
+---
+
+<details class="relative">
+  <summary
+    class="flex cursor-pointer list-none items-center gap-2 rounded-md border border-frame-border bg-page px-3 py-1.5 text-sm font-medium text-copy [&::-webkit-details-marker]:hidden"
+  >
+    <Icon name="branch" class="size-4 shrink-0 text-copy-muted" />
+    <span class="sr-only">{languageSelector.switchLanguage}: </span>
+    <span lang={current.locale} dir={current.direction}>{current.endonym}</span>
+    <Icon name="chevronDown" class="size-3 shrink-0 text-copy-muted" />
+  </summary>
+
+  <div
+    class="absolute end-0 top-full z-20 mt-1 w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border border-frame-border bg-page shadow-xl"
+  >
+    <p class="border-b border-rule bg-panel px-3 py-2 text-xs font-semibold text-copy">{languageSelector.switchLanguage}</p>
+
+    <ul>
+      {
+        options.map((option) => (
+          <li class="border-b border-rule last:border-b-0">
+            <a
+              class="flex min-w-0 items-center gap-2 px-3 py-2.5 text-sm text-copy no-underline hover:bg-panel"
+              href={option.href}
+              hreflang={option.locale}
+              aria-current={option.current ? 'page' : undefined}
+            >
+              <span class="size-4 shrink-0 text-copy-muted" aria-hidden="true">
+                {option.current && <Icon name="check" class="size-4" />}
+              </span>
+
+              <span class="min-w-0 flex-1">
+                <span class="block truncate" lang={option.locale} dir={option.direction}>
+                  {option.endonym}
+                </span>
+              </span>
+
+              {option.isDefault && (
+                <span class="shrink-0 rounded-full border border-frame-border px-2 py-0.5 text-[0.7rem] font-medium text-copy-muted">
+                  {GITHUB_LEXICON.default}
+                </span>
+              )}
+              {option.interfaceOnly && (
+                <span class="shrink-0 rounded-full border border-frame-border px-2 py-0.5 text-[0.7rem] font-medium text-copy-muted">
+                  {languageSelector.interfaceOnly}
+                </span>
+              )}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</details>
