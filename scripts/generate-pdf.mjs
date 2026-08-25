@@ -1,5 +1,5 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { chromium } from 'playwright';
@@ -10,7 +10,7 @@ import { startBuildServer } from './build-server.mjs';
 
 const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const DIST_DIRECTORY = resolve(PROJECT_ROOT, 'dist');
-const PDF_PATH = resolve(DIST_DIRECTORY, `.${resumePath(DEFAULT_LOCALE)}`);
+const PDF_PATH = join(DIST_DIRECTORY, resumePath(DEFAULT_LOCALE));
 const PAGINATION_TEST_PDF_PATH = resolve(PROJECT_ROOT, 'tmp/pagination-test', resumeFileName(DEFAULT_LOCALE));
 const PACKAGE_PATH = resolve(PROJECT_ROOT, 'package.json');
 const paginationTest = process.argv.includes('--pagination-test');
@@ -19,7 +19,7 @@ const generationTarget = paginationTest
   : { pagePath: '/cv-print', pdfPath: PDF_PATH };
 const CSS_PIXELS_PER_MILLIMETER = 96 / 25.4;
 const A4_PAGE_SIZE_MILLIMETERS = { width: 210, height: 297 };
-// Keep this value synchronized with the @page margin in src/pages/cv-print.astro.
+// Keep this value synchronized with the @page margin in src/pages/[...locale]/cv-print.astro.
 const PAGE_MARGIN_MILLIMETERS = 8;
 const PRINTABLE_PAGE_SIZE = {
   width: Math.floor((A4_PAGE_SIZE_MILLIMETERS.width - 2 * PAGE_MARGIN_MILLIMETERS) * CSS_PIXELS_PER_MILLIMETER),

@@ -4,17 +4,20 @@ import { resolve } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+import { chromium } from 'playwright';
+
+import { startBuildServer } from '../scripts/build-server.mjs';
 import { LOCALES } from '../src/i18n/locales.ts';
 import { localeDirection, localeUrlSegment, resumePath } from '../src/i18n/routing.ts';
 
 const DIST_DIRECTORY = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
 
-function builtPagePath(locale, page = '') {
-  return resolve(DIST_DIRECTORY, ...[localeUrlSegment(locale), page, 'index.html'].filter(Boolean));
+function builtPagePath(locale, route = '') {
+  return resolve(DIST_DIRECTORY, ...[localeUrlSegment(locale), route, 'index.html'].filter(Boolean));
 }
 
-async function readBuiltPage(locale, page) {
-  return readFile(builtPagePath(locale, page), 'utf8');
+async function readBuiltPage(locale, route) {
+  return readFile(builtPagePath(locale, route), 'utf8');
 }
 
 function htmlAttributes(html) {
@@ -36,10 +39,10 @@ test('le build sert /, /en/ et /ar/ ainsi que leurs routes d’impression, sans 
 
 test('chaque page porte le lang de sa locale et dir="rtl" sur l’arabe seulement', async () => {
   for (const locale of LOCALES) {
-    for (const page of ['', 'cv-print']) {
-      const { lang, dir } = htmlAttributes(await readBuiltPage(locale, page));
+    for (const route of ['', 'cv-print']) {
+      const { lang, dir } = htmlAttributes(await readBuiltPage(locale, route));
 
-      assert.equal(lang, locale, `Expected /${localeUrlSegment(locale) ?? ''} ${page} to declare lang="${locale}".`);
+      assert.equal(lang, locale, `Expected /${localeUrlSegment(locale) ?? ''} ${route} to declare lang="${locale}".`);
       assert.equal(dir, localeDirection(locale) === 'rtl' ? 'rtl' : undefined);
     }
   }
@@ -62,11 +65,59 @@ test('chaque page publique télécharge le PDF depuis resumePath(locale)', async
 
 test('aucune page ne livre de JavaScript ni de redirection meta refresh', async () => {
   for (const locale of LOCALES) {
-    for (const page of ['', 'cv-print']) {
-      const html = await readBuiltPage(locale, page);
+    for (const route of ['', 'cv-print']) {
+      const html = await readBuiltPage(locale, route);
 
       assert.doesNotMatch(html, /<script\b/);
       assert.doesNotMatch(html, /http-equiv="refresh"/i);
     }
   }
+});
+
+test('sur /ar/ la colonne latérale passe à gauche et les compteurs et valeurs de fait rejoignent le bord opposé', async (t) => {
+  const server = await startBuildServer(DIST_DIRECTORY);
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+
+  t.after(async () => {
+    await browser.close();
+    await server.close();
+  });
+
+  async function measure(path) {
+    const response = await page.goto(`${server.origin}${path}`, { waitUntil: 'networkidle' });
+
+    assert.ok(response?.ok(), `Expected ${path} to load, received HTTP ${response?.status() ?? 'unknown'}.`);
+
+    return page.evaluate(() => {
+      const edges = (element) => {
+        const { left, right } = element.getBoundingClientRect();
+
+        return { left, right };
+      };
+      const frame = document.querySelector('main section[aria-label="Expérience professionnelle"]');
+      const counter = frame?.querySelector(':scope > div:first-child > span:last-child');
+      const aside = document.querySelector('aside');
+      const factValue = document.querySelector('dd');
+
+      if (!frame || !counter || !aside || !factValue) throw new Error('Unable to find the measured page elements.');
+
+      return {
+        aside: edges(aside),
+        frame: edges(frame),
+        counter: edges(counter),
+        factValueAlign: getComputedStyle(factValue).textAlign,
+      };
+    });
+  }
+
+  const ltr = await measure('/');
+  const rtl = await measure('/ar/');
+
+  assert.ok(ltr.aside.left > ltr.frame.right, 'Expected the French sidebar on the right of the main column.');
+  assert.ok(rtl.aside.right < rtl.frame.left, 'Expected the Arabic sidebar on the left of the main column.');
+  assert.ok(ltr.frame.right - ltr.counter.right < 32, 'Expected the French section counter against the frame end edge.');
+  assert.ok(rtl.counter.left - rtl.frame.left < 32, 'Expected the Arabic section counter against the frame start edge.');
+  assert.equal(ltr.factValueAlign, 'end');
+  assert.equal(rtl.factValueAlign, 'end');
 });

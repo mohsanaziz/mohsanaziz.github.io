@@ -1,5 +1,5 @@
 ---
-import { isLocale } from '@/i18n/locales';
+import { requireLocale } from '@/i18n/locales';
 import { localeDirection } from '@/i18n/routing';
 import '@/styles/main.css';
 
@@ -10,12 +10,7 @@ interface Props {
 }
 
 const { title, description, robots } = Astro.props;
-const locale = Astro.currentLocale;
-
-if (!isLocale(locale)) {
-  throw new Error(`The layout is rendered for an unknown locale: ${locale}.`);
-}
-
+const locale = requireLocale(Astro.currentLocale);
 // `dir` is only emitted for right-to-left locales so that the left-to-right pages keep their exact markup.
 const direction = localeDirection(locale);
 ---
