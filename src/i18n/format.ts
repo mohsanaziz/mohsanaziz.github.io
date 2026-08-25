@@ -7,6 +7,10 @@ const NUMBER_FORMATTERS = new Map<Locale, Intl.NumberFormat>();
 const PERCENTAGE_FORMATTERS = new Map<Locale, Intl.NumberFormat>();
 const PLURAL_RULES = new Map<Locale, Intl.PluralRules>();
 
+function formattingLocale(locale: Locale): string {
+  return locale === 'ar' ? 'ar-u-nu-arab' : locale;
+}
+
 // Intl formatters are costly to build and the build renders every page of every locale, so keep one per locale.
 function cached<TFormatter>(cache: Map<Locale, TFormatter>, locale: Locale, create: () => TFormatter): TFormatter {
   let formatter = cache.get(locale);
@@ -20,12 +24,19 @@ function cached<TFormatter>(cache: Map<Locale, TFormatter>, locale: Locale, crea
 }
 
 function formatNumber(locale: Locale, value: number): string {
-  return cached(NUMBER_FORMATTERS, locale, () => new Intl.NumberFormat(locale)).format(value);
+  return cached(NUMBER_FORMATTERS, locale, () => new Intl.NumberFormat(formattingLocale(locale))).format(value);
+}
+
+/** Rewrites digits in visible text while leaving the surrounding punctuation and letters untouched. */
+export function formatDigits(locale: Locale, value: string): string {
+  return value.replace(/[0-9]/g, (digit) => formatNumber(locale, Number(digit)));
 }
 
 /** Renders a share expressed in percentage points, spacing and symbol included. */
 export function formatPercentage(locale: Locale, percentagePoints: number): string {
-  return cached(PERCENTAGE_FORMATTERS, locale, () => new Intl.NumberFormat(locale, { style: 'percent' })).format(percentagePoints / 100);
+  return cached(PERCENTAGE_FORMATTERS, locale, () => new Intl.NumberFormat(formattingLocale(locale), { style: 'percent' })).format(
+    percentagePoints / 100,
+  );
 }
 
 export function formatPlural(locale: Locale, forms: PluralMessage, count: number): string {
@@ -39,7 +50,7 @@ function formatMonth(locale: Locale, bound: string): string {
   const formatter = cached(
     MONTH_FORMATTERS,
     locale,
-    () => new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' }),
+    () => new Intl.DateTimeFormat(formattingLocale(locale), { month: 'long', year: 'numeric', timeZone: 'UTC' }),
   );
   const label = formatter.format(new Date(Date.UTC(year, month - 1)));
 
@@ -63,6 +74,8 @@ export function formatDuration(locale: Locale, messages: LocaleMessages, totalMo
   return months === 0 ? years : `${years} ${formatPlural(locale, messages.counts.month, months)}`;
 }
 
-export function formatVersion(versionNumber: number): string {
-  return `v${versionNumber}.0.0`;
+export function formatVersion(locale: Locale, versionNumber: number): string {
+  const zero = formatNumber(locale, 0);
+
+  return `v${formatNumber(locale, versionNumber)}.${zero}.${zero}`;
 }

@@ -11,6 +11,7 @@ import {
 import type { MissionReleaseData } from '../data/missions.ts';
 import type { Period } from '../data/period.ts';
 import type { LocaleCv } from './content.ts';
+import { formatDigits } from './format.ts';
 import { localeLayer } from './layers.ts';
 import type { Locale } from './locales.ts';
 import type { Translator } from './translate.ts';
@@ -23,6 +24,7 @@ export interface ContactDetailView {
   title: string;
   info: string;
   icon: IconName;
+  href?: string;
 }
 
 export interface EmployerView {
@@ -47,6 +49,7 @@ export interface CvView {
   profile: {
     image: { source: ImageSource; alt: string };
     name: string;
+    alternateName?: string;
     jobTitle: string;
     socialLinks: (typeof cv)['profile']['socialLinks'];
     contactDetails: readonly ContactDetailView[];
@@ -78,14 +81,39 @@ function resolveClient(client: ClientReference, institutions: LocaleCv['institut
   return 'institution' in client ? institutions[client.institution] : client.organisation;
 }
 
+function localizeDisplayStrings<TValue>(locale: Locale, value: TValue): TValue {
+  if (typeof value === 'string') {
+    return formatDigits(locale, value) as TValue;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => localizeDisplayStrings(locale, entry)) as TValue;
+  }
+
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, localizeDisplayStrings(locale, entry)])) as TValue;
+  }
+
+  return value;
+}
+
+function phoneHref(info: string): string {
+  const digits = info.replace(/\D/g, '');
+  const internationalNumber = digits.startsWith('0') ? `+33${digits.slice(1)}` : `+${digits}`;
+
+  return `tel:${internationalNumber}`;
+}
+
 export function cvView(locale: Locale): CvView {
-  const content = localeLayer(locale).cv;
+  const content = localizeDisplayStrings(locale, localeLayer(locale).cv);
+  const localizedInvariantName = formatDigits(locale, cv.profile.name);
 
   return {
     metadata: content.metadata,
     profile: {
       image: { source: cv.profile.image.source, alt: content.profile.imageAlt },
-      name: content.profile.name ?? cv.profile.name,
+      name: content.profile.name ?? localizedInvariantName,
+      alternateName: content.profile.name && content.profile.name !== localizedInvariantName ? localizedInvariantName : undefined,
       jobTitle: content.profile.jobTitle,
       socialLinks: cv.profile.socialLinks,
       contactDetails: cv.profile.contactDetails.map((detail) => {
@@ -96,7 +124,13 @@ export function cvView(locale: Locale): CvView {
           throw new Error(`The contact detail "${detail.id}" has no information in the "${locale}" layer.`);
         }
 
-        return { id: detail.id, title: text.title, info, icon: detail.icon };
+        return {
+          id: detail.id,
+          title: text.title,
+          info: formatDigits(locale, info),
+          icon: detail.icon,
+          ...(detail.id === 'phone' ? { href: phoneHref(info) } : {}),
+        };
       }),
       resume: { ...cv.profile.resume, text: content.profile.resume.text },
     },
@@ -108,7 +142,7 @@ export function cvView(locale: Locale): CvView {
 
         return {
           id: employer.id,
-          name: text.name ?? employer.name,
+          name: text.name ?? formatDigits(locale, employer.name),
           jobTitle: text.jobTitle,
           contract: employer.contract,
           period: employer.period,
@@ -122,10 +156,10 @@ export function cvView(locale: Locale): CvView {
 
         return {
           id: mission.id,
-          name: text.name ?? mission.name,
-          client: resolveClient(mission.client, content.institutions),
+          name: text.name ?? formatDigits(locale, mission.name),
+          client: formatDigits(locale, resolveClient(mission.client, content.institutions)),
           period: mission.period,
-          technologies: mission.technologies,
+          technologies: mission.technologies.map((technology) => formatDigits(locale, technology)),
           description: text.description,
         };
       }),

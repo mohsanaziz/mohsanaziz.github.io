@@ -9,13 +9,6 @@ interface Props {
 const { details } = Astro.props;
 
 function contactHref({ icon, info }: ContactDetailView): string | undefined {
-  if (icon === 'phone') {
-    const digits = info.replace(/\D/g, '');
-    const internationalNumber = digits.startsWith('0') ? `+33${digits.slice(1)}` : `+${digits}`;
-
-    return `tel:${internationalNumber}`;
-  }
-
   if (icon === 'mail') {
     return `mailto:${info}`;
   }
@@ -25,7 +18,7 @@ function contactHref({ icon, info }: ContactDetailView): string | undefined {
 <dl class="space-y-4">
   {
     details.map((detail) => {
-      const href = contactHref(detail);
+      const href = detail.href ?? contactHref(detail);
 
       return (
         <div class="flex min-w-0 gap-3">

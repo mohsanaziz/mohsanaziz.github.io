@@ -38,7 +38,18 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
       </header>
 
       <div class="readme-content">
-        <h1>{cv.profile.name}</h1>
+        <h1>
+          {
+            cv.profile.alternateName ? (
+              <>
+                <span>{cv.profile.name}</span>
+                <span class="alternate-name">{cv.profile.alternateName}</span>
+              </>
+            ) : (
+              cv.profile.name
+            )
+          }
+        </h1>
         <p class="profile-summary">{cv.profile.jobTitle} <span aria-hidden="true">·</span> {profileLocation.info}</p>
 
         <ul class="contact-line" aria-label={print.contactDetails}>
@@ -179,6 +190,15 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
     font-size: 2.125em;
     line-height: 1.05;
     letter-spacing: -0.025em;
+  }
+
+  .alternate-name {
+    display: block;
+    margin-top: 0.25em;
+    color: var(--color-copy-muted);
+    font-size: 0.5em;
+    font-weight: 500;
+    letter-spacing: normal;
   }
 
   .profile-summary {

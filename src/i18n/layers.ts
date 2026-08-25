@@ -1,4 +1,5 @@
-import type { LocaleCv } from './content.ts';
+import type { LocaleCv, PartialLocaleCv } from './content.ts';
+import * as ar from './ar.ts';
 import * as en from './en.ts';
 import * as fr from './fr.ts';
 import type { Locale } from './locales.ts';
@@ -9,28 +10,57 @@ interface LocaleLayer {
   readonly cv: LocaleCv;
 }
 
+interface PartialLocaleLayer {
+  readonly messages: LocaleMessages;
+  readonly cv: PartialLocaleCv;
+}
+
 type LocaleContentCoverage = 'complete' | 'interface-only';
 
 interface LocaleLayerDefinition {
-  readonly layer: LocaleLayer;
+  readonly layer: LocaleLayer | PartialLocaleLayer;
   readonly contentCoverage: LocaleContentCoverage;
 }
 
-// The definition keeps the rendered layer and its coverage together. Ticket #76 will give Arabic its own
-// partial layer while leaving `contentCoverage` unchanged until the CV content itself is translated.
+// The definition keeps the rendered layer and its coverage together. Arabic remains interface-only until
+// the CV content itself is translated, even though it now owns a partial layer.
 const LOCALE_LAYERS = {
   fr: { layer: fr, contentCoverage: 'complete' },
   en: { layer: en, contentCoverage: 'complete' },
-  // Until #76, `/ar/` renders the French layer whole — interface included, not only the CV content.
-  ar: { layer: fr, contentCoverage: 'interface-only' },
+  ar: { layer: ar, contentCoverage: 'interface-only' },
 } as const satisfies Record<Locale, LocaleLayerDefinition>;
 
 // Deliberately the union of the layers' literal types rather than the schema: a message keeps its literal
 // type through every lookup, which is what lets `formatMessage` check its placeholders at the call site.
 export type Messages = (typeof LOCALE_LAYERS)[Locale]['layer']['messages'];
 
+function isMergeableObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function mergeWithFallback<TValue>(fallback: TValue, partial: PartialLocaleCv | TValue): TValue {
+  if (!isMergeableObject(fallback) || !isMergeableObject(partial)) {
+    return partial as TValue;
+  }
+
+  const merged: Record<string, unknown> = { ...fallback };
+
+  for (const [key, value] of Object.entries(partial)) {
+    if (value === undefined) continue;
+
+    const fallbackValue = fallback[key];
+    merged[key] = isMergeableObject(fallbackValue) && isMergeableObject(value) ? mergeWithFallback(fallbackValue, value) : value;
+  }
+
+  return merged as TValue;
+}
+
 // The CV content, unlike the messages, is read through its schema: the merge needs completeness, not literals.
 export function localeLayer(locale: Locale): { readonly messages: Messages; readonly cv: LocaleCv } {
+  if (locale === 'ar') {
+    return { messages: ar.messages, cv: mergeWithFallback(fr.cv, ar.cv) };
+  }
+
   return LOCALE_LAYERS[locale].layer;
 }
 

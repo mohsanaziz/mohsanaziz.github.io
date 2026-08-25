@@ -104,7 +104,7 @@ test('le sélecteur relie les trois pages publiques avec des endonymes accessibl
     await page.goto(`${server.origin}${localeUrlSegment(locale) ? `/${locale}/` : '/'}`);
 
     const selector = await page.locator('header details').evaluate((details) => {
-      const endonymOf = (element) => element.querySelector('[lang][dir]');
+      const endonymOf = (element) => element.querySelector('[lang]');
 
       return {
         accessibleLabel: details.querySelector('summary .sr-only')?.textContent,
@@ -151,7 +151,7 @@ test('le sélecteur relie les trois pages publiques avec des endonymes accessibl
         linkDir: null,
         endonym: option.endonym,
         endonymLang: option.locale,
-        endonymDir: option.dir,
+        endonymDir: locale === 'ar' && option.dir === 'ltr' ? null : option.dir,
         current: option.locale === locale ? 'page' : null,
       })),
     );
@@ -233,18 +233,18 @@ test('sur /ar/ la colonne latérale passe à gauche et les compteurs et valeurs 
     await server.close();
   });
 
-  async function measure(path) {
+  async function measure(path, experienceTitle) {
     const response = await page.goto(`${server.origin}${path}`, { waitUntil: 'networkidle' });
 
     assert.ok(response?.ok(), `Expected ${path} to load, received HTTP ${response?.status() ?? 'unknown'}.`);
 
-    return page.evaluate(() => {
+    return page.evaluate((experienceTitle) => {
       const edges = (element) => {
         const { left, right } = element.getBoundingClientRect();
 
         return { left, right };
       };
-      const frame = document.querySelector('main section[aria-label="Expérience professionnelle"]');
+      const frame = document.querySelector(`main section[aria-label="${experienceTitle}"]`);
       const counter = frame?.querySelector(':scope > div:first-child > span:last-child');
       const aside = document.querySelector('aside');
       const factValue = document.querySelector('dd');
@@ -257,11 +257,11 @@ test('sur /ar/ la colonne latérale passe à gauche et les compteurs et valeurs 
         counter: edges(counter),
         factValueAlign: getComputedStyle(factValue).textAlign,
       };
-    });
+    }, experienceTitle);
   }
 
-  const ltr = await measure('/');
-  const rtl = await measure('/ar/');
+  const ltr = await measure('/', fr.cv.professionalExperience.title);
+  const rtl = await measure('/ar/', 'الخبرة المهنية');
 
   assert.ok(ltr.aside.left > ltr.frame.right, 'Expected the French sidebar on the right of the main column.');
   assert.ok(rtl.aside.right < rtl.frame.left, 'Expected the Arabic sidebar on the left of the main column.');
@@ -269,6 +269,54 @@ test('sur /ar/ la colonne latérale passe à gauche et les compteurs et valeurs 
   assert.ok(rtl.counter.left - rtl.frame.left < 32, 'Expected the Arabic section counter against the frame start edge.');
   assert.equal(ltr.factValueAlign, 'end');
   assert.equal(rtl.factValueAlign, 'end');
+});
+
+test('/ar/ rend son interface, ses chiffres et son interlignage en arabe sans altérer les chemins', async (t) => {
+  const server = await startBuildServer(DIST_DIRECTORY);
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+
+  t.after(async () => {
+    await browser.close();
+    await server.close();
+  });
+
+  await page.goto(`${server.origin}/ar/`, { waitUntil: 'networkidle' });
+
+  const rendered = await page.evaluate(() => {
+    const aboutHeading = Array.from(document.querySelectorAll('h2')).find((heading) => heading.textContent?.trim() === 'نبذة');
+    const prose = aboutHeading?.nextElementSibling;
+    const download = document.querySelector('a[download]');
+
+    if (!prose || !download) throw new Error('Unable to find the Arabic prose or PDF link.');
+
+    const proseStyle = getComputedStyle(prose);
+
+    return {
+      text: document.body.innerText,
+      name: document.querySelector('h1')?.innerText,
+      proseLineHeightRatio: Number.parseFloat(proseStyle.lineHeight) / Number.parseFloat(proseStyle.fontSize),
+      pdfHref: download.getAttribute('href'),
+      pdfFileName: download.getAttribute('download'),
+      ltrIslandCount: document.querySelectorAll('[dir="ltr"]').length,
+      asideLabel: document.querySelector('aside')?.getAttribute('aria-label'),
+    };
+  });
+
+  for (const expected of ['معلومات الاتصال', 'الفترة', 'قيد التنفيذ', 'تغيير اللغة', fr.cv.about.paragraphs[0]]) {
+    assert.ok(rendered.text.includes(expected), `Expected /ar/ to render “${expected}”.`);
+  }
+
+  assert.equal(rendered.asideLabel, 'معلومات إضافية');
+  assert.match(rendered.name ?? '', /محسن عزيز.*Mohsan AZIZ/s);
+  assert.doesNotMatch(rendered.text, /[0-9]/, 'Expected every displayed number on /ar/ to use Arabic digits.');
+  assert.ok(
+    Math.abs(rendered.proseLineHeightRatio - 2.112) < 0.001,
+    `Expected Arabic prose line-height 2.112, got ${rendered.proseLineHeightRatio}.`,
+  );
+  assert.equal(rendered.pdfHref, '/cv/CV.pdf');
+  assert.equal(rendered.pdfFileName, 'CV.pdf');
+  assert.equal(rendered.ltrIslandCount, 0);
 });
 
 test('/en/ ne laisse subsister aucune chaîne française là où l’anglais diffère', async () => {
@@ -303,8 +351,8 @@ test('/en/ rend son contenu et son interface en anglais', async () => {
   assert.match(html, /<title>CV — Mohsan AZIZ<\/title>/);
 });
 
-test('le lexique GitHub reste en anglais sur / comme sur /en/', async () => {
-  for (const locale of ['fr', 'en']) {
+test('le lexique GitHub reste en anglais dans les trois locales', async () => {
+  for (const locale of LOCALES) {
     const html = decodeHtml(await readBuiltPage(locale));
 
     for (const term of Object.values(GITHUB_LEXICON)) {
