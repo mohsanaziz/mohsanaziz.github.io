@@ -151,7 +151,7 @@ test('le sélecteur relie les trois pages publiques avec des endonymes accessibl
         linkDir: null,
         endonym: option.endonym,
         endonymLang: option.locale,
-        endonymDir: locale === 'ar' && option.dir === 'ltr' ? null : option.dir,
+        endonymDir: locale === 'ar' && option.dir === 'ltr' ? 'auto' : option.dir,
         current: option.locale === locale ? 'page' : null,
       })),
     );

@@ -49,6 +49,11 @@
     U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1;
 }
 
+/* Noto Sans Arabic v2.012 has a measured natural line box of 2.112 em. */
+:lang(ar) .cv-prose {
+  line-height: 2.112;
+}
+
 @layer base {
   a {
     text-decoration-line: underline;

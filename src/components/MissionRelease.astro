@@ -1,7 +1,6 @@
 ---
 import MissionSummary from '@/components/MissionSummary.astro';
 import StatusBadge from '@/components/StatusBadge.astro';
-import { requireLocale } from '@/i18n/locales';
 import type { MissionSummaryView } from '@/i18n/views';
 
 interface Props {
@@ -12,7 +11,6 @@ interface Props {
 }
 
 const { title, summary, description, showStatusBadge = false } = Astro.props;
-const locale = requireLocale(Astro.currentLocale);
 ---
 
 <article class="py-6 first:pt-0 last:pb-0">
@@ -22,7 +20,7 @@ const locale = requireLocale(Astro.currentLocale);
   </header>
 
   <div class="mt-4 grid min-w-0 grid-cols-1 gap-5 min-[1200px]:grid-cols-[minmax(0,1fr)_15rem] min-[1200px]:gap-6">
-    <div class={`max-w-[68ch] space-y-4 ${locale === 'ar' ? 'leading-[2.112]' : 'leading-7'} text-copy-muted`}>
+    <div class="cv-prose max-w-[68ch] space-y-4 leading-7 text-copy-muted">
       {description.map((paragraph) => <p>{paragraph}</p>)}
     </div>
 
