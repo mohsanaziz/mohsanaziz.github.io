@@ -7,8 +7,12 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 import { startBuildServer } from '../scripts/build-server.mjs';
+import { GITHUB_LEXICON } from '../src/components/lexicon.ts';
+import * as en from '../src/i18n/en.ts';
+import * as fr from '../src/i18n/fr.ts';
 import { LOCALES } from '../src/i18n/locales.ts';
 import { localeDirection, localeUrlSegment, resumePath } from '../src/i18n/routing.ts';
+import { useTranslations } from '../src/i18n/translate.ts';
 
 const DIST_DIRECTORY = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
 
@@ -18,6 +22,23 @@ function builtPagePath(locale, route = '') {
 
 async function readBuiltPage(locale, route) {
   return readFile(builtPagePath(locale, route), 'utf8');
+}
+
+// Astro escapes a handful of characters in the rendered HTML; compare against the source strings.
+function decodeHtml(html) {
+  return html.replaceAll('&#39;', "'").replaceAll('&quot;', '"').replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>');
+}
+
+function flattenStrings(value, prefix = '') {
+  if (typeof value === 'string') {
+    return [[prefix, value]];
+  }
+
+  if (value === null || typeof value !== 'object') {
+    return [];
+  }
+
+  return Object.entries(value).flatMap(([key, nested]) => flattenStrings(nested, prefix ? `${prefix}.${key}` : key));
 }
 
 function htmlAttributes(html) {
@@ -120,4 +141,52 @@ test('sur /ar/ la colonne latérale passe à gauche et les compteurs et valeurs 
   assert.ok(rtl.counter.left - rtl.frame.left < 32, 'Expected the Arabic section counter against the frame start edge.');
   assert.equal(ltr.factValueAlign, 'end');
   assert.equal(rtl.factValueAlign, 'end');
+});
+
+test('/en/ ne laisse subsister aucune chaîne française là où l’anglais diffère', async () => {
+  const html = decodeHtml(await readBuiltPage('en'));
+  const englishStrings = new Map(flattenStrings({ ...en.messages, ...en.cv }));
+
+  for (const [path, frenchValue] of flattenStrings({ ...fr.messages, ...fr.cv })) {
+    if (englishStrings.get(path) === frenchValue) continue;
+
+    assert.ok(!html.includes(frenchValue), `Expected the English page to drop the French “${path}”: “${frenchValue}”.`);
+  }
+});
+
+test('/en/ rend son contenu et son interface en anglais', async () => {
+  const html = decodeHtml(await readBuiltPage('en'));
+  const english = useTranslations('en');
+  const expected = [
+    en.cv.profile.jobTitle,
+    en.cv.about.title,
+    en.cv.professionalExperience.title,
+    en.cv.institutions.frenchMinistryOfJustice,
+    en.messages.navigation.additionalInformation,
+    en.messages.labels.contract,
+    english.count('employer', 2),
+    english.count('version', 6),
+  ];
+
+  for (const value of expected) {
+    assert.ok(html.includes(value), `Expected the English page to render “${value}”.`);
+  }
+
+  assert.match(html, /<title>CV — Mohsan AZIZ<\/title>/);
+});
+
+test('le lexique GitHub reste en anglais sur / comme sur /en/', async () => {
+  for (const locale of ['fr', 'en']) {
+    const html = decodeHtml(await readBuiltPage(locale));
+
+    for (const term of Object.values(GITHUB_LEXICON)) {
+      assert.ok(html.includes(term), `Expected the ${locale} page to quote the GitHub term “${term}”.`);
+    }
+  }
+
+  const frenchHtml = decodeHtml(await readBuiltPage('fr'));
+
+  for (const translated of ['Langages', 'Contributeurs', 'En résumé']) {
+    assert.ok(!frenchHtml.includes(translated), `Expected the GitHub lexicon to stay in English, found “${translated}”.`);
+  }
 });

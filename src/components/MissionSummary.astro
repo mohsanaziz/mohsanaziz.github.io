@@ -1,6 +1,9 @@
 ---
 import FactRow from '@/components/FactRow.astro';
-import type { MissionSummaryView } from '@/i18n/format';
+import { GITHUB_LEXICON } from '@/components/lexicon';
+import { formatMessage } from '@/i18n/messages';
+import { useTranslations } from '@/i18n/translate';
+import type { MissionSummaryView } from '@/i18n/views';
 
 interface Props {
   mission: string;
@@ -8,26 +11,28 @@ interface Props {
 }
 
 const { mission, summary } = Astro.props;
+const { messages } = useTranslations(Astro.currentLocale);
+const { labels } = messages;
 const facts = [
-  ['Client', summary.client],
-  ['Période', summary.period],
-  ['Durée', summary.duration],
-  ['Statut', summary.status],
-  ['Sous', summary.employer],
-  ['Version', summary.version],
+  [labels.client, summary.client],
+  [labels.period, summary.period],
+  [labels.duration, summary.duration],
+  [labels.status, summary.status],
+  [labels.employer, summary.employer],
+  [labels.version, summary.version],
 ] as const;
-const stackLabel = /^[aeiouyàâäéèêëîïôöùûüÿ]/i.test(mission) ? `Stack d'${mission}` : `Stack de ${mission}`;
+const stackLabel = formatMessage(messages.accessibility.missionStack, { mission });
 ---
 
 <div class="overflow-hidden rounded-lg border border-frame-border bg-panel">
-  <h4 class="border-b border-rule px-4 py-3 text-sm font-semibold text-copy">En résumé</h4>
+  <h4 class="border-b border-rule px-4 py-3 text-sm font-semibold text-copy">{GITHUB_LEXICON.summary}</h4>
 
   <dl class="divide-y divide-rule px-4 text-sm">
     {facts.map(([label, value]) => <FactRow label={label}>{value}</FactRow>)}
   </dl>
 
   <div class="border-t border-rule px-4 py-3">
-    <h5 class="text-xs font-semibold tracking-wide text-copy-muted uppercase">Stack</h5>
+    <h5 class="text-xs font-semibold tracking-wide text-copy-muted uppercase">{GITHUB_LEXICON.stack}</h5>
     <ul class="mt-2 flex flex-wrap gap-1.5" aria-label={stackLabel}>
       {
         summary.technologies.map((technology) => (

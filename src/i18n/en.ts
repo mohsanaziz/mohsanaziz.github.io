@@ -4,6 +4,9 @@
 // tribunals”; semi-Agile methodology → “hybrid Agile delivery model”. Product,
 // employer and technology names remain unchanged in the invariant core.
 
+import type { LocaleCv } from './content.ts';
+import type { LocaleMessages } from './messages.ts';
+
 export const messages = {
   navigation: {
     additionalInformation: 'Additional information',
@@ -59,13 +62,16 @@ export const messages = {
   accessibility: {
     missionStack: 'Stack: {mission}',
   },
+  punctuation: {
+    labelColon: ':',
+  },
   print: {
     contactDetails: 'Contact details',
     experienceAndClientProjects: 'Experience & client projects',
     client: 'Client',
     environment: 'Environment',
   },
-} as const;
+} as const satisfies LocaleMessages;
 
 export const cv = {
   metadata: {
@@ -166,4 +172,4 @@ export const cv = {
       },
     },
   },
-} as const;
+} as const satisfies LocaleCv;

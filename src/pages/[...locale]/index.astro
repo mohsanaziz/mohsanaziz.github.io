@@ -3,24 +3,25 @@ import ContactDetails from '@/components/ContactDetails.astro';
 import Contributors from '@/components/Contributors.astro';
 import EmployerCard from '@/components/EmployerCard.astro';
 import LanguageBar from '@/components/LanguageBar.astro';
+import { GITHUB_LEXICON } from '@/components/lexicon';
 import MissionRelease from '@/components/MissionRelease.astro';
 import ReleaseAsset from '@/components/ReleaseAsset.astro';
 import RepositoryHeader from '@/components/RepositoryHeader.astro';
 import SectionFrame from '@/components/SectionFrame.astro';
 import { getPeriodDurationInMonths } from '@/data/career';
-import { cv } from '@/data/cv';
 import { derivedCv } from '@/data/derived';
+import { profileImage } from '@/data/photo';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
-import { formatDurationInMonths, formatPeriod } from '@/i18n/format';
-import { requireLocale } from '@/i18n/locales';
 import { localeStaticPaths, resumeFileName, resumePath } from '@/i18n/routing';
-import { buildMissionReleaseViews } from '@/i18n/views';
+import { useTranslations } from '@/i18n/translate';
+import { buildMissionReleaseViews, cvView } from '@/i18n/views';
 import Layout from '@/layouts/Layout.astro';
 import packageMetadata from '@package';
 
 export const getStaticPaths = localeStaticPaths;
 
-const locale = requireLocale(Astro.currentLocale);
+const translate = useTranslations(Astro.currentLocale);
+const cv = cvView(translate.locale);
 
 const { githubProfile, linkedinProfile, profileLocation } = resolveProfileDetails(cv.profile);
 
@@ -38,30 +39,33 @@ const {
   missionCountsByEmployer,
   missionReleases: structuralMissionReleases,
 } = derivedCv;
-const employerCount: number = cv.professionalExperience.entries.length;
-const employersWithMissionCounts = cv.professionalExperience.entries.map((experience) => {
-  const missionCount = missionCountsByEmployer.get(experience.id);
+const employersWithMissionCounts = cv.professionalExperience.entries.map((employer) => {
+  const missionCount = missionCountsByEmployer.get(employer.id);
 
   if (missionCount === undefined) {
-    throw new Error(`The mission count is missing for ${experience.title}.`);
+    throw new Error(`The mission count is missing for ${employer.name}.`);
   }
 
-  return { experience, missionCount };
+  return { employer, missionCount };
 });
-const employerLabel = `${employerCount} ${employerCount === 1 ? 'employeur' : 'employeurs'}`;
-const careerDurationLabel = `${careerDurationInYears} ${careerDurationInYears === 1 ? 'an' : 'ans'}`;
-const missionCount: number = cv.clientProjects.entries.length;
-const missionVersionLabel = `${missionCount} ${missionCount === 1 ? 'version' : 'versions'}`;
-const missionReleases = buildMissionReleaseViews(cv.professionalExperience.entries, cv.clientProjects.entries, structuralMissionReleases);
+const employerLabel = translate.count('employer', cv.professionalExperience.entries.length);
+const careerDurationLabel = translate.count('year', careerDurationInYears);
+const missionVersionLabel = translate.count('version', cv.clientProjects.entries.length);
+const missionReleases = buildMissionReleaseViews(translate, cv, structuralMissionReleases);
 ---
 
-<Layout title={cv.pageTitle} description={`${cv.profile.name} — ${cv.profile.jobTitle}`}>
-  <RepositoryHeader image={cv.profile.image} owner={githubOwner} repository="cv" ownerHref={githubProfile.href} />
+<Layout title={cv.metadata.pageTitle} description={cv.metadata.pageDescription}>
+  <RepositoryHeader
+    image={{ ...profileImage, alt: cv.profile.imageAlt }}
+    owner={githubOwner}
+    repository={GITHUB_LEXICON.repository}
+    ownerHref={githubProfile.href}
+  />
 
   <main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
     <div class="grid min-w-0 grid-cols-1 gap-6 min-[1000px]:grid-cols-[minmax(0,1fr)_18rem]">
       <div class="min-w-0 space-y-6">
-        <SectionFrame title="README.md" icon="book">
+        <SectionFrame title={GITHUB_LEXICON.readme} icon="book">
           <article class="[overflow-wrap:anywhere]">
             <h1 class="text-3xl font-bold tracking-tight text-copy sm:text-4xl">{cv.profile.name}</h1>
             <p class="mt-2 text-base text-copy-muted">
@@ -80,13 +84,13 @@ const missionReleases = buildMissionReleaseViews(cv.professionalExperience.entri
         <SectionFrame title={cv.professionalExperience.title} counter={`${employerLabel} · ${careerDurationLabel}`}>
           <div class="grid grid-cols-1 gap-4 min-[700px]:grid-cols-2">
             {
-              employersWithMissionCounts.map(({ experience, missionCount }) => (
+              employersWithMissionCounts.map(({ employer, missionCount }) => (
                 <EmployerCard
-                  company={experience.title}
-                  role={experience.subtitle}
-                  contract={experience.contract}
-                  period={formatPeriod(experience.period)}
-                  duration={formatDurationInMonths(getPeriodDurationInMonths(experience.period, currentDate))}
+                  company={employer.name}
+                  role={employer.jobTitle}
+                  contract={employer.contract}
+                  period={translate.period(employer.period)}
+                  duration={translate.duration(getPeriodDurationInMonths(employer.period, currentDate))}
                   missionCount={missionCount}
                 />
               ))
@@ -99,7 +103,7 @@ const missionReleases = buildMissionReleaseViews(cv.professionalExperience.entri
             {
               missionReleases.map(({ mission, summary, showStatusBadge }) => (
                 <MissionRelease
-                  title={mission.title}
+                  title={mission.name}
                   summary={summary}
                   description={mission.description}
                   showStatusBadge={showStatusBadge}
@@ -110,24 +114,28 @@ const missionReleases = buildMissionReleaseViews(cv.professionalExperience.entri
         </SectionFrame>
       </div>
 
-      <aside class="min-w-0 space-y-6 self-start" aria-label="Informations complémentaires">
-        <SectionFrame title="Contact">
+      <aside class="min-w-0 space-y-6 self-start" aria-label={translate.messages.navigation.additionalInformation}>
+        <SectionFrame title={translate.messages.labels.contact}>
           <ContactDetails details={cv.profile.contactDetails} />
         </SectionFrame>
 
-        <SectionFrame title="Contributeurs">
+        <SectionFrame title={GITHUB_LEXICON.contributors}>
           <Contributors
-            image={cv.profile.image.src}
+            image={profileImage.src}
             github={{ href: githubProfile.href, label: githubOwner }}
             linkedin={{ href: linkedinProfile.href, label: linkedinPath }}
           />
         </SectionFrame>
 
-        <SectionFrame title="Releases" icon="tag">
-          <ReleaseAsset version={`v${packageMetadata.version}`} href={resumePath(locale)} fileName={resumeFileName(locale)} />
+        <SectionFrame title={GITHUB_LEXICON.releases} icon="tag">
+          <ReleaseAsset
+            version={`v${packageMetadata.version}`}
+            href={resumePath(translate.locale)}
+            fileName={resumeFileName(translate.locale)}
+          />
         </SectionFrame>
 
-        <SectionFrame title="Langages">
+        <SectionFrame title={GITHUB_LEXICON.languages}>
           <LanguageBar languages={languages} />
         </SectionFrame>
       </aside>

@@ -1,29 +1,36 @@
 ---
 import type { LanguageShare } from '@/data/languages';
+import { useTranslations } from '@/i18n/translate';
 
 interface Props {
   languages: readonly LanguageShare[];
 }
 
 const { languages } = Astro.props;
+const translate = useTranslations(Astro.currentLocale);
+const shares = languages.map((language) => ({ ...language, share: translate.percentage(language.percentage) }));
 ---
 
 <div>
   <div class="flex h-2.5 overflow-hidden rounded-full bg-panel" aria-hidden="true">
     {
-      languages.map(({ name, color, percentage }) => (
-        <span aria-hidden="true" title={`${name} : ${percentage} %`} style={`width: ${percentage}%; background-color: ${color};`} />
+      shares.map(({ name, color, percentage, share }) => (
+        <span
+          aria-hidden="true"
+          title={`${translate.fieldLabel(name)} ${share}`}
+          style={`width: ${percentage}%; background-color: ${color};`}
+        />
       ))
     }
   </div>
 
   <ul class="mt-4 space-y-2.5">
     {
-      languages.map(({ name, color, percentage }) => (
+      shares.map(({ name, color, share }) => (
         <li class="flex items-center gap-2 text-sm">
           <span aria-hidden="true" class="h-2.5 w-2.5 shrink-0 rounded-full" style={`background-color: ${color};`} />
           <span class="min-w-0 text-copy">{name}</span>
-          <span class="ms-auto text-copy-muted tabular-nums">{percentage} %</span>
+          <span class="ms-auto text-copy-muted tabular-nums">{share}</span>
         </li>
       ))
     }

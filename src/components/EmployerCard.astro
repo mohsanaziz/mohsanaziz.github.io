@@ -3,7 +3,7 @@ import FactRow from '@/components/FactRow.astro';
 import StatusBadge from '@/components/StatusBadge.astro';
 import { TONE_BY_CONTRACT } from '@/components/status';
 import type { Contract } from '@/data/cv';
-import { CONTRACT_LABELS } from '@/i18n/format';
+import { useTranslations } from '@/i18n/translate';
 
 interface Props {
   company: string;
@@ -15,14 +15,15 @@ interface Props {
 }
 
 const { company, role, contract, period, duration, missionCount } = Astro.props;
+const translate = useTranslations(Astro.currentLocale);
+const { labels } = translate.messages;
 const monogram = company
   .split(/\s+/)
   .map((word) => /^(\p{L})/u.exec(word)?.[1])
   .filter((initial): initial is string => initial !== undefined)
   .slice(0, 2)
   .join('')
-  .toLocaleUpperCase('fr');
-const missionLabel = `${missionCount} ${missionCount === 1 ? 'mission' : 'missions'}`;
+  .toLocaleUpperCase(translate.locale);
 ---
 
 <article class="min-w-0 rounded-lg border border-frame-border bg-page p-4 sm:p-5">
@@ -40,9 +41,9 @@ const missionLabel = `${missionCount} ${missionCount === 1 ? 'mission' : 'missio
   </header>
 
   <dl class="mt-5 divide-y divide-rule border-t border-rule text-sm">
-    <FactRow label="Contrat"><StatusBadge label={CONTRACT_LABELS[contract]} tone={TONE_BY_CONTRACT[contract]} /></FactRow>
-    <FactRow label="Période">{period}</FactRow>
-    <FactRow label="Durée">{duration}</FactRow>
-    <FactRow label="Missions">{missionLabel}</FactRow>
+    <FactRow label={labels.contract}><StatusBadge label={translate.contract(contract)} tone={TONE_BY_CONTRACT[contract]} /></FactRow>
+    <FactRow label={labels.period}>{period}</FactRow>
+    <FactRow label={labels.duration}>{duration}</FactRow>
+    <FactRow label={labels.missions}>{translate.count('mission', missionCount)}</FactRow>
   </dl>
 </article>

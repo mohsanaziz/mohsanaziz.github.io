@@ -1,14 +1,14 @@
 ---
 import Icon from '@/components/Icon.astro';
-import type { ContactDetail } from '@/data/cv';
+import type { ContactDetailView } from '@/i18n/views';
 
 interface Props {
-  details: readonly ContactDetail[];
+  details: readonly ContactDetailView[];
 }
 
 const { details } = Astro.props;
 
-function contactHref({ icon, info }: ContactDetail): string | undefined {
+function contactHref({ icon, info }: ContactDetailView): string | undefined {
   if (icon === 'phone') {
     const digits = info.replace(/\D/g, '');
     const internationalNumber = digits.startsWith('0') ? `+33${digits.slice(1)}` : `+${digits}`;
