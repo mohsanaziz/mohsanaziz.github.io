@@ -2,22 +2,19 @@
 import FactRow from '@/components/FactRow.astro';
 import StatusBadge from '@/components/StatusBadge.astro';
 import { TONE_BY_CONTRACT } from '@/components/status';
-import type { Contract } from '@/data/cv';
 import { useTranslations } from '@/i18n/translate';
+import type { EmployerView } from '@/i18n/views';
 
 interface Props {
-  company: string;
-  role: string;
-  contract: Contract;
-  period: string;
-  duration: string;
+  employer: EmployerView;
+  durationInMonths: number;
   missionCount: number;
 }
 
-const { company, role, contract, period, duration, missionCount } = Astro.props;
+const { employer, durationInMonths, missionCount } = Astro.props;
 const translate = useTranslations(Astro.currentLocale);
 const { labels } = translate.messages;
-const monogram = company
+const monogram = employer.name
   .split(/\s+/)
   .map((word) => /^(\p{L})/u.exec(word)?.[1])
   .filter((initial): initial is string => initial !== undefined)
@@ -35,15 +32,17 @@ const monogram = company
       {monogram}
     </span>
     <div class="min-w-0">
-      <h3 class="font-semibold [overflow-wrap:anywhere] text-copy">{company}</h3>
-      <p class="mt-0.5 text-sm [overflow-wrap:anywhere] text-copy-muted">{role}</p>
+      <h3 class="font-semibold [overflow-wrap:anywhere] text-copy">{employer.name}</h3>
+      <p class="mt-0.5 text-sm [overflow-wrap:anywhere] text-copy-muted">{employer.jobTitle}</p>
     </div>
   </header>
 
   <dl class="mt-5 divide-y divide-rule border-t border-rule text-sm">
-    <FactRow label={labels.contract}><StatusBadge label={translate.contract(contract)} tone={TONE_BY_CONTRACT[contract]} /></FactRow>
-    <FactRow label={labels.period}>{period}</FactRow>
-    <FactRow label={labels.duration}>{duration}</FactRow>
+    <FactRow label={labels.contract}>
+      <StatusBadge label={translate.contract(employer.contract)} tone={TONE_BY_CONTRACT[employer.contract]} />
+    </FactRow>
+    <FactRow label={labels.period}>{translate.period(employer.period)}</FactRow>
+    <FactRow label={labels.duration}>{translate.duration(durationInMonths)}</FactRow>
     <FactRow label={labels.missions}>{translate.count('mission', missionCount)}</FactRow>
   </dl>
 </article>

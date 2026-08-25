@@ -19,7 +19,7 @@ function cached<TFormatter>(cache: Map<Locale, TFormatter>, locale: Locale, crea
   return formatter;
 }
 
-export function formatNumber(locale: Locale, value: number): string {
+function formatNumber(locale: Locale, value: number): string {
   return cached(NUMBER_FORMATTERS, locale, () => new Intl.NumberFormat(locale)).format(value);
 }
 

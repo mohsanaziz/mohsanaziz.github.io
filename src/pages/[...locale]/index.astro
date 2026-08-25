@@ -46,7 +46,7 @@ const employersWithMissionCounts = cv.professionalExperience.entries.map((employ
     throw new Error(`The mission count is missing for ${employer.name}.`);
   }
 
-  return { employer, missionCount };
+  return { employer, durationInMonths: getPeriodDurationInMonths(employer.period, currentDate), missionCount };
 });
 const employerLabel = translate.count('employer', cv.professionalExperience.entries.length);
 const careerDurationLabel = translate.count('year', careerDurationInYears);
@@ -84,15 +84,8 @@ const missionReleases = buildMissionReleaseViews(translate, cv, structuralMissio
         <SectionFrame title={cv.professionalExperience.title} counter={`${employerLabel} · ${careerDurationLabel}`}>
           <div class="grid grid-cols-1 gap-4 min-[700px]:grid-cols-2">
             {
-              employersWithMissionCounts.map(({ employer, missionCount }) => (
-                <EmployerCard
-                  company={employer.name}
-                  role={employer.jobTitle}
-                  contract={employer.contract}
-                  period={translate.period(employer.period)}
-                  duration={translate.duration(getPeriodDurationInMonths(employer.period, currentDate))}
-                  missionCount={missionCount}
-                />
+              employersWithMissionCounts.map(({ employer, durationInMonths, missionCount }) => (
+                <EmployerCard employer={employer} durationInMonths={durationInMonths} missionCount={missionCount} />
               ))
             }
           </div>
