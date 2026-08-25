@@ -9,23 +9,14 @@ import { LOCALES } from '../src/i18n/locales.ts';
 import { formatMessage } from '../src/i18n/messages.ts';
 import { useTranslations } from '../src/i18n/translate.ts';
 import { cvView } from '../src/i18n/views.ts';
+import { stringPaths } from './layer-strings.mjs';
 
 // The French and English layers are typed complete, so `astro check` already refuses an incomplete one.
 // These tests cover what the type system cannot see: the values themselves and the rendering rules.
 
-function keyPaths(value, prefix = '') {
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
-    return [prefix];
-  }
-
-  return Object.keys(value)
-    .sort()
-    .flatMap((key) => keyPaths(value[key], prefix ? `${prefix}.${key}` : key));
-}
-
 test('les calques fr et en sont symétriques, clé pour clé', () => {
-  assert.deepEqual(keyPaths(fr.messages), keyPaths(en.messages));
-  assert.deepEqual(keyPaths(fr.cv), keyPaths(en.cv));
+  assert.deepEqual(stringPaths(fr.messages), stringPaths(en.messages));
+  assert.deepEqual(stringPaths(fr.cv), stringPaths(en.cv));
 });
 
 test('le noyau invariant ne porte aucune phrase de langue naturelle', () => {

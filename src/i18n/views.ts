@@ -2,7 +2,8 @@ import type { IconName } from '../components/icons.ts';
 import { cv, type ClientProjectId, type ClientReference, type ContactDetailId, type Contract, type EmployerId } from '../data/cv.ts';
 import type { MissionReleaseData } from '../data/missions.ts';
 import type { Period } from '../data/period.ts';
-import { localeLayer, type Content } from './layers.ts';
+import type { LocaleCv } from './content.ts';
+import { localeLayer } from './layers.ts';
 import type { Locale } from './locales.ts';
 import type { Translator } from './translate.ts';
 
@@ -34,7 +35,7 @@ export interface ClientProjectView {
 }
 
 export interface CvView {
-  metadata: Content['metadata'];
+  metadata: LocaleCv['metadata'];
   profile: {
     name: string;
     imageAlt: string;
@@ -43,7 +44,7 @@ export interface CvView {
     contactDetails: readonly ContactDetailView[];
     resume: { label: string; text: string; icon: IconName };
   };
-  about: Content['about'];
+  about: LocaleCv['about'];
   professionalExperience: { title: string; entries: readonly EmployerView[] };
   clientProjects: { title: string; entries: readonly ClientProjectView[] };
 }
@@ -65,13 +66,11 @@ export interface MissionReleaseView {
   showStatusBadge: boolean;
 }
 
-const CV_VIEWS = new Map<Locale, CvView>();
-
-function resolveClient(client: ClientReference, institutions: Content['institutions']): string {
+function resolveClient(client: ClientReference, institutions: LocaleCv['institutions']): string {
   return 'institution' in client ? institutions[client.institution] : client.organisation;
 }
 
-function buildCvView(locale: Locale): CvView {
+export function cvView(locale: Locale): CvView {
   const content = localeLayer(locale).cv;
 
   return {
@@ -124,18 +123,6 @@ function buildCvView(locale: Locale): CvView {
       }),
     },
   };
-}
-
-/** The merge is pure, and the build renders each locale several times: compute it once per locale. */
-export function cvView(locale: Locale): CvView {
-  let view = CV_VIEWS.get(locale);
-
-  if (view === undefined) {
-    view = buildCvView(locale);
-    CV_VIEWS.set(locale, view);
-  }
-
-  return view;
 }
 
 export function buildMissionReleaseViews(

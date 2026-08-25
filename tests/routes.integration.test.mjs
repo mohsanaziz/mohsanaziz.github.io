@@ -13,6 +13,7 @@ import * as fr from '../src/i18n/fr.ts';
 import { LOCALES } from '../src/i18n/locales.ts';
 import { localeDirection, localeUrlSegment, resumePath } from '../src/i18n/routing.ts';
 import { useTranslations } from '../src/i18n/translate.ts';
+import { flattenStrings } from './layer-strings.mjs';
 
 const DIST_DIRECTORY = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
 
@@ -27,18 +28,6 @@ async function readBuiltPage(locale, route) {
 // Astro escapes a handful of characters in the rendered HTML; compare against the source strings.
 function decodeHtml(html) {
   return html.replaceAll('&#39;', "'").replaceAll('&quot;', '"').replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>');
-}
-
-function flattenStrings(value, prefix = '') {
-  if (typeof value === 'string') {
-    return [[prefix, value]];
-  }
-
-  if (value === null || typeof value !== 'object') {
-    return [];
-  }
-
-  return Object.entries(value).flatMap(([key, nested]) => flattenStrings(nested, prefix ? `${prefix}.${key}` : key));
 }
 
 function htmlAttributes(html) {
