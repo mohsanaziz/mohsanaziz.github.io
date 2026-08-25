@@ -4,8 +4,11 @@ import test from 'node:test';
 
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
-const PDF_PATH = new URL('../dist/cv/CV.pdf', import.meta.url);
-const PAGINATION_TEST_PDF_PATH = new URL('../tmp/pagination-test/CV.pdf', import.meta.url);
+import { DEFAULT_LOCALE } from '../src/i18n/locales.ts';
+import { resumeFileName, resumePath } from '../src/i18n/routing.ts';
+
+const PDF_PATH = new URL(`../dist${resumePath(DEFAULT_LOCALE)}`, import.meta.url);
+const PAGINATION_TEST_PDF_PATH = new URL(`../tmp/pagination-test/${resumeFileName(DEFAULT_LOCALE)}`, import.meta.url);
 const PACKAGE_PATH = new URL('../package.json', import.meta.url);
 const A4_WIDTH_POINTS = 595.28;
 const A4_HEIGHT_POINTS = 841.89;

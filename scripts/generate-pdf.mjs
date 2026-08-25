@@ -4,12 +4,14 @@ import { fileURLToPath } from 'node:url';
 
 import { chromium } from 'playwright';
 
+import { DEFAULT_LOCALE } from '../src/i18n/locales.ts';
+import { resumeFileName, resumePath } from '../src/i18n/routing.ts';
 import { startBuildServer } from './build-server.mjs';
 
 const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const DIST_DIRECTORY = resolve(PROJECT_ROOT, 'dist');
-const PDF_PATH = resolve(DIST_DIRECTORY, 'cv/CV.pdf');
-const PAGINATION_TEST_PDF_PATH = resolve(PROJECT_ROOT, 'tmp/pagination-test/CV.pdf');
+const PDF_PATH = resolve(DIST_DIRECTORY, `.${resumePath(DEFAULT_LOCALE)}`);
+const PAGINATION_TEST_PDF_PATH = resolve(PROJECT_ROOT, 'tmp/pagination-test', resumeFileName(DEFAULT_LOCALE));
 const PACKAGE_PATH = resolve(PROJECT_ROOT, 'package.json');
 const paginationTest = process.argv.includes('--pagination-test');
 const generationTarget = paginationTest

@@ -12,18 +12,27 @@ import { cv } from '@/data/cv';
 import { derivedCv } from '@/data/derived';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
 import { formatDurationInMonths, formatPeriod } from '@/i18n/format';
+import { isLocale } from '@/i18n/locales';
+import { localeStaticPaths, resumeFileName, resumePath } from '@/i18n/routing';
 import { buildMissionReleaseViews } from '@/i18n/views';
 import Layout from '@/layouts/Layout.astro';
 import packageMetadata from '@package';
+
+export const getStaticPaths = localeStaticPaths;
+
+const locale = Astro.currentLocale;
+
+if (!isLocale(locale)) {
+  throw new Error(`The page is served for an unknown locale: ${locale}.`);
+}
 
 const { githubProfile, linkedinProfile, profileLocation } = resolveProfileDetails(cv.profile);
 
 const githubOwner = urlPathSegments(githubProfile.href).at(0);
 const linkedinPath = urlPathSegments(linkedinProfile.href).join('/');
-const resumeFileName = urlPathSegments(cv.profile.resume.href, Astro.site ?? Astro.url).at(-1);
 
-if (!githubOwner || !linkedinPath || !resumeFileName) {
-  throw new Error('The profile and resume URLs must contain displayable paths.');
+if (!githubOwner || !linkedinPath) {
+  throw new Error('The profile URLs must contain displayable paths.');
 }
 
 const {
@@ -119,7 +128,7 @@ const missionReleases = buildMissionReleaseViews(cv.professionalExperience.entri
         </SectionFrame>
 
         <SectionFrame title="Releases" icon="tag">
-          <ReleaseAsset version={`v${packageMetadata.version}`} href={cv.profile.resume.href} fileName={resumeFileName} />
+          <ReleaseAsset version={`v${packageMetadata.version}`} href={resumePath(locale)} fileName={resumeFileName(locale)} />
         </SectionFrame>
 
         <SectionFrame title="Langages">
