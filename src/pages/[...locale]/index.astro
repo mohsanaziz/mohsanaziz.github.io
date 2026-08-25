@@ -12,7 +12,7 @@ import { cv } from '@/data/cv';
 import { derivedCv } from '@/data/derived';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
 import { formatDurationInMonths, formatPeriod } from '@/i18n/format';
-import { isLocale } from '@/i18n/locales';
+import { requireLocale } from '@/i18n/locales';
 import { localeStaticPaths, resumeFileName, resumePath } from '@/i18n/routing';
 import { buildMissionReleaseViews } from '@/i18n/views';
 import Layout from '@/layouts/Layout.astro';
@@ -20,11 +20,7 @@ import packageMetadata from '@package';
 
 export const getStaticPaths = localeStaticPaths;
 
-const locale = Astro.currentLocale;
-
-if (!isLocale(locale)) {
-  throw new Error(`The page is served for an unknown locale: ${locale}.`);
-}
+const locale = requireLocale(Astro.currentLocale);
 
 const { githubProfile, linkedinProfile, profileLocation } = resolveProfileDetails(cv.profile);
 
