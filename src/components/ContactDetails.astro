@@ -7,36 +7,26 @@ interface Props {
 }
 
 const { details } = Astro.props;
-
-function contactHref({ icon, info }: ContactDetailView): string | undefined {
-  if (icon === 'mail') {
-    return `mailto:${info}`;
-  }
-}
 ---
 
 <dl class="space-y-4">
   {
-    details.map((detail) => {
-      const href = detail.href ?? contactHref(detail);
-
-      return (
-        <div class="flex min-w-0 gap-3">
-          <Icon name={detail.icon} class="mt-0.5 h-4 w-4 shrink-0 text-copy-muted" />
-          <div class="min-w-0">
-            <dt class="text-xs font-medium tracking-wide text-copy-muted uppercase">{detail.title}</dt>
-            <dd class="mt-0.5 text-sm [overflow-wrap:anywhere] text-copy">
-              {href ? (
-                <a class="rounded-sm text-link" href={href}>
-                  {detail.info}
-                </a>
-              ) : (
-                detail.info
-              )}
-            </dd>
-          </div>
+    details.map((detail) => (
+      <div class="flex min-w-0 gap-3">
+        <Icon name={detail.icon} class="mt-0.5 h-4 w-4 shrink-0 text-copy-muted" />
+        <div class="min-w-0">
+          <dt class="text-xs font-medium tracking-wide text-copy-muted uppercase">{detail.title}</dt>
+          <dd class="mt-0.5 text-sm [overflow-wrap:anywhere] text-copy">
+            {detail.href ? (
+              <a class="rounded-sm text-link" href={detail.href}>
+                {detail.info}
+              </a>
+            ) : (
+              detail.info
+            )}
+          </dd>
         </div>
-      );
-    })
+      </div>
+    ))
   }
 </dl>

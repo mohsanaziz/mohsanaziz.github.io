@@ -1,15 +1,11 @@
 import { parseMachineMonth, type Period } from '../data/period.ts';
-import type { Locale } from './locales.ts';
+import { localeFormatting, type Locale } from './locales.ts';
 import { formatMessage, type LocaleMessages, type PluralMessage } from './messages.ts';
 
 const MONTH_FORMATTERS = new Map<Locale, Intl.DateTimeFormat>();
 const NUMBER_FORMATTERS = new Map<Locale, Intl.NumberFormat>();
 const PERCENTAGE_FORMATTERS = new Map<Locale, Intl.NumberFormat>();
 const PLURAL_RULES = new Map<Locale, Intl.PluralRules>();
-
-function formattingLocale(locale: Locale): string {
-  return locale === 'ar' ? 'ar-u-nu-arab' : locale;
-}
 
 // Intl formatters are costly to build and the build renders every page of every locale, so keep one per locale.
 function cached<TFormatter>(cache: Map<Locale, TFormatter>, locale: Locale, create: () => TFormatter): TFormatter {
@@ -24,22 +20,27 @@ function cached<TFormatter>(cache: Map<Locale, TFormatter>, locale: Locale, crea
 }
 
 function formatNumber(locale: Locale, value: number): string {
-  return cached(NUMBER_FORMATTERS, locale, () => new Intl.NumberFormat(formattingLocale(locale))).format(value);
+  return cached(NUMBER_FORMATTERS, locale, () => new Intl.NumberFormat(localeFormatting(locale).intlLocale)).format(value);
 }
 
 /** Rewrites digits in visible text while leaving the surrounding punctuation and letters untouched. */
 export function formatDigits(locale: Locale, value: string): string {
+  if (localeFormatting(locale).numberingSystem === 'latn') return value;
+
   return value.replace(/[0-9]/g, (digit) => formatNumber(locale, Number(digit)));
 }
 
 /** Renders a share expressed in percentage points, spacing and symbol included. */
 export function formatPercentage(locale: Locale, percentagePoints: number): string {
-  return cached(PERCENTAGE_FORMATTERS, locale, () => new Intl.NumberFormat(formattingLocale(locale), { style: 'percent' })).format(
-    percentagePoints / 100,
-  );
+  return cached(
+    PERCENTAGE_FORMATTERS,
+    locale,
+    () => new Intl.NumberFormat(localeFormatting(locale).intlLocale, { style: 'percent' }),
+  ).format(percentagePoints / 100);
 }
 
 export function formatPlural(locale: Locale, forms: PluralMessage, count: number): string {
+  // Plural categories depend on the language only; calendar and numbering extensions do not belong here.
   const category = cached(PLURAL_RULES, locale, () => new Intl.PluralRules(locale)).select(count);
 
   return formatMessage(forms[category] ?? forms.other, { count: formatNumber(locale, count) });
@@ -50,7 +51,7 @@ function formatMonth(locale: Locale, bound: string): string {
   const formatter = cached(
     MONTH_FORMATTERS,
     locale,
-    () => new Intl.DateTimeFormat(formattingLocale(locale), { month: 'long', year: 'numeric', timeZone: 'UTC' }),
+    () => new Intl.DateTimeFormat(localeFormatting(locale).intlLocale, { month: 'long', year: 'numeric', timeZone: 'UTC' }),
   );
   const label = formatter.format(new Date(Date.UTC(year, month - 1)));
 

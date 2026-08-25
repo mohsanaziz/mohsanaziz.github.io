@@ -95,16 +95,16 @@ test('le sélecteur relie les trois pages publiques avec des endonymes accessibl
   });
 
   const expectedOptions = [
-    { locale: 'fr', href: '/', endonym: 'Français', dir: 'ltr' },
-    { locale: 'en', href: '/en/', endonym: 'English', dir: 'ltr' },
-    { locale: 'ar', href: '/ar/', endonym: 'العربية', dir: 'rtl' },
+    { locale: 'fr', href: '/', endonym: 'Français' },
+    { locale: 'en', href: '/en/', endonym: 'English' },
+    { locale: 'ar', href: '/ar/', endonym: 'العربية' },
   ];
 
   for (const locale of LOCALES) {
     await page.goto(`${server.origin}${localeUrlSegment(locale) ? `/${locale}/` : '/'}`);
 
     const selector = await page.locator('header details').evaluate((details) => {
-      const endonymOf = (element) => element.querySelector('[lang]');
+      const endonymOf = (element) => element.querySelector('[lang][dir]');
 
       return {
         accessibleLabel: details.querySelector('summary .sr-only')?.textContent,
@@ -151,7 +151,7 @@ test('le sélecteur relie les trois pages publiques avec des endonymes accessibl
         linkDir: null,
         endonym: option.endonym,
         endonymLang: option.locale,
-        endonymDir: locale === 'ar' && option.dir === 'ltr' ? 'auto' : option.dir,
+        endonymDir: 'auto',
         current: option.locale === locale ? 'page' : null,
       })),
     );
@@ -293,7 +293,10 @@ test('/ar/ rend son interface, ses chiffres et son interlignage en arabe sans al
     const proseStyle = getComputedStyle(prose);
 
     return {
-      text: document.body.innerText,
+      accessibleText: [
+        document.body.innerText,
+        ...Array.from(document.querySelectorAll('[aria-label]'), (element) => element.getAttribute('aria-label') ?? ''),
+      ].join('\n'),
       name: document.querySelector('h1')?.innerText,
       proseLineHeightRatio: Number.parseFloat(proseStyle.lineHeight) / Number.parseFloat(proseStyle.fontSize),
       pdfHref: download.getAttribute('href'),
@@ -304,12 +307,12 @@ test('/ar/ rend son interface, ses chiffres et son interlignage en arabe sans al
   });
 
   for (const expected of ['معلومات الاتصال', 'الفترة', 'قيد التنفيذ', 'تغيير اللغة', fr.cv.about.paragraphs[0]]) {
-    assert.ok(rendered.text.includes(expected), `Expected /ar/ to render “${expected}”.`);
+    assert.ok(rendered.accessibleText.includes(expected), `Expected /ar/ to render “${expected}”.`);
   }
 
   assert.equal(rendered.asideLabel, 'معلومات إضافية');
   assert.match(rendered.name ?? '', /محسن عزيز.*Mohsan AZIZ/s);
-  assert.doesNotMatch(rendered.text, /[0-9]/, 'Expected every displayed number on /ar/ to use Arabic digits.');
+  assert.doesNotMatch(rendered.accessibleText, /[0-9]/, 'Expected every visible or aria-labelled number on /ar/ to use Arabic digits.');
   assert.ok(
     Math.abs(rendered.proseLineHeightRatio - 2.112) < 0.001,
     `Expected Arabic prose line-height 2.112, got ${rendered.proseLineHeightRatio}.`,
@@ -317,6 +320,21 @@ test('/ar/ rend son interface, ses chiffres et son interlignage en arabe sans al
   assert.equal(rendered.pdfHref, '/cv/CV.pdf');
   assert.equal(rendered.pdfFileName, 'CV.pdf');
   assert.equal(rendered.ltrIslandCount, 0);
+
+  await page.goto(`${server.origin}/ar/cv-print/`, { waitUntil: 'networkidle' });
+
+  const printableAccessibleText = await page.evaluate(() =>
+    [
+      document.body.innerText,
+      ...Array.from(document.querySelectorAll('[aria-label]'), (element) => element.getAttribute('aria-label') ?? ''),
+    ].join('\n'),
+  );
+
+  assert.doesNotMatch(
+    printableAccessibleText,
+    /[0-9]/,
+    'Expected every visible or aria-labelled number on /ar/cv-print/ to use Arabic digits.',
+  );
 });
 
 test('/en/ ne laisse subsister aucune chaîne française là où l’anglais diffère', async () => {

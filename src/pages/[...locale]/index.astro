@@ -12,9 +12,9 @@ import { getPeriodDurationInMonths } from '@/data/career';
 import { derivedCv } from '@/data/derived';
 import { imageAsset } from '@/data/images';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
-import { localeStaticPaths, resumeFileName, resumePath } from '@/i18n/routing';
+import { localeStaticPaths } from '@/i18n/routing';
 import { useTranslations } from '@/i18n/translate';
-import { buildMissionReleaseViews, cvView } from '@/i18n/views';
+import { buildMissionReleaseViews, cvView, releaseAssetView } from '@/i18n/views';
 import Layout from '@/layouts/Layout.astro';
 import packageMetadata from '@package';
 
@@ -53,6 +53,7 @@ const employerLabel = translate.count('employer', cv.professionalExperience.entr
 const careerDurationLabel = translate.count('year', careerDurationInYears);
 const missionVersionLabel = translate.count('version', cv.clientProjects.entries.length);
 const missionReleases = buildMissionReleaseViews(translate, cv, structuralMissionReleases);
+const releaseAsset = releaseAssetView(translate.locale, packageMetadata.version);
 ---
 
 <Layout title={cv.metadata.pageTitle} description={cv.metadata.pageDescription}>
@@ -130,11 +131,7 @@ const missionReleases = buildMissionReleaseViews(translate, cv, structuralMissio
         </SectionFrame>
 
         <SectionFrame title={GITHUB_LEXICON.releases} icon="tag">
-          <ReleaseAsset
-            version={translate.digits(`v${packageMetadata.version}`)}
-            href={resumePath(translate.locale)}
-            fileName={resumeFileName(translate.locale)}
-          />
+          <ReleaseAsset {...releaseAsset} />
         </SectionFrame>
 
         <SectionFrame title={GITHUB_LEXICON.languages}>

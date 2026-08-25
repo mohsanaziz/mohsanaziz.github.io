@@ -9,7 +9,7 @@ import { localeContentCoverage, localeLayer } from '../src/i18n/layers.ts';
 import { LOCALES } from '../src/i18n/locales.ts';
 import { formatMessage } from '../src/i18n/messages.ts';
 import { useTranslations } from '../src/i18n/translate.ts';
-import { cvView } from '../src/i18n/views.ts';
+import { cvView, releaseAssetView } from '../src/i18n/views.ts';
 import { stringPaths } from './layer-strings.mjs';
 
 // The French and English layers are typed complete, so `astro check` already refuses an incomplete one.
@@ -113,7 +113,13 @@ test('une institution est traduite, une entité nommée reste invariante', () =>
 test('les coordonnées invariantes viennent du noyau, les autres du calque', () => {
   const detailOf = (view, id) => view.profile.contactDetails.find((detail) => detail.id === id);
 
-  assert.deepEqual(detailOf(cvView('en'), 'email'), { id: 'email', title: 'Email', info: 'mohsan.aziz@gmail.com', icon: 'mail' });
+  assert.deepEqual(detailOf(cvView('en'), 'email'), {
+    id: 'email',
+    title: 'Email',
+    info: 'mohsan.aziz@gmail.com',
+    icon: 'mail',
+    href: 'mailto:mohsan.aziz@gmail.com',
+  });
   assert.equal(detailOf(cvView('fr'), 'birthdate')?.info, '19 Octobre 1989');
   assert.equal(detailOf(cvView('en'), 'birthdate')?.info, '19 October 1989');
 });
@@ -151,4 +157,12 @@ test('la vue arabe localise les chiffres affichés tout en conservant les cibles
       fallbackParagraph: fr.cv.about.paragraphs[0],
     },
   );
+});
+
+test('la vue de release localise sa version sans altérer le chemin ou le nom du PDF', () => {
+  assert.deepEqual(releaseAssetView('ar', '2.1.0'), {
+    version: 'v٢.١.٠',
+    href: '/cv/CV.pdf',
+    fileName: 'CV.pdf',
+  });
 });
