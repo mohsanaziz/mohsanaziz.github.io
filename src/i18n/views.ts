@@ -1,5 +1,13 @@
 import type { IconName } from '../components/icons.ts';
-import { cv, type ClientProjectId, type ClientReference, type ContactDetailId, type Contract, type EmployerId } from '../data/cv.ts';
+import {
+  cv,
+  type ClientProjectId,
+  type ClientReference,
+  type ContactDetailId,
+  type Contract,
+  type EmployerId,
+  type ImageSource,
+} from '../data/cv.ts';
 import type { MissionReleaseData } from '../data/missions.ts';
 import type { Period } from '../data/period.ts';
 import type { LocaleCv } from './content.ts';
@@ -37,8 +45,8 @@ export interface ClientProjectView {
 export interface CvView {
   metadata: LocaleCv['metadata'];
   profile: {
+    image: { source: ImageSource; alt: string };
     name: string;
-    imageAlt: string;
     jobTitle: string;
     socialLinks: (typeof cv)['profile']['socialLinks'];
     contactDetails: readonly ContactDetailView[];
@@ -76,8 +84,8 @@ export function cvView(locale: Locale): CvView {
   return {
     metadata: content.metadata,
     profile: {
+      image: { source: cv.profile.image.source, alt: content.profile.imageAlt },
       name: content.profile.name ?? cv.profile.name,
-      imageAlt: content.profile.imageAlt,
       jobTitle: content.profile.jobTitle,
       socialLinks: cv.profile.socialLinks,
       contactDetails: cv.profile.contactDetails.map((detail) => {

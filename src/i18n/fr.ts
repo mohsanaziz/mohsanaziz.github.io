@@ -1,11 +1,11 @@
 import type { LocaleCv } from './content.ts';
-import type { LocaleMessages } from './messages.ts';
+import { defineMessages } from './messages.ts';
 
 // French locale layer. Its shape mirrors `en.ts` key for key: French is a locale like any other, and the
 // GitHub shell vocabulary (README.md, Public, Releases, Latest, Languages, Contributors, Stack, Summary)
 // is quoted from the GitHub interface, so it stays in English and out of this store.
 
-export const messages = {
+export const messages = defineMessages({
   navigation: {
     additionalInformation: 'Informations complémentaires',
   },
@@ -69,7 +69,7 @@ export const messages = {
     client: 'Client',
     environment: 'Environnement',
   },
-} as const satisfies LocaleMessages;
+});
 
 export const cv = {
   metadata: {

@@ -75,6 +75,11 @@ test('les parts de langage sont formatées par Intl dans chaque locale', () => {
   assert.match(useTranslations('fr').percentage(37), /^37\s%$/);
 });
 
+test('la vue porte l’image du noyau et son texte de remplacement traduit', () => {
+  assert.deepEqual(cvView('fr').profile.image, { source: cv.profile.image.source, alt: 'Photo de Mohsan AZIZ' });
+  assert.deepEqual(cvView('en').profile.image, { source: cv.profile.image.source, alt: 'Portrait of Mohsan AZIZ' });
+});
+
 test('la vue de CV fusionne le noyau et le calque de la locale', () => {
   const french = cvView('fr');
   const english = cvView('en');
