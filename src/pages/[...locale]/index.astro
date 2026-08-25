@@ -10,7 +10,7 @@ import RepositoryHeader from '@/components/RepositoryHeader.astro';
 import SectionFrame from '@/components/SectionFrame.astro';
 import { getPeriodDurationInMonths } from '@/data/career';
 import { derivedCv } from '@/data/derived';
-import { profileImage } from '@/data/photo';
+import { imageAsset } from '@/data/images';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
 import { localeStaticPaths, resumeFileName, resumePath } from '@/i18n/routing';
 import { useTranslations } from '@/i18n/translate';
@@ -22,6 +22,7 @@ export const getStaticPaths = localeStaticPaths;
 
 const translate = useTranslations(Astro.currentLocale);
 const cv = cvView(translate.locale);
+const portrait = { src: imageAsset(cv.profile.image.source), alt: cv.profile.image.alt };
 
 const { githubProfile, linkedinProfile, profileLocation } = resolveProfileDetails(cv.profile);
 
@@ -55,12 +56,7 @@ const missionReleases = buildMissionReleaseViews(translate, cv, structuralMissio
 ---
 
 <Layout title={cv.metadata.pageTitle} description={cv.metadata.pageDescription}>
-  <RepositoryHeader
-    image={{ ...profileImage, alt: cv.profile.imageAlt }}
-    owner={githubOwner}
-    repository={GITHUB_LEXICON.repository}
-    ownerHref={githubProfile.href}
-  />
+  <RepositoryHeader image={portrait} owner={githubOwner} repository={GITHUB_LEXICON.repository} ownerHref={githubProfile.href} />
 
   <main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
     <div class="grid min-w-0 grid-cols-1 gap-6 min-[1000px]:grid-cols-[minmax(0,1fr)_18rem]">
@@ -114,7 +110,7 @@ const missionReleases = buildMissionReleaseViews(translate, cv, structuralMissio
 
         <SectionFrame title={GITHUB_LEXICON.contributors}>
           <Contributors
-            image={profileImage.src}
+            image={portrait.src}
             github={{ href: githubProfile.href, label: githubOwner }}
             linkedin={{ href: linkedinProfile.href, label: linkedinPath }}
           />
