@@ -3,6 +3,7 @@ import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import { GITHUB_LEXICON } from '@/components/lexicon';
 import LanguageSelector from '@/components/LanguageSelector.astro';
+import ShellBadge from '@/components/ShellBadge.astro';
 
 interface Props {
   image: {
@@ -12,9 +13,10 @@ interface Props {
   owner: string;
   repository: string;
   ownerHref: string;
+  showLanguageSelector?: boolean;
 }
 
-const { image, owner, repository, ownerHref } = Astro.props;
+const { image, owner, repository, ownerHref, showLanguageSelector = true } = Astro.props;
 ---
 
 <header class="border-b border-frame-border bg-panel">
@@ -36,13 +38,15 @@ const { image, owner, repository, ownerHref } = Astro.props;
         <span aria-hidden="true" class="text-copy-muted"> / </span>
         <span class="font-semibold">{repository}</span>
       </p>
-      <span class="shrink-0 rounded-full border border-frame-border px-2 py-0.5 text-xs font-medium text-copy-muted"
-        >{GITHUB_LEXICON.visibility}</span
-      >
+      <ShellBadge>{GITHUB_LEXICON.visibility}</ShellBadge>
     </div>
 
-    <div class="ms-auto shrink-0">
-      <LanguageSelector />
-    </div>
+    {
+      showLanguageSelector && (
+        <div class="ms-auto shrink-0">
+          <LanguageSelector />
+        </div>
+      )
+    }
   </div>
 </header>
