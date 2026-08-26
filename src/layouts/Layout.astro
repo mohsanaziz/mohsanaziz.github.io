@@ -4,16 +4,17 @@ import { GITHUB_LEXICON } from '@/components/lexicon';
 import { cv } from '@/data/cv';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
 import { DEFAULT_LOCALE, localeFormatting, localeOpenGraphCode, LOCALES, requireLocale } from '@/i18n/locales';
-import { localeDirection, localeUrlSegment } from '@/i18n/routing';
+import { localeDirection, localeUrlSegment, openGraphImagePath } from '@/i18n/routing';
 import '@/styles/main.css';
 
 interface Props {
   title: string;
   description: string;
   discoverable?: boolean;
+  openGraphImageAlt?: string;
 }
 
-const { title, description, discoverable = false } = Astro.props;
+const { title, description, discoverable = false, openGraphImageAlt } = Astro.props;
 const locale = requireLocale(Astro.currentLocale);
 const { lineHeight } = localeFormatting(locale);
 // `dir` is only emitted for right-to-left locales so that the left-to-right pages keep their exact markup.
@@ -39,6 +40,12 @@ const discoveryMetadata = discoverable
       const openGraphLocale = localeOpenGraphCode(locale);
       const alternateOpenGraphLocales = LOCALES.filter((alternateLocale) => alternateLocale !== locale).map(localeOpenGraphCode);
 
+      if (!Astro.site || !openGraphImageAlt) {
+        throw new Error('Discoverable pages require Astro.site and a localized Open Graph image description.');
+      }
+
+      const openGraphImageUrl = new URL(openGraphImagePath(locale), Astro.site).href;
+
       // Profile fields deliberately use the invariant Latin core name; the localized page name remains in og:title.
       const [profileFirstName, ...profileLastNameParts] = cv.profile.name.trim().split(/\s+/);
       const profileLastName = profileLastNameParts.join(' ');
@@ -63,6 +70,8 @@ const discoveryMetadata = discoverable
         profileFirstName,
         profileLastName,
         siteName: `${githubOwner}/${GITHUB_LEXICON.repository}`,
+        openGraphImageUrl,
+        openGraphImageAlt,
       };
     })()
   : undefined;
@@ -94,6 +103,8 @@ const discoveryMetadata = discoverable
           <meta property="profile:last_name" content={discoveryMetadata.profileLastName} />
           <meta property="og:title" content={title} />
           <meta property="og:description" content={description} />
+          <meta property="og:image" content={discoveryMetadata.openGraphImageUrl} />
+          <meta property="og:image:alt" content={discoveryMetadata.openGraphImageAlt} />
           <meta property="og:locale" content={discoveryMetadata.openGraphLocale} />
           {discoveryMetadata.alternateOpenGraphLocales.map((alternateLocale) => (
             <meta property="og:locale:alternate" content={alternateLocale} />

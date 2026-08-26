@@ -22,6 +22,14 @@ export function localeDirection(locale: Locale): Direction {
   return RTL_LOCALES.has(locale) ? 'rtl' : 'ltr';
 }
 
+// Build-time captures use the same locale-prefix rule as Astro's rest routes. Keeping that rule here means
+// generators name a route, never assemble a localized page URL themselves.
+export function localePagePath(locale: Locale, route: string): string {
+  const segment = localeUrlSegment(locale);
+
+  return `/${[segment, route].filter(Boolean).join('/')}`;
+}
+
 // The generated PDFs stay grouped under /cv/. French keeps the historical URL while every prefixed locale
 // reuses its ASCII URL token as the download suffix (see ADR 0007 §6).
 export function resumeFileName(locale: Locale): string {
@@ -32,4 +40,12 @@ export function resumeFileName(locale: Locale): string {
 
 export function resumePath(locale: Locale): string {
   return `/cv/${resumeFileName(locale)}`;
+}
+
+export function openGraphImageFileName(locale: Locale): string {
+  return `cv-${locale}.png`;
+}
+
+export function openGraphImagePath(locale: Locale): string {
+  return `/og/${openGraphImageFileName(locale)}`;
 }

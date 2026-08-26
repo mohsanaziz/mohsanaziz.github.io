@@ -2,7 +2,16 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { DEFAULT_LOCALE, LOCALES } from '../src/i18n/locales.ts';
-import { localeDirection, localeRoutes, localeStaticPaths, resumeFileName, resumePath } from '../src/i18n/routing.ts';
+import {
+  localeDirection,
+  localePagePath,
+  localeRoutes,
+  localeStaticPaths,
+  openGraphImageFileName,
+  openGraphImagePath,
+  resumeFileName,
+  resumePath,
+} from '../src/i18n/routing.ts';
 
 test('les trois locales sont déclarées une seule fois, le français par défaut', () => {
   assert.deepEqual([...LOCALES], ['fr', 'en', 'ar']);
@@ -38,4 +47,21 @@ test('le PDF reste groupé sous /cv/ et son nom de fichier est le dernier segmen
   assert.equal(resumeFileName('en'), 'CV-en.pdf');
   assert.equal(resumePath('ar'), '/cv/CV-ar.pdf');
   assert.equal(resumeFileName('ar'), 'CV-ar.pdf');
+});
+
+test('les routes de capture et les cartes Open Graph suivent les chemins localisés déclarés', () => {
+  assert.deepEqual(
+    LOCALES.map((locale) => ({
+      locale,
+      printRoute: localePagePath(locale, 'cv-print'),
+      cardRoute: localePagePath(locale, 'og-card'),
+      imagePath: openGraphImagePath(locale),
+      imageFileName: openGraphImageFileName(locale),
+    })),
+    [
+      { locale: 'fr', printRoute: '/cv-print', cardRoute: '/og-card', imagePath: '/og/cv-fr.png', imageFileName: 'cv-fr.png' },
+      { locale: 'en', printRoute: '/en/cv-print', cardRoute: '/en/og-card', imagePath: '/og/cv-en.png', imageFileName: 'cv-en.png' },
+      { locale: 'ar', printRoute: '/ar/cv-print', cardRoute: '/ar/og-card', imagePath: '/og/cv-ar.png', imageFileName: 'cv-ar.png' },
+    ],
+  );
 });
