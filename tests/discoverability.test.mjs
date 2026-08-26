@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import astroConfig from '../astro.config.mjs';
 import { DEFAULT_LOCALE, LOCALES } from '../src/i18n/locales.ts';
-import { localeUrlSegment } from '../src/i18n/routing.ts';
+import { localeUrlSegment, openGraphImagePath } from '../src/i18n/routing.ts';
 
 const DIST_DIRECTORY = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
 const SITE = new URL(astroConfig.site);
@@ -14,6 +14,20 @@ const OPEN_GRAPH_LOCALES = {
   fr: 'fr_FR',
   en: 'en_GB',
   ar: 'ar_AR',
+};
+const OPEN_GRAPH_IMAGES = {
+  fr: {
+    url: 'https://mohsanaziz.github.io/og/cv-fr.png',
+    alt: 'Carte de partage de Mohsan AZIZ — Développeur freelance Angular/Java',
+  },
+  en: {
+    url: 'https://mohsanaziz.github.io/og/cv-en.png',
+    alt: 'Share card for Mohsan AZIZ — Freelance Angular/Java Developer',
+  },
+  ar: {
+    url: 'https://mohsanaziz.github.io/og/cv-ar.png',
+    alt: 'بطاقة مشاركة لمحسن عزيز — مطوّر Angular/Java مستقل',
+  },
 };
 
 function builtPagePath(locale, route = '') {
@@ -48,6 +62,12 @@ function metadataValues(metaTags, attribute, name) {
   return metaTags.filter((meta) => meta[attribute] === name).map((meta) => meta.content);
 }
 
+function pngDimensions(contents) {
+  assert.equal(contents.subarray(1, 4).toString('ascii'), 'PNG', 'Expected a PNG signature.');
+
+  return { width: contents.readUInt32BE(16), height: contents.readUInt32BE(20) };
+}
+
 test('les pages publiques forment un groupe canonical/hreflang réciproque et complet', async () => {
   const expectedAlternates = Object.fromEntries(LOCALES.map((locale) => [locale, publicUrl(locale)]));
   const defaultUrl = publicUrl(DEFAULT_LOCALE);
@@ -78,6 +98,7 @@ test('les pages publiques reprennent leur titre, leur description et leur URL da
     const meta = headTags(html, 'meta');
     const description = singleValue(metadataValues(meta, 'name', 'description'), `description on ${publicUrl(locale)}`);
     const openGraphLocale = OPEN_GRAPH_LOCALES[locale];
+    const openGraphImage = OPEN_GRAPH_IMAGES[locale];
     const expectedAlternateLocales = LOCALES.filter((alternate) => alternate !== locale).map((alternate) => OPEN_GRAPH_LOCALES[alternate]);
 
     assert.ok(title, `Expected ${publicUrl(locale)} to contain a title.`);
@@ -88,6 +109,8 @@ test('les pages publiques reprennent leur titre, leur description et leur URL da
     assert.equal(singleValue(metadataValues(meta, 'property', 'profile:last_name'), 'profile:last_name'), 'AZIZ');
     assert.equal(singleValue(metadataValues(meta, 'property', 'og:title'), 'og:title'), title);
     assert.equal(singleValue(metadataValues(meta, 'property', 'og:description'), 'og:description'), description);
+    assert.equal(singleValue(metadataValues(meta, 'property', 'og:image'), 'og:image'), openGraphImage.url);
+    assert.equal(singleValue(metadataValues(meta, 'property', 'og:image:alt'), 'og:image:alt'), openGraphImage.alt);
     assert.equal(singleValue(metadataValues(meta, 'property', 'og:locale'), 'og:locale'), openGraphLocale);
     assert.deepEqual(metadataValues(meta, 'property', 'og:locale:alternate'), expectedAlternateLocales);
     assert.equal(singleValue(metadataValues(meta, 'name', 'twitter:card'), 'twitter:card'), 'summary_large_image');
@@ -96,23 +119,34 @@ test('les pages publiques reprennent leur titre, leur description et leur URL da
 
 test('les pages techniques restent noindex et ne portent aucun bloc de découvrabilité', async () => {
   for (const locale of LOCALES) {
-    const html = await readFile(builtPagePath(locale, 'cv-print'), 'utf8');
-    const links = headTags(html, 'link');
-    const meta = headTags(html, 'meta');
+    for (const route of ['cv-print', 'og-card']) {
+      const html = await readFile(builtPagePath(locale, route), 'utf8');
+      const links = headTags(html, 'link');
+      const meta = headTags(html, 'meta');
 
-    assert.deepEqual(metadataValues(meta, 'name', 'robots'), ['noindex, nofollow']);
-    assert.equal(
-      links.some(({ rel }) => rel === 'canonical' || rel === 'alternate'),
-      false,
-    );
-    assert.equal(
-      meta.some(({ property }) => property?.startsWith('og:') || property?.startsWith('profile:')),
-      false,
-    );
-    assert.equal(
-      meta.some(({ name }) => name?.startsWith('twitter:')),
-      false,
-    );
+      assert.deepEqual(metadataValues(meta, 'name', 'robots'), ['noindex, nofollow']);
+      assert.equal(
+        links.some(({ rel }) => rel === 'canonical' || rel === 'alternate'),
+        false,
+      );
+      assert.equal(
+        meta.some(({ property }) => property?.startsWith('og:') || property?.startsWith('profile:')),
+        false,
+      );
+      assert.equal(
+        meta.some(({ name }) => name?.startsWith('twitter:')),
+        false,
+      );
+    }
+  }
+});
+
+test('le build produit une carte Open Graph 1200 × 630 par locale sous /og/', async () => {
+  for (const locale of LOCALES) {
+    const imagePath = resolve(DIST_DIRECTORY, openGraphImagePath(locale).replace(/^\/+/, ''));
+    const contents = await readFile(imagePath);
+
+    assert.deepEqual(pngDimensions(contents), { width: 1200, height: 630 });
   }
 });
 

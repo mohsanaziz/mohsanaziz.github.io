@@ -4,8 +4,9 @@ import { fileURLToPath } from 'node:url';
 
 import { chromium } from 'playwright';
 
-import { localeDirection, localeRoutes, localeUrlSegment, resumeFileName, resumePath } from '../src/i18n/routing.ts';
+import { localeDirection, localePagePath, localeRoutes, resumeFileName, resumePath } from '../src/i18n/routing.ts';
 import { startBuildServer } from './build-server.mjs';
+import { generateOpenGraphImages } from './generate-og-images.mjs';
 import { PAGINATION_TEST_LOCALES, paginationTestMarker } from './pdf-test-contract.mjs';
 
 const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
@@ -33,9 +34,7 @@ function pdfPath(locale) {
 }
 
 function printablePagePath(locale) {
-  const segment = localeUrlSegment(locale);
-
-  return `/${segment === undefined ? '' : `${segment}/`}cv-print`;
+  return localePagePath(locale, 'cv-print');
 }
 
 function generationTarget(locale) {
@@ -351,6 +350,10 @@ async function generatePdfs(locales) {
       const typographyTier = await generatePdf(context, buildServer, target);
 
       console.log(`Generated ${target.pdfPath} with typography tier ${typographyTier.name} (×${typographyTier.scale})`);
+    }
+
+    if (!paginationTest) {
+      await generateOpenGraphImages(context, buildServer, DIST_DIRECTORY, locales);
     }
   } finally {
     await Promise.allSettled([browser?.close(), buildServer.close()]);
