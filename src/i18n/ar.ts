@@ -86,6 +86,7 @@ export const messages = defineMessages({
     experienceAndClientProjects: 'الخبرة ومشاريع العملاء',
     client: 'العميل',
     environment: 'بيئة العمل',
+    footer: 'تم الإنشاء من mohsanaziz.github.io · {version} — الصفحة',
   },
 });
 

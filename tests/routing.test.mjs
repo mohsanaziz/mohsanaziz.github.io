@@ -29,4 +29,8 @@ test('le PDF reste groupé sous /cv/ et son nom de fichier est le dernier segmen
 
   assert.equal(resumePath('fr'), '/cv/CV.pdf');
   assert.equal(resumeFileName('fr'), 'CV.pdf');
+  assert.equal(resumePath('en'), '/cv/CV-en.pdf');
+  assert.equal(resumeFileName('en'), 'CV-en.pdf');
+  assert.equal(resumePath('ar'), '/cv/CV-ar.pdf');
+  assert.equal(resumeFileName('ar'), 'CV-ar.pdf');
 });

@@ -13,7 +13,7 @@ const PACKAGE_PATH = new URL('../package.json', import.meta.url);
 const A4_WIDTH_POINTS = 595.28;
 const A4_HEIGHT_POINTS = 841.89;
 const TIER_M_BODY_SIZE_POINTS = 6;
-const TIER_M_PDF_TITLE = 'Mohsan AZIZ — CV imprimable — palier M';
+const TIER_M_PDF_TITLE = 'Mohsan AZIZ — CV imprimable [M]';
 const MINIMUM_PAGINATION_TEST_MISSIONS = 12;
 let paginationTestPdfPromise;
 
