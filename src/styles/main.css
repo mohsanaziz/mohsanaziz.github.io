@@ -4,6 +4,7 @@
 
 @theme {
   --font-sans: 'Noto Sans Arabic', 'Noto Sans Arabic Latin', system-ui, sans-serif;
+  --font-mono: 'Noto Sans Mono', monospace;
 
   --color-page: light-dark(#fffefb, #0f0f11);
   --color-panel: light-dark(#f5f3ee, #18181b);
@@ -16,6 +17,17 @@
   --color-focus: light-dark(#12507e, #f4f4f5);
   --color-status-success: light-dark(#2f6b34, #4ade80);
   --color-status-cdi: light-dark(#12507e, #8ec5ff);
+}
+
+@font-face {
+  font-family: 'Noto Sans Mono';
+  src: url('/fonts/NotoSansMono-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191,
+    U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 :root {
