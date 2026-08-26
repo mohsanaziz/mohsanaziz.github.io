@@ -16,13 +16,13 @@ Le site est alors accessible sur `http://localhost:4321`. Il sert une URL par lo
 
 ## Build
 
-La commande suivante vérifie le projet avec `astro check`, génère le site de production dans `dist/`, puis produit le CV PDF dans `dist/cv/CV.pdf` avec Chromium :
+La commande suivante vérifie le projet avec `astro check`, génère le site de production dans `dist/`, puis produit avec Chromium un PDF par locale : `dist/cv/CV.pdf`, `dist/cv/CV-en.pdf` et `dist/cv/CV-ar.pdf` :
 
 ```sh
 npm run build
 ```
 
-Le test d’intégration s’exécute sur le PDF produit par ce build :
+Les tests d’intégration s’exécutent sur les artefacts produits par ce build :
 
 ```sh
 npm test
@@ -34,7 +34,7 @@ Le résultat peut être prévisualisé localement après le build :
 npm run preview
 ```
 
-En mode développement, `/cv/CV.pdf` n’existe pas encore et le lien « Version PDF » est donc indisponible. Utilisez `npm run build`, puis `npm run preview`, pour vérifier le téléchargement généré.
+En mode développement, les PDF sous `/cv/` n’existent pas encore et les liens de téléchargement sont donc indisponibles. Utilisez `npm run build`, puis `npm run preview`, pour vérifier les artefacts générés.
 
 ## Déploiement
 
