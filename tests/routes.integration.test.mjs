@@ -10,7 +10,7 @@ import { startBuildServer } from '../scripts/build-server.mjs';
 import { GITHUB_LEXICON } from '../src/components/lexicon.ts';
 import * as en from '../src/i18n/en.ts';
 import * as fr from '../src/i18n/fr.ts';
-import { LOCALES } from '../src/i18n/locales.ts';
+import { localeFormatting, LOCALES } from '../src/i18n/locales.ts';
 import { localeDirection, localeUrlSegment, resumeFileName, resumePath } from '../src/i18n/routing.ts';
 import { useTranslations } from '../src/i18n/translate.ts';
 import { flattenStrings } from './layer-strings.mjs';
@@ -88,7 +88,76 @@ test('aucune page ne livre de JavaScript ni de redirection meta refresh', async 
   }
 });
 
-test('le média d’impression arabe applique la face auto-hébergée au document et aux badges de version', async (t) => {
+test('le média d’impression charge la face arabe sur /ar/ seulement et l’applique à chaque texte arabe', async (t) => {
+  const server = await startBuildServer(DIST_DIRECTORY);
+  const browser = await chromium.launch();
+
+  t.after(async () => {
+    await browser.close();
+    await server.close();
+  });
+
+  for (const locale of LOCALES) {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const fontRequests = [];
+
+    page.on('request', (request) => {
+      if (request.resourceType() === 'font') fontRequests.push(new URL(request.url()).pathname);
+    });
+
+    await page.emulateMedia({ media: 'print' });
+    await page.goto(`${server.origin}${locale === 'fr' ? '/' : `/${locale}/`}cv-print/`, { waitUntil: 'networkidle' });
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+
+    assert.equal(
+      fontRequests.includes('/fonts/NotoSansArabic-arabic.woff2'),
+      locale === 'ar',
+      `Expected the Arabic print face on ${locale} only, received ${JSON.stringify(fontRequests)}.`,
+    );
+
+    if (locale === 'ar') {
+      const font = await page.evaluate(() => {
+        const roots = document.querySelectorAll('.print-document, .print-footer-copy');
+        const family = 'Noto Sans Arabic';
+        const targets = [];
+
+        for (const root of roots) {
+          const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+          let textNode;
+
+          while ((textNode = walker.nextNode())) {
+            if (!textNode.textContent?.match(/\p{Script=Arabic}/u) || !textNode.parentElement) continue;
+
+            const firstFamily = getComputedStyle(textNode.parentElement)
+              .fontFamily.split(',')[0]
+              .trim()
+              .replace(/^['"]|['"]$/g, '');
+            targets.push(firstFamily);
+          }
+        }
+
+        return {
+          targetCount: targets.length,
+          families: [...new Set(targets)],
+          footerDisplay: getComputedStyle(document.querySelector('.print-footer-copy')).display,
+          loaded: Array.from(document.fonts).some(
+            (fontFace) => fontFace.family.trim().replace(/^['"]|['"]$/g, '') === family && fontFace.status === 'loaded',
+          ),
+        };
+      });
+
+      assert.ok(font.targetCount > 0);
+      assert.deepEqual(font.families, ['Noto Sans Arabic']);
+      assert.equal(font.footerDisplay, 'block');
+      assert.equal(font.loaded, true);
+    }
+
+    await context.close();
+  }
+});
+
+test('les hauteurs de ligne d’impression restent compactes en latin et sûres en arabe', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
   const page = await browser.newPage();
@@ -98,38 +167,41 @@ test('le média d’impression arabe applique la face auto-hébergée au documen
     await server.close();
   });
 
-  await page.emulateMedia({ media: 'print' });
-  await page.goto(`${server.origin}/ar/cv-print/`, { waitUntil: 'networkidle' });
-  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  const expected = {
+    fr: { document: localeFormatting('fr').lineHeight, heading: 1.05, badge: 1.2 },
+    en: { document: localeFormatting('en').lineHeight, heading: 1.05, badge: 1.2 },
+    ar: {
+      document: localeFormatting('ar').lineHeight,
+      heading: localeFormatting('ar').lineHeight,
+      badge: localeFormatting('ar').lineHeight,
+    },
+  };
 
-  const font = await page.evaluate(() => {
-    const printDocument = document.querySelector('.print-document');
-    const versionBadge = document.querySelector('.mission-header code');
-    const family = 'Noto Sans Arabic Print';
-    const normalizeFirstFamily = (element) =>
-      getComputedStyle(element)
-        .fontFamily.split(',')[0]
-        .trim()
-        .replace(/^['"]|['"]$/g, '');
+  for (const locale of LOCALES) {
+    await page.emulateMedia({ media: 'print' });
+    await page.goto(`${server.origin}${locale === 'fr' ? '/' : `/${locale}/`}cv-print/`, { waitUntil: 'networkidle' });
 
-    if (!printDocument || !versionBadge) throw new Error('Unable to find the Arabic print font targets.');
+    const ratios = await page.evaluate(() => {
+      const ratio = (element) => {
+        const style = getComputedStyle(element);
+        return Number.parseFloat(style.lineHeight) / Number.parseFloat(style.fontSize);
+      };
+      const document = globalThis.document.querySelector('.print-document');
+      const heading = globalThis.document.querySelector('.readme-content h1');
+      const badge = globalThis.document.querySelector('.badge');
 
-    return {
-      documentFamily: normalizeFirstFamily(printDocument),
-      versionFamily: normalizeFirstFamily(versionBadge),
-      declared: Array.from(document.fonts).some(
-        (fontFace) => fontFace.family.trim().replace(/^['"]|['"]$/g, '') === family && fontFace.status === 'loaded',
-      ),
-      available: document.fonts.check(`1em "${family}"`, 'العربية'),
-    };
-  });
+      if (!document || !heading || !badge) throw new Error('Unable to find the print typography targets.');
 
-  assert.deepEqual(font, {
-    documentFamily: 'Noto Sans Arabic Print',
-    versionFamily: 'Noto Sans Arabic Print',
-    declared: true,
-    available: true,
-  });
+      return { document: ratio(document), heading: ratio(heading), badge: ratio(badge) };
+    });
+
+    for (const key of ['document', 'heading', 'badge']) {
+      assert.ok(
+        Math.abs(ratios[key] - expected[locale][key]) < 0.001,
+        `Expected ${locale} ${key} ratio ${expected[locale][key]}, got ${ratios[key]}.`,
+      );
+    }
+  }
 });
 
 test('le sélecteur relie les trois pages publiques avec des endonymes accessibles et reste absent des pages d’impression', async (t) => {
@@ -362,8 +434,8 @@ test('/ar/ rend son interface, ses chiffres et son interlignage en arabe sans al
   assert.match(rendered.name ?? '', /محسن عزيز.*Mohsan AZIZ/s);
   assert.doesNotMatch(rendered.accessibleText, /[0-9]/, 'Expected every visible or aria-labelled number on /ar/ to use Arabic digits.');
   assert.ok(
-    Math.abs(rendered.proseLineHeightRatio - 2.112) < 0.001,
-    `Expected Arabic prose line-height 2.112, got ${rendered.proseLineHeightRatio}.`,
+    Math.abs(rendered.proseLineHeightRatio - localeFormatting('ar').lineHeight) < 0.001,
+    `Expected Arabic prose line-height ${localeFormatting('ar').lineHeight}, got ${rendered.proseLineHeightRatio}.`,
   );
   assert.equal(rendered.pdfHref, '/cv/CV-ar.pdf');
   assert.equal(rendered.pdfFileName, 'CV-ar.pdf');
