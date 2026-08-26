@@ -1,19 +1,44 @@
 ---
-import { localeFormatting, requireLocale } from '@/i18n/locales';
-import { localeDirection } from '@/i18n/routing';
+import { getAbsoluteLocaleUrl } from 'astro:i18n';
+import { cv } from '@/data/cv';
+import { DEFAULT_LOCALE, localeFormatting, localeOpenGraphCode, LOCALES, requireLocale } from '@/i18n/locales';
+import { localeDirection, localeUrlSegment } from '@/i18n/routing';
 import '@/styles/main.css';
 
 interface Props {
   title: string;
   description: string;
-  robots?: string;
+  discoverable?: boolean;
 }
 
-const { title, description, robots } = Astro.props;
+const { title, description, discoverable = true } = Astro.props;
 const locale = requireLocale(Astro.currentLocale);
 const { lineHeight } = localeFormatting(locale);
 // `dir` is only emitted for right-to-left locales so that the left-to-right pages keep their exact markup.
 const direction = localeDirection(locale);
+
+const currentPathSegments = Astro.url.pathname.split('/').filter(Boolean);
+const currentLocaleSegment = localeUrlSegment(locale);
+
+if (currentLocaleSegment !== undefined && currentPathSegments[0] === currentLocaleSegment) {
+  currentPathSegments.shift();
+}
+
+const localeIndependentPath = currentPathSegments.join('/') || undefined;
+const canonicalUrl = getAbsoluteLocaleUrl(locale, localeIndependentPath);
+const alternateUrls = LOCALES.map((alternateLocale) => ({
+  locale: alternateLocale,
+  href: getAbsoluteLocaleUrl(alternateLocale, localeIndependentPath),
+}));
+const defaultUrl = getAbsoluteLocaleUrl(DEFAULT_LOCALE);
+const openGraphLocale = localeOpenGraphCode(locale);
+const alternateOpenGraphLocales = LOCALES.filter((alternateLocale) => alternateLocale !== locale).map(localeOpenGraphCode);
+const [profileFirstName, ...profileLastNameParts] = cv.profile.name.trim().split(/\s+/);
+const profileLastName = profileLastNameParts.join(' ');
+
+if (!profileFirstName || !profileLastName) {
+  throw new Error('The profile name must contain a first name and a last name for Open Graph metadata.');
+}
 ---
 
 <!doctype html>
@@ -26,7 +51,32 @@ const direction = localeDirection(locale);
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
-    {robots && <meta name="robots" content={robots} />}
+    {
+      discoverable ? (
+        <>
+          <link rel="canonical" href={canonicalUrl} />
+          {alternateUrls.map(({ locale: alternateLocale, href }) => (
+            <link rel="alternate" hreflang={alternateLocale} href={href} />
+          ))}
+          <link rel="alternate" hreflang="x-default" href={defaultUrl} />
+
+          <meta property="og:url" content={canonicalUrl} />
+          <meta property="og:site_name" content="mohsanaziz/cv" />
+          <meta property="og:type" content="profile" />
+          <meta property="profile:first_name" content={profileFirstName} />
+          <meta property="profile:last_name" content={profileLastName} />
+          <meta property="og:title" content={title} />
+          <meta property="og:description" content={description} />
+          <meta property="og:locale" content={openGraphLocale} />
+          {alternateOpenGraphLocales.map((alternateLocale) => (
+            <meta property="og:locale:alternate" content={alternateLocale} />
+          ))}
+          <meta name="twitter:card" content="summary_large_image" />
+        </>
+      ) : (
+        <meta name="robots" content="noindex, nofollow" />
+      )
+    }
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preload" href="/fonts/NotoSansArabic-latin.woff2" as="font" type="font/woff2" crossorigin />
