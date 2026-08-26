@@ -4,14 +4,13 @@ import { fileURLToPath } from 'node:url';
 
 import { chromium } from 'playwright';
 
-import { DEFAULT_LOCALE } from '../src/i18n/locales.ts';
 import { localeDirection, localeRoutes, localeUrlSegment, resumeFileName, resumePath } from '../src/i18n/routing.ts';
 import { startBuildServer } from './build-server.mjs';
+import { PAGINATION_TEST_LOCALES } from './pdf-test-contract.mjs';
 
 const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const DIST_DIRECTORY = resolve(PROJECT_ROOT, 'dist');
 const paginationTest = process.argv.includes('--pagination-test');
-const PAGINATION_TEST_LOCALES = [DEFAULT_LOCALE, 'ar'];
 const CSS_PIXELS_PER_MILLIMETER = 96 / 25.4;
 const A4_PAGE_SIZE_MILLIMETERS = { width: 210, height: 297 };
 // Keep this value synchronized with the @page margin in src/pages/[...locale]/cv-print.astro.
