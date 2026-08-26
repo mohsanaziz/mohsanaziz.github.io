@@ -80,6 +80,7 @@ export const cv = {
     pageDescription: 'Mohsan AZIZ — Freelance Angular/Java Developer',
     printablePageTitle: 'Mohsan AZIZ — Printable CV',
     openGraphImageAlt: 'Share card for Mohsan AZIZ — Freelance Angular/Java Developer',
+    openGraphLocation: 'Paris, France',
   },
   profile: {
     imageAlt: 'Portrait of Mohsan AZIZ',
