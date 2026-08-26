@@ -15,6 +15,7 @@ export interface LocaleCv {
     readonly pageTitle: string;
     readonly pageDescription: string;
     readonly printablePageTitle: string;
+    readonly openGraphImageAlt: string;
   };
   readonly profile: NameOverride & {
     readonly imageAlt: string;

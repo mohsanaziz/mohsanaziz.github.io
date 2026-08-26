@@ -11,7 +11,7 @@ import { GITHUB_LEXICON } from '../src/components/lexicon.ts';
 import * as en from '../src/i18n/en.ts';
 import * as fr from '../src/i18n/fr.ts';
 import { localeFormatting, LOCALES } from '../src/i18n/locales.ts';
-import { localeDirection, localeUrlSegment, resumeFileName, resumePath } from '../src/i18n/routing.ts';
+import { localeDirection, localePagePath, localeUrlSegment, resumeFileName, resumePath } from '../src/i18n/routing.ts';
 import { useTranslations } from '../src/i18n/translate.ts';
 import { flattenStrings } from './layer-strings.mjs';
 
@@ -38,10 +38,11 @@ function htmlAttributes(html) {
   return Object.fromEntries(Array.from(attributes.matchAll(/([\w-]+)="([^"]*)"/g), ([, name, value]) => [name, value]));
 }
 
-test('le build sert /, /en/ et /ar/ ainsi que leurs routes d’impression, sans /fr/', async () => {
+test('le build sert /, /en/ et /ar/ ainsi que leurs routes techniques, sans /fr/', async () => {
   for (const locale of LOCALES) {
     await access(builtPagePath(locale));
     await access(builtPagePath(locale, 'cv-print'));
+    await access(builtPagePath(locale, 'og-card'));
     await access(resolve(DIST_DIRECTORY, resumePath(locale).slice(1)));
   }
 
@@ -50,7 +51,7 @@ test('le build sert /, /en/ et /ar/ ainsi que leurs routes d’impression, sans 
 
 test('chaque page porte le lang de sa locale et dir="rtl" sur l’arabe seulement', async () => {
   for (const locale of LOCALES) {
-    for (const route of ['', 'cv-print']) {
+    for (const route of ['', 'cv-print', 'og-card']) {
       const { lang, dir } = htmlAttributes(await readBuiltPage(locale, route));
 
       assert.equal(lang, locale, `Expected /${localeUrlSegment(locale) ?? ''} ${route} to declare lang="${locale}".`);
@@ -72,12 +73,62 @@ test('chaque page publique affiche et télécharge le PDF de sa locale', async (
 
 test('aucune page ne livre de JavaScript ni de redirection meta refresh', async () => {
   for (const locale of LOCALES) {
-    for (const route of ['', 'cv-print']) {
+    for (const route of ['', 'cv-print', 'og-card']) {
       const html = await readBuiltPage(locale, route);
 
       assert.doesNotMatch(html, /<script\b/);
       assert.doesNotMatch(html, /http-equiv="refresh"/i);
     }
+  }
+});
+
+test('les cartes Open Graph rendent le calque de leur locale, dont l’arabe en RTL avec sa police embarquée', async (t) => {
+  const server = await startBuildServer(DIST_DIRECTORY);
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
+
+  t.after(async () => {
+    await browser.close();
+    await server.close();
+  });
+
+  const expected = {
+    fr: { name: 'Mohsan AZIZ', jobTitle: 'Développeur freelance Angular/Java', location: 'Paris, France' },
+    en: { name: 'Mohsan AZIZ', jobTitle: 'Freelance Angular/Java Developer', location: 'Paris, France' },
+    ar: { name: 'محسن عزيز', jobTitle: 'Développeur freelance Angular/Java', location: 'باريس، فرنسا' },
+  };
+
+  for (const locale of LOCALES) {
+    await page.goto(`${server.origin}${localePagePath(locale, 'og-card')}`, { waitUntil: 'networkidle' });
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+
+    const card = await page.locator('main').evaluate((main) => {
+      const { width, height } = main.getBoundingClientRect();
+      const firstFontFamily = getComputedStyle(main)
+        .fontFamily.split(',')[0]
+        .trim()
+        .replace(/^['"]|['"]$/g, '');
+
+      return {
+        width,
+        height,
+        colorScheme: getComputedStyle(main).colorScheme,
+        text: main.textContent,
+        direction: document.documentElement.dir || 'ltr',
+        firstFontFamily,
+        fallbackLanguage: main.querySelector('p[lang]')?.getAttribute('lang') ?? null,
+      };
+    });
+
+    assert.equal(card.width, 1200);
+    assert.equal(card.height, 630);
+    assert.equal(card.colorScheme, 'light');
+    assert.equal(card.direction, localeDirection(locale));
+    assert.match(card.text, new RegExp(expected[locale].name));
+    assert.match(card.text, new RegExp(expected[locale].jobTitle));
+    assert.match(card.text, new RegExp(expected[locale].location));
+    assert.equal(card.fallbackLanguage, locale === 'ar' ? 'fr' : null);
+    assert.equal(card.firstFontFamily, 'Noto Sans Arabic');
   }
 });
 

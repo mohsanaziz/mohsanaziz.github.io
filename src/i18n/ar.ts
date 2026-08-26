@@ -95,6 +95,7 @@ export const cv = {
     pageTitle: 'السيرة الذاتية — محسن عزيز — Mohsan AZIZ',
     pageDescription: 'محسن عزيز — مطوّر Angular/Java مستقل',
     printablePageTitle: 'محسن عزيز — نسخة قابلة للطباعة من السيرة الذاتية',
+    openGraphImageAlt: 'بطاقة مشاركة لمحسن عزيز — مطوّر Angular/Java مستقل',
   },
   profile: {
     name: 'محسن عزيز',
@@ -108,6 +109,7 @@ export const cv = {
       },
       location: {
         title: 'الموقع',
+        info: 'باريس، فرنسا',
       },
       birthdate: {
         title: 'تاريخ الميلاد',
