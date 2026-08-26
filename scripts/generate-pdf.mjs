@@ -29,12 +29,8 @@ function pdfPath(locale) {
   return join(DIST_DIRECTORY, resumePath(locale));
 }
 
-function printablePagePath(locale) {
-  return localePagePath(locale, 'cv-print');
-}
-
 function generationTarget(locale, paginationTest) {
-  const pagePath = printablePagePath(locale);
+  const pagePath = localePagePath(locale, 'cv-print');
 
   if (paginationTest) {
     return {
