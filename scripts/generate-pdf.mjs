@@ -11,6 +11,7 @@ import { startBuildServer } from './build-server.mjs';
 const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const DIST_DIRECTORY = resolve(PROJECT_ROOT, 'dist');
 const paginationTest = process.argv.includes('--pagination-test');
+const PAGINATION_TEST_LOCALES = [DEFAULT_LOCALE, 'ar'];
 const CSS_PIXELS_PER_MILLIMETER = 96 / 25.4;
 const A4_PAGE_SIZE_MILLIMETERS = { width: 210, height: 297 };
 // Keep this value synchronized with the @page margin in src/pages/[...locale]/cv-print.astro.
@@ -100,6 +101,15 @@ async function inflatePaginationTestVolume(page) {
       throw new Error('Unable to find employer groups for the pagination test.');
     }
 
+    const appendTestMarker = (element, marker) => {
+      if (!(element instanceof HTMLElement)) return;
+
+      const markerElement = document.createElement('span');
+      markerElement.dir = 'ltr';
+      markerElement.textContent = ` ${marker}`;
+      element.append(markerElement);
+    };
+
     for (const [groupIndex, sourceGroup] of sourceGroups.entries()) {
       const testGroup = sourceGroup.cloneNode(true);
 
@@ -114,12 +124,10 @@ async function inflatePaginationTestVolume(page) {
 
       if (employerHeading instanceof HTMLElement) {
         employerHeading.id = employerHeadingId;
-        employerHeading.append(` [début test pagination employeur ${employerTestId}]`);
       }
 
-      if (employerPeriod instanceof HTMLElement) {
-        employerPeriod.append(` [fin test pagination employeur ${employerTestId}]`);
-      }
+      appendTestMarker(employerHeading, `PAGINATION_TEST_EMPLOYER_START_${employerTestId}`);
+      appendTestMarker(employerPeriod, `PAGINATION_TEST_EMPLOYER_END_${employerTestId}`);
 
       const missions = testGroup.querySelector('.missions');
 
@@ -136,13 +144,8 @@ async function inflatePaginationTestVolume(page) {
         const missionHeading = mission.querySelector('.mission-header h4');
         const missionEnvironment = mission.querySelector('.mission-environment');
 
-        if (missionHeading instanceof HTMLElement) {
-          missionHeading.append(` [début test pagination mission ${missionTestId}]`);
-        }
-
-        if (missionEnvironment instanceof HTMLElement) {
-          missionEnvironment.append(` [fin test pagination mission ${missionTestId}]`);
-        }
+        appendTestMarker(missionHeading, `PAGINATION_TEST_MISSION_START_${missionTestId.replace('.', '_')}`);
+        appendTestMarker(missionEnvironment, `PAGINATION_TEST_MISSION_END_${missionTestId.replace('.', '_')}`);
       }
 
       experienceContent.append(testGroup);
@@ -288,4 +291,4 @@ async function generatePdfs(locales) {
   }
 }
 
-await generatePdfs(paginationTest ? [DEFAULT_LOCALE] : localeRoutes().map(({ locale }) => locale));
+await generatePdfs(paginationTest ? PAGINATION_TEST_LOCALES : localeRoutes().map(({ locale }) => locale));
