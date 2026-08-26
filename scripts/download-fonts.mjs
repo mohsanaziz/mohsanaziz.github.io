@@ -20,6 +20,14 @@ export const fonts = [
     url: 'https://fonts.gstatic.com/s/notosansarabic/v33/nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj4wv4rqxzLIhjE.woff2',
     expectedSha256: '69cdf0bf005fdc9cc13fb5a8581697eb9ba8f761aeaf255fc717d14c62c38891',
   },
+  {
+    family: 'Noto Sans Mono',
+    version: '2.014',
+    subset: 'latin',
+    fileName: 'NotoSansMono-latin.woff2',
+    url: 'https://fonts.gstatic.com/s/notosansmono/v37/BngcUXNETWXI6LwhGYvaxZikqZqK6fBq6kPvUce2oAZ2evCj.woff2',
+    expectedSha256: '71f6c22d5dd256eaa9e48347bda6ac2c65f58980dd372ed5780fbdaca1186331',
+  },
 ];
 
 const fontDirectory = fileURLToPath(new URL('../public/fonts/', import.meta.url));

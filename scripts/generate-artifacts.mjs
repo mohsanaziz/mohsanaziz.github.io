@@ -21,7 +21,7 @@ try {
   browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
 
-  await generatePdfs(context, buildServer, locales, { paginationTest });
+  await generatePdfs(context, buildServer, DIST_DIRECTORY, locales, { paginationTest });
 
   if (!pdfOnly) {
     await generateOpenGraphImages(context, buildServer, DIST_DIRECTORY, locales);
