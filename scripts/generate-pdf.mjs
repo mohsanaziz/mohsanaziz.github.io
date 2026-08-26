@@ -6,7 +6,7 @@ import { chromium } from 'playwright';
 
 import { localeDirection, localeRoutes, localeUrlSegment, resumeFileName, resumePath } from '../src/i18n/routing.ts';
 import { startBuildServer } from './build-server.mjs';
-import { PAGINATION_TEST_LOCALES } from './pdf-test-contract.mjs';
+import { PAGINATION_TEST_LOCALES, paginationTestMarker } from './pdf-test-contract.mjs';
 
 const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const DIST_DIRECTORY = resolve(PROJECT_ROOT, 'dist');
@@ -82,8 +82,8 @@ async function selectTypographyTier(page) {
   );
 }
 
-async function inflatePaginationTestVolume(page) {
-  await page.evaluate(() => {
+async function paginationTestMarkersForPage(page) {
+  const sourceMissionCounts = await page.evaluate(() => {
     if (new URLSearchParams(window.location.search).get('test-volume') !== 'pagination') {
       throw new Error('The pagination test volume parameter is missing.');
     }
@@ -100,8 +100,63 @@ async function inflatePaginationTestVolume(page) {
       throw new Error('Unable to find employer groups for the pagination test.');
     }
 
+    return sourceGroups.map((sourceGroup) => {
+      const missions = sourceGroup.querySelector('.missions');
+
+      if (!(missions instanceof HTMLElement)) {
+        throw new Error('Unable to find an employer mission list for the pagination test.');
+      }
+
+      const missionCount = missions.querySelectorAll('.mission-release').length;
+
+      if (missionCount === 0) {
+        throw new Error('Unable to find employer missions for the pagination test.');
+      }
+
+      return missionCount;
+    });
+  });
+
+  return sourceMissionCounts.map((sourceMissionCount, groupIndex) => {
+    const employerTestId = String(groupIndex + 1);
+
+    return {
+      employer: {
+        start: paginationTestMarker('start', 'employer', employerTestId),
+        end: paginationTestMarker('end', 'employer', employerTestId),
+      },
+      missions: Array.from({ length: sourceMissionCount * 2 }, (_, missionIndex) => {
+        const missionTestId = `${employerTestId}.${missionIndex + 1}`;
+
+        return {
+          start: paginationTestMarker('start', 'mission', missionTestId),
+          end: paginationTestMarker('end', 'mission', missionTestId),
+        };
+      }),
+    };
+  });
+}
+
+async function inflatePaginationTestVolume(page) {
+  const markerGroups = await paginationTestMarkersForPage(page);
+
+  await page.evaluate((markerGroups) => {
+    const experienceContent = document.querySelector('.experience-content');
+
+    if (!(experienceContent instanceof HTMLElement)) {
+      throw new Error('Unable to find the printable experience content.');
+    }
+
+    const sourceGroups = Array.from(experienceContent.querySelectorAll(':scope > .employer-group'));
+
+    if (sourceGroups.length !== markerGroups.length) {
+      throw new Error('The pagination test employer groups changed while preparing the fixture.');
+    }
+
     const appendTestMarker = (element, marker) => {
-      if (!(element instanceof HTMLElement)) return;
+      if (!(element instanceof HTMLElement)) {
+        throw new Error(`Unable to attach pagination test marker "${marker}".`);
+      }
 
       const markerElement = document.createElement('span');
       markerElement.dir = 'ltr';
@@ -111,8 +166,11 @@ async function inflatePaginationTestVolume(page) {
 
     for (const [groupIndex, sourceGroup] of sourceGroups.entries()) {
       const testGroup = sourceGroup.cloneNode(true);
+      const markers = markerGroups[groupIndex];
 
-      if (!(testGroup instanceof HTMLElement)) continue;
+      if (!(testGroup instanceof HTMLElement)) {
+        throw new Error('Unable to clone an employer group for the pagination test.');
+      }
 
       const employerTestId = String(groupIndex + 1);
       const employerHeading = testGroup.querySelector('.employer-heading h3');
@@ -121,35 +179,44 @@ async function inflatePaginationTestVolume(page) {
 
       testGroup.setAttribute('aria-labelledby', employerHeadingId);
 
-      if (employerHeading instanceof HTMLElement) {
-        employerHeading.id = employerHeadingId;
+      if (!(employerHeading instanceof HTMLElement)) {
+        throw new Error('Unable to find an employer heading for the pagination test.');
       }
 
-      appendTestMarker(employerHeading, `PAGINATION_TEST_EMPLOYER_START_${employerTestId}`);
-      appendTestMarker(employerPeriod, `PAGINATION_TEST_EMPLOYER_END_${employerTestId}`);
+      employerHeading.id = employerHeadingId;
+      appendTestMarker(employerHeading, markers.employer.start);
+      appendTestMarker(employerPeriod, markers.employer.end);
 
       const missions = testGroup.querySelector('.missions');
 
-      if (missions instanceof HTMLElement) {
-        const sourceMissions = Array.from(missions.querySelectorAll('.mission-release'));
-
-        for (const sourceMission of sourceMissions) {
-          missions.append(sourceMission.cloneNode(true));
-        }
+      if (!(missions instanceof HTMLElement)) {
+        throw new Error('Unable to find a cloned employer mission list for the pagination test.');
       }
 
-      for (const [missionIndex, mission] of testGroup.querySelectorAll('.mission-release').entries()) {
-        const missionTestId = `${employerTestId}.${missionIndex + 1}`;
+      const sourceMissions = Array.from(missions.querySelectorAll('.mission-release'));
+
+      for (const sourceMission of sourceMissions) {
+        missions.append(sourceMission.cloneNode(true));
+      }
+
+      const testMissions = Array.from(testGroup.querySelectorAll('.mission-release'));
+
+      if (testMissions.length !== markers.missions.length) {
+        throw new Error(`The pagination test mission count changed for employer ${employerTestId}.`);
+      }
+
+      for (const [missionIndex, mission] of testMissions.entries()) {
+        const missionMarkers = markers.missions[missionIndex];
         const missionHeading = mission.querySelector('.mission-header h4');
         const missionEnvironment = mission.querySelector('.mission-environment');
 
-        appendTestMarker(missionHeading, `PAGINATION_TEST_MISSION_START_${missionTestId.replace('.', '_')}`);
-        appendTestMarker(missionEnvironment, `PAGINATION_TEST_MISSION_END_${missionTestId.replace('.', '_')}`);
+        appendTestMarker(missionHeading, missionMarkers.start);
+        appendTestMarker(missionEnvironment, missionMarkers.end);
       }
 
       experienceContent.append(testGroup);
     }
-  });
+  }, markerGroups);
 }
 
 async function assertPrintFont(page, locale) {
