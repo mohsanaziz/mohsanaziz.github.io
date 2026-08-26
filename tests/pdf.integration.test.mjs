@@ -4,15 +4,16 @@ import test from 'node:test';
 
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
-import { PAGINATION_TEST_LOCALES } from '../scripts/pdf-test-contract.mjs';
-import { localeRoutes, resumeFileName, resumePath } from '../src/i18n/routing.ts';
+import { extractPaginationTestMarkers, PAGINATION_TEST_LOCALES, paginationTestMarker } from '../scripts/pdf-test-contract.mjs';
+import { localeDirection, localeRoutes, resumeFileName, resumePath } from '../src/i18n/routing.ts';
 
 const NOMINAL_LOCALES = localeRoutes().map(({ locale }) => locale);
 const PACKAGE_PATH = new URL('../package.json', import.meta.url);
 const A4_WIDTH_POINTS = 595.28;
 const A4_HEIGHT_POINTS = 841.89;
-const TIER_M_BODY_SIZE_POINTS = 6;
+const TIER_BODY_SIZE_POINTS = { M: 6, L: 6 * 1.15 };
 const MINIMUM_PAGINATION_TEST_MISSIONS = 12;
+// The invariant stops before the localized version digit because Arabic extraction separates it from the name.
 const EXPECTED_EMPLOYER_MISSION_FLOW = ['SASU AZMOPAK', 'ATLAS IHM', 'SPS', 'SIAJ', 'PARCOURS', 'IMS', 'Sopra Steria', 'PORTALIS V'];
 const EXPECTED_MISSION_ENVIRONMENTS = [
   ['ATLAS IHM', 'Java, Spring Boot, Angular, RxJS, Ngrx, Bootstrap, npm, git, Docker, Kubernetes, Jenkins, Gitlab, Confluence, Jira'],
@@ -37,7 +38,7 @@ const EXPECTED_MISSION_ENVIRONMENTS = [
 const TRANSLATED_NOMINAL_EXPECTATIONS = {
   fr: {
     bodySample: "Projet de refonte de l'application des magasins Point P",
-    bodySizePoints: 6,
+    bodySizePoints: TIER_BODY_SIZE_POINTS.M,
     footerPrefix: 'Généré depuis mohsanaziz.github.io · v',
     footerSuffix: ' — page',
     numPages: 1,
@@ -66,11 +67,12 @@ const TRANSLATED_NOMINAL_EXPECTATIONS = {
       'logiciel de suivi des jeunes',
       'application de gestion des jeux à gratter',
       'logiciel des conseils de prud’hommes',
+      'PORTALIS V3',
     ],
   },
   en: {
     bodySample: 'Redesign of the Point P in-store application',
-    bodySizePoints: 6.9,
+    bodySizePoints: TIER_BODY_SIZE_POINTS.L,
     footerPrefix: 'Generated from mohsanaziz.github.io · v',
     footerSuffix: ' — page',
     numPages: 1,
@@ -99,6 +101,7 @@ const TRANSLATED_NOMINAL_EXPECTATIONS = {
       'track young people',
       'scratch-card game management application',
       'French employment tribunals',
+      'PORTALIS V3',
     ],
   },
 };
@@ -176,19 +179,6 @@ function pageNumberContaining(pageTexts, expected) {
   return pageIndex + 1;
 }
 
-function extractPaginationTestMarkers(text) {
-  return Array.from(text.matchAll(/PAGINATION_TEST_(MISSION|EMPLOYER)_(START|END)_(\d+(?:_\d+)?)/g), ([marker, kind, boundary, id]) => ({
-    marker,
-    boundary: boundary.toLowerCase(),
-    kind: kind.toLowerCase(),
-    id: id.replace('_', '.'),
-  }));
-}
-
-function paginationTestMarker(boundary, kind, id) {
-  return `PAGINATION_TEST_${kind.toUpperCase()}_${boundary.toUpperCase()}_${id.replace('.', '_')}`;
-}
-
 function assertTextSequence(text, expectedSequence) {
   let cursor = 0;
 
@@ -205,7 +195,7 @@ for (const locale of PAGINATION_TEST_LOCALES) {
 
     assert.ok(document.numPages > 1, `Expected the inflated ${locale} CV to span multiple pages.`);
     assert.match((await document.getMetadata()).info.Title, /\[M\]$/);
-    await assertDocumentTextSize(document, 'PAGINATION_TEST_MISSION_END', TIER_M_BODY_SIZE_POINTS);
+    await assertDocumentTextSize(document, 'PAGINATION_TEST_MISSION_END', TIER_BODY_SIZE_POINTS.M);
   });
 
   test(`the inflated ${locale} CV keeps every mission intact and an employer banner with its first mission`, async () => {
@@ -251,11 +241,19 @@ for (const locale of PAGINATION_TEST_LOCALES) {
   });
 
   test(`the inflated ${locale} CV carries exact page numbers and a linear reading flow across pages`, async () => {
-    const { document } = await readPaginationTestPdf(locale);
+    const [{ document }, packageMetadata] = await Promise.all([
+      readPaginationTestPdf(locale),
+      readFile(PACKAGE_PATH, 'utf8').then(JSON.parse),
+    ]);
     const pageTexts = await extractPageTexts(document);
+    const expectations = TRANSLATED_NOMINAL_EXPECTATIONS[locale];
+    const expectedFooter =
+      expectations === undefined
+        ? 'mohsanaziz.github.io'
+        : `${expectations.footerPrefix}${packageMetadata.version}${expectations.footerSuffix}`;
 
     for (const [pageIndex, pageText] of pageTexts.entries()) {
-      assert.ok(pageText.includes('mohsanaziz.github.io'), `Expected page ${pageIndex + 1} to carry its source footer.`);
+      assert.ok(pageText.includes(expectedFooter), `Expected page ${pageIndex + 1} to carry its source footer.`);
       assert.match(pageText, new RegExp(`\\b${pageIndex + 1}/${pageTexts.length}\\b`));
     }
 
@@ -276,6 +274,14 @@ for (const locale of PAGINATION_TEST_LOCALES) {
     }
   });
 }
+
+test('every LTR locale carries explicit translated expectations', () => {
+  assert.deepEqual(
+    NOMINAL_LOCALES.filter((locale) => localeDirection(locale) === 'ltr'),
+    Object.keys(TRANSLATED_NOMINAL_EXPECTATIONS),
+    'Every LTR locale must carry explicit translated expectations.',
+  );
+});
 
 for (const locale of NOMINAL_LOCALES) {
   test(`the nominal ${locale} artifact is a valid A4 PDF with a coherent footer and typography tier`, async () => {
