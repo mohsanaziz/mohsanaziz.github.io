@@ -1,20 +1,15 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { chromium } from 'playwright';
 
-import { formatDigits } from '../src/i18n/format.ts';
 import { DEFAULT_LOCALE } from '../src/i18n/locales.ts';
-import { formatMessage } from '../src/i18n/messages.ts';
 import { localeDirection, localeRoutes, localeUrlSegment, resumeFileName, resumePath } from '../src/i18n/routing.ts';
-import { useTranslations } from '../src/i18n/translate.ts';
 import { startBuildServer } from './build-server.mjs';
 
 const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const DIST_DIRECTORY = resolve(PROJECT_ROOT, 'dist');
-const PACKAGE_PATH = resolve(PROJECT_ROOT, 'package.json');
-const ARABIC_PRINT_FONT_PATH = resolve(PROJECT_ROOT, 'public/fonts/NotoSansArabic-arabic.woff2');
 const paginationTest = process.argv.includes('--pagination-test');
 const CSS_PIXELS_PER_MILLIMETER = 96 / 25.4;
 const A4_PAGE_SIZE_MILLIMETERS = { width: 210, height: 297 };
@@ -30,7 +25,7 @@ const TYPOGRAPHY_TIERS = [
   { name: 'M', scale: 1 },
 ];
 const PRINT_FONT_BY_LOCALE = {
-  ar: { family: 'Noto Sans Arabic Print', sample: 'العربية' },
+  ar: { family: 'Noto Sans Arabic' },
 };
 
 function pdfPath(locale) {
@@ -57,20 +52,8 @@ function generationTarget(locale) {
   return { locale, pagePath, pdfPath: pdfPath(locale) };
 }
 
-function escapeHtml(value) {
-  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
-}
-
-function footerTemplate(locale, version, arabicPrintFontData) {
-  const { footer } = useTranslations(locale).messages.print;
-  const text = formatMessage(footer, { version: formatDigits(locale, `v${version}`) });
-  const fontFace =
-    locale === 'ar'
-      ? `<style>@font-face { font-family: 'Noto Sans Arabic Print'; src: url(data:font/woff2;base64,${arabicPrintFontData}) format('woff2'); font-weight: 100 900; font-style: normal; unicode-range: U+0600-06FF; }</style>`
-      : '';
-  const fontFamily = locale === 'ar' ? "'Noto Sans Arabic Print', Arial, sans-serif" : 'Arial, sans-serif';
-
-  return `${fontFace}<div lang="${locale}" dir="${localeDirection(locale)}" style="box-sizing: border-box; width: 100%; padding: 0 8mm; color: #5c574e; font-family: ${fontFamily}; font-size: 6px; text-align: center;">${escapeHtml(text)} <span class="pageNumber"></span>/<span class="totalPages"></span></div>`;
+function footerTemplate(locale) {
+  return `<div lang="${locale}" dir="${localeDirection(locale)}" style="box-sizing: border-box; width: 100%; padding: 0 8mm; transform: translateY(-11px); color: #5c574e; font-family: Arial, sans-serif; font-size: 6px; text-align: end;"><span class="pageNumber"></span>/<span class="totalPages"></span></div>`;
 }
 
 async function selectTypographyTier(page) {
@@ -172,21 +155,47 @@ async function assertPrintFont(page, locale) {
 
   if (requiredFont === undefined) return;
 
-  const result = await page.evaluate(({ family, sample }) => {
+  const result = await page.evaluate(({ family }) => {
     const printDocument = document.querySelector('.print-document');
+    const printFooter = document.querySelector('.print-footer-copy');
 
-    if (!(printDocument instanceof HTMLElement)) {
-      throw new Error('Unable to find the printable CV document.');
+    if (!(printDocument instanceof HTMLElement) || !(printFooter instanceof HTMLElement)) {
+      throw new Error('Unable to find the printable CV document and footer.');
     }
 
-    const appliedFamilies = getComputedStyle(printDocument)
-      .fontFamily.split(',')
-      .map((candidate) => candidate.trim().replace(/^['"]|['"]$/g, ''));
+    const normalizedFirstFamily = (element) =>
+      getComputedStyle(element)
+        .fontFamily.split(',')[0]
+        .trim()
+        .replace(/^['"]|['"]$/g, '');
+    const arabicTextTargets = [];
+
+    for (const root of [printDocument, printFooter]) {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let textNode;
+
+      while ((textNode = walker.nextNode())) {
+        const arabicCharacters = textNode.textContent?.match(/\p{Script=Arabic}/gu)?.join('') ?? '';
+        const element = textNode.parentElement;
+
+        if (arabicCharacters && element) {
+          arabicTextTargets.push({
+            sample: arabicCharacters,
+            family: normalizedFirstFamily(element),
+            target: `${element.tagName.toLowerCase()}.${element.className}`,
+          });
+        }
+      }
+    }
+
+    const sample = [...new Set(arabicTextTargets.flatMap(({ sample }) => [...sample]))].join('');
     const declaredFaces = Array.from(document.fonts).filter((fontFace) => fontFace.family.trim().replace(/^['"]|['"]$/g, '') === family);
+    const mismatches = arabicTextTargets.filter((target) => target.family !== family);
 
     return {
-      applied: appliedFamilies[0] === family,
+      applied: arabicTextTargets.length > 0 && mismatches.length === 0,
       declared: declaredFaces.length > 0,
+      mismatches,
       loaded: declaredFaces.some((fontFace) => fontFace.status === 'loaded') && document.fonts.check(`1em "${family}"`, sample),
     };
   }, requiredFont);
@@ -196,7 +205,9 @@ async function assertPrintFont(page, locale) {
   }
 
   if (!result.applied) {
-    throw new Error(`The required print font "${requiredFont.family}" is loaded but not applied for locale "${locale}".`);
+    throw new Error(
+      `The required print font "${requiredFont.family}" is loaded but not applied to every Arabic text node for locale "${locale}": ${JSON.stringify(result.mismatches)}.`,
+    );
   }
 
   if (!result.loaded) {
@@ -204,7 +215,7 @@ async function assertPrintFont(page, locale) {
   }
 }
 
-async function generatePdf(context, buildServer, { locale, pagePath, pdfPath }, version, arabicPrintFontData) {
+async function generatePdf(context, buildServer, { locale, pagePath, pdfPath }) {
   const page = await context.newPage();
   const loadingErrors = [];
 
@@ -243,7 +254,7 @@ async function generatePdf(context, buildServer, { locale, pagePath, pdfPath }, 
     const session = await context.newCDPSession(page);
     const { data } = await session.send('Page.printToPDF', {
       displayHeaderFooter: true,
-      footerTemplate: footerTemplate(locale, version, arabicPrintFontData),
+      footerTemplate: footerTemplate(locale),
       headerTemplate: '<div></div>',
       preferCSSPageSize: true,
       printBackground: true,
@@ -259,9 +270,6 @@ async function generatePdf(context, buildServer, { locale, pagePath, pdfPath }, 
 }
 
 async function generatePdfs(locales) {
-  const [packageContents, arabicPrintFont] = await Promise.all([readFile(PACKAGE_PATH, 'utf8'), readFile(ARABIC_PRINT_FONT_PATH)]);
-  const { version } = JSON.parse(packageContents);
-  const arabicPrintFontData = arabicPrintFont.toString('base64');
   const buildServer = await startBuildServer(DIST_DIRECTORY);
   let browser;
 
@@ -271,7 +279,7 @@ async function generatePdfs(locales) {
 
     for (const locale of locales) {
       const target = generationTarget(locale);
-      const typographyTier = await generatePdf(context, buildServer, target, version, arabicPrintFontData);
+      const typographyTier = await generatePdf(context, buildServer, target);
 
       console.log(`Generated ${target.pdfPath} with typography tier ${typographyTier.name} (×${typographyTier.scale})`);
     }

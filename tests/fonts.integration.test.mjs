@@ -51,7 +51,7 @@ test('le build livre deux sous-ensembles et ne précharge que le latin', async (
   const latinFace = fontFaces.find((fontFace) => fontFace.includes('NotoSansArabic-latin.woff2'));
   const arabicFace = fontFaces.find((fontFace) => fontFace.includes('NotoSansArabic-arabic.woff2'));
 
-  assert.match(latinFace ?? '', /font-family:Noto Sans Arabic/);
+  assert.match(latinFace ?? '', /font-family:Noto Sans Arabic Latin/);
   assert.match(latinFace ?? '', /font-weight:100 900/);
   assert.match(latinFace ?? '', /unicode-range:/);
   assert.match(arabicFace ?? '', /font-family:Noto Sans Arabic/);
@@ -87,7 +87,7 @@ test('la page française ne charge pas le sous-ensemble arabe et distingue les g
 
   const fontDiagnostics = await page.evaluate(async () => {
     const sample = 'Hamburgefontsiv';
-    const fontFamily = 'Noto Sans Arabic';
+    const fontFamily = 'Noto Sans Arabic Latin';
 
     const loadedFaces = await Promise.all([
       document.fonts.load(`300 96px "${fontFamily}"`, sample),
@@ -127,7 +127,7 @@ test('la page française ne charge pas le sous-ensemble arabe et distingue les g
     };
   });
 
-  assert.ok(fontDiagnostics.loaded, 'Expected both requested weights to load from Noto Sans Arabic.');
+  assert.ok(fontDiagnostics.loaded, 'Expected both requested weights to load from Noto Sans Arabic Latin.');
   assert.deepEqual(fontDiagnostics.loadedFaceCounts, [1, 1]);
   assert.match(fontDiagnostics.computedFamily, /Noto Sans Arabic/);
   assert.ok(

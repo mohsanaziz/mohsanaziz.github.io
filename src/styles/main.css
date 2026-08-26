@@ -3,7 +3,7 @@
 @source '../../src';
 
 @theme {
-  --font-sans: 'Noto Sans Arabic', system-ui, sans-serif;
+  --font-sans: 'Noto Sans Arabic', 'Noto Sans Arabic Latin', system-ui, sans-serif;
 
   --color-page: light-dark(#fffefb, #0f0f11);
   --color-panel: light-dark(#f5f3ee, #18181b);
@@ -23,7 +23,7 @@
 }
 
 @font-face {
-  font-family: 'Noto Sans Arabic';
+  font-family: 'Noto Sans Arabic Latin';
   src: url('/fonts/NotoSansArabic-latin.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
@@ -52,7 +52,7 @@
 /* Noto Sans Arabic v2.012 has a measured natural line box of 2.112 em. Keep this rule
    unlayered so it outranks Tailwind's leading utilities; print line-height belongs to #77. */
 :lang(ar) .cv-prose {
-  line-height: 2.112;
+  line-height: var(--locale-line-height);
 }
 
 @layer base {
