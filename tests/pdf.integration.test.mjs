@@ -4,11 +4,10 @@ import test from 'node:test';
 
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
-import { DEFAULT_LOCALE } from '../src/i18n/locales.ts';
-import { resumeFileName, resumePath } from '../src/i18n/routing.ts';
+import { PAGINATION_TEST_LOCALES } from '../scripts/pdf-test-contract.mjs';
+import { localeRoutes, resumeFileName, resumePath } from '../src/i18n/routing.ts';
 
-const NOMINAL_LOCALES = [DEFAULT_LOCALE, 'en', 'ar'];
-const PAGINATION_TEST_LOCALES = [DEFAULT_LOCALE, 'ar'];
+const NOMINAL_LOCALES = localeRoutes().map(({ locale }) => locale);
 const PACKAGE_PATH = new URL('../package.json', import.meta.url);
 const A4_WIDTH_POINTS = 595.28;
 const A4_HEIGHT_POINTS = 841.89;
