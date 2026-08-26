@@ -11,7 +11,7 @@ import { GITHUB_LEXICON } from '../src/components/lexicon.ts';
 import * as en from '../src/i18n/en.ts';
 import * as fr from '../src/i18n/fr.ts';
 import { LOCALES } from '../src/i18n/locales.ts';
-import { localeDirection, localeUrlSegment, resumePath } from '../src/i18n/routing.ts';
+import { localeDirection, localeUrlSegment, resumeFileName, resumePath } from '../src/i18n/routing.ts';
 import { useTranslations } from '../src/i18n/translate.ts';
 import { flattenStrings } from './layer-strings.mjs';
 
@@ -42,6 +42,7 @@ test('le build sert /, /en/ et /ar/ ainsi que leurs routes d’impression, sans 
   for (const locale of LOCALES) {
     await access(builtPagePath(locale));
     await access(builtPagePath(locale, 'cv-print'));
+    await access(resolve(DIST_DIRECTORY, resumePath(locale).slice(1)));
   }
 
   await assert.rejects(access(resolve(DIST_DIRECTORY, 'fr')), { code: 'ENOENT' });
@@ -65,11 +66,14 @@ test('les routes d’impression restent noindex, nofollow et les pages publiques
   }
 });
 
-test('chaque page publique télécharge le PDF depuis resumePath(locale)', async () => {
+test('chaque page publique affiche et télécharge le PDF de sa locale', async () => {
   for (const locale of LOCALES) {
     const html = await readBuiltPage(locale);
+    const fileName = resumeFileName(locale);
 
     assert.ok(html.includes(`href="${resumePath(locale)}"`), `Expected the ${locale} page to link ${resumePath(locale)}.`);
+    assert.ok(html.includes(`download="${fileName}"`), `Expected the ${locale} page to download ${fileName}.`);
+    assert.match(html, new RegExp(`<span class="truncate">${fileName.replace('.', '\\.')}</span>`));
   }
 });
 
@@ -317,8 +321,8 @@ test('/ar/ rend son interface, ses chiffres et son interlignage en arabe sans al
     Math.abs(rendered.proseLineHeightRatio - 2.112) < 0.001,
     `Expected Arabic prose line-height 2.112, got ${rendered.proseLineHeightRatio}.`,
   );
-  assert.equal(rendered.pdfHref, '/cv/CV.pdf');
-  assert.equal(rendered.pdfFileName, 'CV.pdf');
+  assert.equal(rendered.pdfHref, '/cv/CV-ar.pdf');
+  assert.equal(rendered.pdfFileName, 'CV-ar.pdf');
   assert.equal(rendered.ltrIslandCount, 0);
 
   await page.goto(`${server.origin}/ar/cv-print/`, { waitUntil: 'networkidle' });

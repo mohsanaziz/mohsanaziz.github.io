@@ -76,6 +76,7 @@ export interface LocaleMessages {
     readonly experienceAndClientProjects: string;
     readonly client: string;
     readonly environment: string;
+    readonly footer: MessageWith<'version'>;
   };
 }
 
