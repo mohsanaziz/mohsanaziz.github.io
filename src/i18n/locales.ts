@@ -7,9 +7,17 @@ export const LOCALE_DEFINITIONS = [
 ] as const;
 
 export type Locale = (typeof LOCALE_DEFINITIONS)[number]['code'];
+type LocaleDefinition = (typeof LOCALE_DEFINITIONS)[number];
+type LocaleOpenGraphCodes = {
+  [Definition in LocaleDefinition as Definition['code']]: Definition['openGraphLocale'];
+};
 
 // Imported by astro.config.mjs and by the routes' getStaticPaths.
 export const LOCALES: readonly Locale[] = LOCALE_DEFINITIONS.map(({ code }) => code);
+
+const LOCALE_OPEN_GRAPH_CODES = Object.fromEntries(
+  LOCALE_DEFINITIONS.map(({ code, openGraphLocale }) => [code, openGraphLocale]),
+) as LocaleOpenGraphCodes;
 
 export const DEFAULT_LOCALE = 'fr' satisfies Locale;
 
@@ -58,14 +66,8 @@ export function localeFormatting(locale: Locale): LocaleFormatting {
   return LOCALE_FORMATTING[locale];
 }
 
-export function localeOpenGraphCode(locale: Locale): (typeof LOCALE_DEFINITIONS)[number]['openGraphLocale'] {
-  const definition = LOCALE_DEFINITIONS.find(({ code }) => code === locale);
-
-  if (!definition) {
-    throw new Error(`Missing locale definition: ${locale}.`);
-  }
-
-  return definition.openGraphLocale;
+export function localeOpenGraphCode<TLocale extends Locale>(locale: TLocale): LocaleOpenGraphCodes[TLocale] {
+  return LOCALE_OPEN_GRAPH_CODES[locale];
 }
 
 export function isLocale(value: unknown): value is Locale {
