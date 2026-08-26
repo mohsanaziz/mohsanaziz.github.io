@@ -85,7 +85,6 @@ test('aucune page ne livre de JavaScript ni de redirection meta refresh', async 
 test('les cartes Open Graph rendent le calque de leur locale, dont l’arabe en RTL avec sa police embarquée', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
 
   t.after(async () => {
     await browser.close();
@@ -99,15 +98,48 @@ test('les cartes Open Graph rendent le calque de leur locale, dont l’arabe en 
   };
 
   for (const locale of LOCALES) {
+    const context = await browser.newContext({ viewport: { width: 1200, height: 630 } });
+    const page = await context.newPage();
+    const fontRequests = [];
+
+    page.on('request', (request) => {
+      if (request.resourceType() === 'font') fontRequests.push(new URL(request.url()).pathname);
+    });
+
     await page.goto(`${server.origin}${localePagePath(locale, 'og-card')}`, { waitUntil: 'networkidle' });
     await page.evaluate(() => document.fonts.ready.then(() => undefined));
 
     const card = await page.locator('main').evaluate((main) => {
       const { width, height } = main.getBoundingClientRect();
-      const firstFontFamily = getComputedStyle(main)
-        .fontFamily.split(',')[0]
-        .trim()
-        .replace(/^['"]|['"]$/g, '');
+      const firstFontFamily = (element) =>
+        getComputedStyle(element)
+          .fontFamily.split(',')[0]
+          .trim()
+          .replace(/^['"]|['"]$/g, '');
+      const loadedFont = (family) =>
+        Array.from(document.fonts).some(
+          (fontFace) => fontFace.family.trim().replace(/^['"]|['"]$/g, '') === family && fontFace.status === 'loaded',
+        );
+      const arabicFamilies = [];
+      const walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT);
+      let textNode;
+
+      while ((textNode = walker.nextNode())) {
+        if (textNode.textContent?.match(/\p{Script=Arabic}/u) && textNode.parentElement) {
+          arabicFamilies.push(firstFontFamily(textNode.parentElement));
+        }
+      }
+
+      const monoFamilies = Array.from(main.querySelectorAll('[data-og-card-mono]'), firstFontFamily);
+      const name = main.querySelector('[data-og-card-name]');
+      const image = main.querySelector('img');
+
+      if (!(name instanceof HTMLElement) || !(image instanceof HTMLImageElement)) {
+        throw new Error('Unable to find the Open Graph card name and portrait.');
+      }
+
+      const nameStyle = getComputedStyle(name);
+      const nameLineCount = Math.round(name.getBoundingClientRect().height / Number.parseFloat(nameStyle.lineHeight));
 
       return {
         width,
@@ -115,8 +147,11 @@ test('les cartes Open Graph rendent le calque de leur locale, dont l’arabe en 
         colorScheme: getComputedStyle(main).colorScheme,
         text: main.textContent,
         direction: document.documentElement.dir || 'ltr',
-        firstFontFamily,
         fallbackLanguage: main.querySelector('p[lang]')?.getAttribute('lang') ?? null,
+        nameLineCount,
+        arabicFont: { families: [...new Set(arabicFamilies)], loaded: loadedFont('Noto Sans Arabic') },
+        monoFont: { families: [...new Set(monoFamilies)], loaded: loadedFont('Noto Sans Mono') },
+        image: { complete: image.complete, loading: image.loading, naturalWidth: image.naturalWidth },
       };
     });
 
@@ -128,7 +163,16 @@ test('les cartes Open Graph rendent le calque de leur locale, dont l’arabe en 
     assert.match(card.text, new RegExp(expected[locale].jobTitle));
     assert.match(card.text, new RegExp(expected[locale].location));
     assert.equal(card.fallbackLanguage, locale === 'ar' ? 'fr' : null);
-    assert.equal(card.firstFontFamily, 'Noto Sans Arabic');
+    assert.equal(card.nameLineCount, 1);
+    assert.equal(fontRequests.includes('/fonts/NotoSansArabic-arabic.woff2'), locale === 'ar');
+    assert.deepEqual(card.arabicFont.families, locale === 'ar' ? ['Noto Sans Arabic'] : []);
+    assert.equal(card.arabicFont.loaded, locale === 'ar');
+    assert.equal(fontRequests.includes('/fonts/NotoSansMono-latin.woff2'), true);
+    assert.deepEqual(card.monoFont.families, ['Noto Sans Mono']);
+    assert.equal(card.monoFont.loaded, true);
+    assert.deepEqual(card.image, { complete: true, loading: 'eager', naturalWidth: 76 });
+
+    await context.close();
   }
 });
 

@@ -10,6 +10,7 @@ node_modules/
 
 # generated third-party assets
 public/fonts/NotoSansArabic-*.woff2
+public/fonts/NotoSansMono-*.woff2
 
 # logs
 npm-debug.log*

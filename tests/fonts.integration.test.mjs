@@ -14,6 +14,7 @@ const FONT_DIRECTORY = resolve(DIST_DIRECTORY, 'fonts');
 const EXPECTED_FONT_SIZES = {
   'NotoSansArabic-arabic.woff2': 166_152,
   'NotoSansArabic-latin.woff2': 31_368,
+  'NotoSansMono-latin.woff2': 32_108,
 };
 
 async function readBuiltFontDelivery() {
@@ -29,13 +30,13 @@ async function readBuiltFontDelivery() {
   return { html, css: stylesheets.join('\n') };
 }
 
-test('le build livre deux sous-ensembles et ne précharge que le latin', async () => {
+test('le build livre les trois faces épinglées et ne précharge que le sans latin', async () => {
   const { html, css } = await readBuiltFontDelivery();
   const fontFaces = css.match(/@font-face\{[^}]+\}/g) ?? [];
   const preloadedFonts = (html.match(/<link\b[^>]*>/g) ?? []).filter((link) => /\brel="preload"/.test(link) && /\bas="font"/.test(link));
   const builtFontEntries = await readdir(FONT_DIRECTORY, { withFileTypes: true });
 
-  assert.equal(fontFaces.length, 2);
+  assert.equal(fontFaces.length, 3);
   assert.equal(preloadedFonts.length, 1);
   assert.match(preloadedFonts[0], /href="\/fonts\/NotoSansArabic-latin\.woff2"/);
   assert.doesNotMatch(preloadedFonts[0], /NotoSansArabic-arabic\.woff2/);
@@ -50,6 +51,7 @@ test('le build livre deux sous-ensembles et ne précharge que le latin', async (
 
   const latinFace = fontFaces.find((fontFace) => fontFace.includes('NotoSansArabic-latin.woff2'));
   const arabicFace = fontFaces.find((fontFace) => fontFace.includes('NotoSansArabic-arabic.woff2'));
+  const monoFace = fontFaces.find((fontFace) => fontFace.includes('NotoSansMono-latin.woff2'));
 
   assert.match(latinFace ?? '', /font-family:Noto Sans Arabic Latin/);
   assert.match(latinFace ?? '', /font-weight:100 900/);
@@ -59,6 +61,9 @@ test('le build livre deux sous-ensembles et ne précharge que le latin', async (
   assert.match(arabicFace ?? '', /unicode-range:/);
   assert.match(arabicFace ?? '', /U\+FB50-FDFF/);
   assert.match(arabicFace ?? '', /U\+FE76-FEFC/);
+  assert.match(monoFace ?? '', /font-family:Noto Sans Mono/);
+  assert.match(monoFace ?? '', /font-weight:400 700/);
+  assert.match(monoFace ?? '', /unicode-range:/);
 });
 
 test('la page française ne charge pas le sous-ensemble arabe et distingue les graisses 300 et 900', async (t) => {

@@ -7,7 +7,6 @@ import { withLoadedBuildPage } from './capture-build-page.mjs';
 import { paginationTestMarker } from './pdf-test-contract.mjs';
 
 const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
-const DIST_DIRECTORY = resolve(PROJECT_ROOT, 'dist');
 const CSS_PIXELS_PER_MILLIMETER = 96 / 25.4;
 const A4_PAGE_SIZE_MILLIMETERS = { width: 210, height: 297 };
 // Keep this value synchronized with the @page margin in src/pages/[...locale]/cv-print.astro.
@@ -25,11 +24,11 @@ const PRINT_FONT_BY_LOCALE = {
   ar: { family: 'Noto Sans Arabic' },
 };
 
-function pdfPath(locale) {
-  return join(DIST_DIRECTORY, resumePath(locale));
+function pdfPath(buildDirectory, locale) {
+  return join(buildDirectory, resumePath(locale));
 }
 
-function generationTarget(locale, paginationTest) {
+function generationTarget(buildDirectory, locale, paginationTest) {
   const pagePath = localePagePath(locale, 'cv-print');
 
   if (paginationTest) {
@@ -40,7 +39,7 @@ function generationTarget(locale, paginationTest) {
     };
   }
 
-  return { locale, pagePath, pdfPath: pdfPath(locale) };
+  return { locale, pagePath, pdfPath: pdfPath(buildDirectory, locale) };
 }
 
 function footerTemplate(locale) {
@@ -309,9 +308,9 @@ async function generatePdf(context, buildServer, { locale, pagePath, pdfPath }, 
   );
 }
 
-export async function generatePdfs(context, buildServer, locales, { paginationTest = false } = {}) {
+export async function generatePdfs(context, buildServer, buildDirectory, locales, { paginationTest = false } = {}) {
   for (const locale of locales) {
-    const target = generationTarget(locale, paginationTest);
+    const target = generationTarget(buildDirectory, locale, paginationTest);
     const typographyTier = await generatePdf(context, buildServer, target, paginationTest);
 
     console.log(`Generated ${target.pdfPath} with typography tier ${typographyTier.name} (×${typographyTier.scale})`);

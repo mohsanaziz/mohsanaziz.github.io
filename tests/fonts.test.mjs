@@ -16,12 +16,13 @@ const font = {
   expectedSha256: sha256(fontFixture),
 };
 
-test('les deux sous-ensembles épinglent explicitement Noto Sans Arabic v2.012', () => {
+test('les polices générées sont épinglées avec leur version et leur sous-ensemble', () => {
   assert.deepEqual(
     fonts.map(({ family, version, subset }) => ({ family, version, subset })),
     [
       { family: 'Noto Sans Arabic', version: '2.012', subset: 'latin' },
       { family: 'Noto Sans Arabic', version: '2.012', subset: 'arabic' },
+      { family: 'Noto Sans Mono', version: '2.014', subset: 'latin' },
     ],
   );
 });

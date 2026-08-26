@@ -33,7 +33,7 @@ async function generateOpenGraphImage(context, buildServer, { locale, pagePath, 
       }
 
       await mkdir(dirname(imagePath), { recursive: true });
-      await page.screenshot({ path: imagePath, type: 'png', clip: { x: 0, y: 0, ...OPEN_GRAPH_CARD_SIZE } });
+      await page.locator('main').screenshot({ path: imagePath, type: 'png' });
     },
   );
 }
