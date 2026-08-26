@@ -1,7 +1,15 @@
-// Single declaration of the served locales: imported by astro.config.mjs and by the routes' getStaticPaths.
-export const LOCALES = ['fr', 'en', 'ar'] as const;
+// Single declaration of the served locales and their protocol-specific Open Graph codes.
+// Bare language codes remain the routing and hreflang source; only Open Graph uses a territory.
+export const LOCALE_DEFINITIONS = [
+  { code: 'fr', openGraphLocale: 'fr_FR' },
+  { code: 'en', openGraphLocale: 'en_GB' },
+  { code: 'ar', openGraphLocale: 'ar_AR' },
+] as const;
 
-export type Locale = (typeof LOCALES)[number];
+export type Locale = (typeof LOCALE_DEFINITIONS)[number]['code'];
+
+// Imported by astro.config.mjs and by the routes' getStaticPaths.
+export const LOCALES: readonly Locale[] = LOCALE_DEFINITIONS.map(({ code }) => code);
 
 export const DEFAULT_LOCALE = 'fr' satisfies Locale;
 
@@ -48,6 +56,16 @@ const LOCALE_FORMATTING = {
 
 export function localeFormatting(locale: Locale): LocaleFormatting {
   return LOCALE_FORMATTING[locale];
+}
+
+export function localeOpenGraphCode(locale: Locale): (typeof LOCALE_DEFINITIONS)[number]['openGraphLocale'] {
+  const definition = LOCALE_DEFINITIONS.find(({ code }) => code === locale);
+
+  if (!definition) {
+    throw new Error(`Missing locale definition: ${locale}.`);
+  }
+
+  return definition.openGraphLocale;
 }
 
 export function isLocale(value: unknown): value is Locale {
