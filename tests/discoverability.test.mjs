@@ -5,7 +5,6 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import astroConfig from '../astro.config.mjs';
-import { cv } from '../src/data/cv.ts';
 import { DEFAULT_LOCALE, LOCALES } from '../src/i18n/locales.ts';
 import { localeUrlSegment } from '../src/i18n/routing.ts';
 
@@ -56,6 +55,7 @@ test('les pages publiques forment un groupe canonical/hreflang réciproque et co
   for (const locale of LOCALES) {
     const html = await readFile(builtPagePath(locale), 'utf8');
     const links = headTags(html, 'link');
+    const meta = headTags(html, 'meta');
     const canonical = singleValue(
       links.filter(({ rel }) => rel === 'canonical').map(({ href }) => href),
       `canonical on ${publicUrl(locale)}`,
@@ -67,13 +67,11 @@ test('les pages publiques forment un groupe canonical/hreflang réciproque et co
     assert.equal(canonical, publicUrl(locale), `Expected ${publicUrl(locale)} to be self-canonical.`);
     assert.deepEqual(alternates, { ...expectedAlternates, 'x-default': defaultUrl });
     assert.equal(alternates[locale], canonical, `Expected ${locale} to include itself in its hreflang group.`);
+    assert.deepEqual(metadataValues(meta, 'name', 'robots'), []);
   }
 });
 
 test('les pages publiques reprennent leur titre, leur description et leur URL dans le bloc Open Graph', async () => {
-  const [firstName, ...lastNameParts] = cv.profile.name.split(' ');
-  const lastName = lastNameParts.join(' ');
-
   for (const locale of LOCALES) {
     const html = await readFile(builtPagePath(locale), 'utf8');
     const [, title] = html.match(/<title>([^<]*)<\/title>/) ?? [];
@@ -86,8 +84,8 @@ test('les pages publiques reprennent leur titre, leur description et leur URL da
     assert.equal(singleValue(metadataValues(meta, 'property', 'og:url'), 'og:url'), publicUrl(locale));
     assert.equal(singleValue(metadataValues(meta, 'property', 'og:site_name'), 'og:site_name'), 'mohsanaziz/cv');
     assert.equal(singleValue(metadataValues(meta, 'property', 'og:type'), 'og:type'), 'profile');
-    assert.equal(singleValue(metadataValues(meta, 'property', 'profile:first_name'), 'profile:first_name'), firstName);
-    assert.equal(singleValue(metadataValues(meta, 'property', 'profile:last_name'), 'profile:last_name'), lastName);
+    assert.equal(singleValue(metadataValues(meta, 'property', 'profile:first_name'), 'profile:first_name'), 'Mohsan');
+    assert.equal(singleValue(metadataValues(meta, 'property', 'profile:last_name'), 'profile:last_name'), 'AZIZ');
     assert.equal(singleValue(metadataValues(meta, 'property', 'og:title'), 'og:title'), title);
     assert.equal(singleValue(metadataValues(meta, 'property', 'og:description'), 'og:description'), description);
     assert.equal(singleValue(metadataValues(meta, 'property', 'og:locale'), 'og:locale'), openGraphLocale);

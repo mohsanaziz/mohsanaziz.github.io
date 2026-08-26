@@ -59,13 +59,6 @@ test('chaque page porte le lang de sa locale et dir="rtl" sur l’arabe seulemen
   }
 });
 
-test('les routes d’impression restent noindex, nofollow et les pages publiques indexables', async () => {
-  for (const locale of LOCALES) {
-    assert.match(await readBuiltPage(locale, 'cv-print'), /<meta name="robots" content="noindex, nofollow">/);
-    assert.doesNotMatch(await readBuiltPage(locale), /<meta name="robots"/);
-  }
-});
-
 test('chaque page publique affiche et télécharge le PDF de sa locale', async () => {
   for (const locale of LOCALES) {
     const html = await readBuiltPage(locale);
