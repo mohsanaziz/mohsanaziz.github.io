@@ -162,7 +162,7 @@ test('la vue arabe localise les chiffres affichés tout en conservant les cibles
 test('la vue de release localise sa version sans altérer le chemin ou le nom du PDF', () => {
   assert.deepEqual(releaseAssetView('ar', '2.1.0'), {
     version: 'v٢.١.٠',
-    href: '/cv/CV.pdf',
-    fileName: 'CV.pdf',
+    href: '/cv/CV-ar.pdf',
+    fileName: 'CV-ar.pdf',
   });
 });

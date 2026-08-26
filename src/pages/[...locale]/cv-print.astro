@@ -13,6 +13,12 @@ export const getStaticPaths = localeStaticPaths;
 const translate = useTranslations(Astro.currentLocale);
 const { print } = translate.messages;
 const cv = cvView(translate.locale);
+const printLineHeight = {
+  fr: 1.3,
+  en: 1.3,
+  // Match the measured natural line box of Noto Sans Arabic v2.012 used by the web view.
+  ar: 2.112,
+}[translate.locale];
 
 const { profileLocation } = resolveProfileDetails(cv.profile);
 
@@ -31,7 +37,7 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
 ---
 
 <Layout title={cv.metadata.printablePageTitle} description={cv.metadata.pageDescription} robots="noindex, nofollow">
-  <main class="print-document">
+  <main class="print-document" style={`--print-line-height: ${printLineHeight}`}>
     <section class="print-frame" aria-label={GITHUB_LEXICON.readme}>
       <header class="frame-header">
         <span class="frame-title">{GITHUB_LEXICON.readme}</span>
@@ -131,8 +137,18 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
 </Layout>
 
 <style>
+  @font-face {
+    font-family: 'Noto Sans Arabic Print';
+    src: url('/fonts/NotoSansArabic-arabic.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: block;
+    unicode-range: U+0600-06FF;
+  }
+
   .print-document {
     --print-type-scale: 1;
+    --print-line-height: 1.3;
 
     color-scheme: only light;
     box-sizing: border-box;
@@ -143,7 +159,7 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
     background: var(--color-page);
     color: var(--color-copy);
     font-size: calc(8px * var(--print-type-scale));
-    line-height: 1.3;
+    line-height: var(--print-line-height);
   }
 
   .print-document *,
@@ -188,7 +204,7 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
 
   .readme-content h1 {
     font-size: 2.125em;
-    line-height: 1.05;
+    line-height: calc(var(--print-line-height) * 1.05);
     letter-spacing: -0.025em;
   }
 
@@ -270,7 +286,7 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
   }
 
   .employer-banner > p:last-child {
-    margin-left: auto;
+    margin-inline-start: auto;
     white-space: nowrap;
     color: var(--color-copy-muted);
   }
@@ -285,7 +301,7 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
     border-radius: 999px;
     font-size: 0.8125em;
     font-weight: 650;
-    line-height: 1.2;
+    line-height: calc(var(--print-line-height) * 1.2);
   }
 
   .mission-release {
@@ -320,7 +336,7 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
   }
 
   .mission-period {
-    margin-left: auto !important;
+    margin-inline-start: auto !important;
     white-space: nowrap;
     color: var(--color-copy-muted);
   }
@@ -353,7 +369,7 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
     .employer-banner > p:last-child,
     .mission-period {
       width: 100%;
-      margin-left: 0 !important;
+      margin-inline-start: 0 !important;
     }
   }
 
@@ -369,7 +385,8 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
       min-height: auto;
       margin: 0;
       padding: 0;
-      font-family: Arial, 'Liberation Sans', sans-serif;
+      /* The first face is Arabic-only, so Latin keeps the ADR 0006 system stack unchanged. */
+      font-family: 'Noto Sans Arabic Print', Arial, 'Liberation Sans', sans-serif;
       font-variant-ligatures: none;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;

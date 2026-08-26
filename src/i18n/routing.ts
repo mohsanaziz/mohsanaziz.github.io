@@ -18,10 +18,12 @@ export function localeDirection(locale: Locale): Direction {
   return RTL_LOCALES.has(locale) ? 'rtl' : 'ltr';
 }
 
-// The generated PDFs stay grouped under /cv/; the locale will distinguish the file name (see ADR 0007 §6).
-// Until the multilingual PDF ticket lands, every locale still points at the French artefact.
-export function resumeFileName(_locale: Locale): string {
-  return 'CV.pdf';
+// The generated PDFs stay grouped under /cv/. French keeps the historical URL while every prefixed locale
+// reuses its ASCII URL token as the download suffix (see ADR 0007 §6).
+export function resumeFileName(locale: Locale): string {
+  const suffix = localeUrlSegment(locale);
+
+  return `CV${suffix === undefined ? '' : `-${suffix}`}.pdf`;
 }
 
 export function resumePath(locale: Locale): string {

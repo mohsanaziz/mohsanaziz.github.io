@@ -68,6 +68,7 @@ export const messages = defineMessages({
     experienceAndClientProjects: 'Expérience & projets client',
     client: 'Client',
     environment: 'Environnement',
+    footer: 'Généré depuis mohsanaziz.github.io · {version} — page',
   },
 });
 
