@@ -88,6 +88,50 @@ test('aucune page ne livre de JavaScript ni de redirection meta refresh', async 
   }
 });
 
+test('le média d’impression arabe applique la face auto-hébergée au document et aux badges de version', async (t) => {
+  const server = await startBuildServer(DIST_DIRECTORY);
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+
+  t.after(async () => {
+    await browser.close();
+    await server.close();
+  });
+
+  await page.emulateMedia({ media: 'print' });
+  await page.goto(`${server.origin}/ar/cv-print/`, { waitUntil: 'networkidle' });
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+
+  const font = await page.evaluate(() => {
+    const printDocument = document.querySelector('.print-document');
+    const versionBadge = document.querySelector('.mission-header code');
+    const family = 'Noto Sans Arabic Print';
+    const normalizeFirstFamily = (element) =>
+      getComputedStyle(element)
+        .fontFamily.split(',')[0]
+        .trim()
+        .replace(/^['"]|['"]$/g, '');
+
+    if (!printDocument || !versionBadge) throw new Error('Unable to find the Arabic print font targets.');
+
+    return {
+      documentFamily: normalizeFirstFamily(printDocument),
+      versionFamily: normalizeFirstFamily(versionBadge),
+      declared: Array.from(document.fonts).some(
+        (fontFace) => fontFace.family.trim().replace(/^['"]|['"]$/g, '') === family && fontFace.status === 'loaded',
+      ),
+      available: document.fonts.check(`1em "${family}"`, 'العربية'),
+    };
+  });
+
+  assert.deepEqual(font, {
+    documentFamily: 'Noto Sans Arabic Print',
+    versionFamily: 'Noto Sans Arabic Print',
+    declared: true,
+    available: true,
+  });
+});
+
 test('le sélecteur relie les trois pages publiques avec des endonymes accessibles et reste absent des pages d’impression', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();

@@ -9,9 +9,13 @@ export function localeUrlSegment(locale: Locale): Locale | undefined {
   return locale === DEFAULT_LOCALE ? undefined : locale;
 }
 
+export function localeRoutes(): readonly { locale: Locale; urlSegment: Locale | undefined }[] {
+  return LOCALES.map((locale) => ({ locale, urlSegment: localeUrlSegment(locale) }));
+}
+
 // Static paths for the `[...locale]` rest routes: one page per locale, `undefined` for the root.
 export function localeStaticPaths(): { params: { locale: Locale | undefined } }[] {
-  return LOCALES.map((locale) => ({ params: { locale: localeUrlSegment(locale) } }));
+  return localeRoutes().map(({ urlSegment }) => ({ params: { locale: urlSegment } }));
 }
 
 export function localeDirection(locale: Locale): Direction {

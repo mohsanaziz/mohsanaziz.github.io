@@ -5,15 +5,16 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 import { formatDigits } from '../src/i18n/format.ts';
-import { DEFAULT_LOCALE, LOCALES } from '../src/i18n/locales.ts';
+import { DEFAULT_LOCALE } from '../src/i18n/locales.ts';
 import { formatMessage } from '../src/i18n/messages.ts';
-import { localeDirection, localeUrlSegment, resumeFileName, resumePath } from '../src/i18n/routing.ts';
+import { localeDirection, localeRoutes, localeUrlSegment, resumeFileName, resumePath } from '../src/i18n/routing.ts';
 import { useTranslations } from '../src/i18n/translate.ts';
 import { startBuildServer } from './build-server.mjs';
 
 const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const DIST_DIRECTORY = resolve(PROJECT_ROOT, 'dist');
 const PACKAGE_PATH = resolve(PROJECT_ROOT, 'package.json');
+const ARABIC_PRINT_FONT_PATH = resolve(PROJECT_ROOT, 'public/fonts/NotoSansArabic-arabic.woff2');
 const paginationTest = process.argv.includes('--pagination-test');
 const CSS_PIXELS_PER_MILLIMETER = 96 / 25.4;
 const A4_PAGE_SIZE_MILLIMETERS = { width: 210, height: 297 };
@@ -60,11 +61,16 @@ function escapeHtml(value) {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 }
 
-function footerTemplate(locale, version) {
+function footerTemplate(locale, version, arabicPrintFontData) {
   const { footer } = useTranslations(locale).messages.print;
   const text = formatMessage(footer, { version: formatDigits(locale, `v${version}`) });
+  const fontFace =
+    locale === 'ar'
+      ? `<style>@font-face { font-family: 'Noto Sans Arabic Print'; src: url(data:font/woff2;base64,${arabicPrintFontData}) format('woff2'); font-weight: 100 900; font-style: normal; unicode-range: U+0600-06FF; }</style>`
+      : '';
+  const fontFamily = locale === 'ar' ? "'Noto Sans Arabic Print', Arial, sans-serif" : 'Arial, sans-serif';
 
-  return `<div lang="${locale}" dir="${localeDirection(locale)}" style="box-sizing: border-box; width: 100%; padding: 0 8mm; color: #5c574e; font-family: Arial, sans-serif; font-size: 6px; text-align: center;">${escapeHtml(text)} <span class="pageNumber"></span>/<span class="totalPages"></span></div>`;
+  return `${fontFace}<div lang="${locale}" dir="${localeDirection(locale)}" style="box-sizing: border-box; width: 100%; padding: 0 8mm; color: #5c574e; font-family: ${fontFamily}; font-size: 6px; text-align: center;">${escapeHtml(text)} <span class="pageNumber"></span>/<span class="totalPages"></span></div>`;
 }
 
 async function selectTypographyTier(page) {
@@ -176,12 +182,18 @@ async function assertPrintFont(page, locale) {
     const appliedFamilies = getComputedStyle(printDocument)
       .fontFamily.split(',')
       .map((candidate) => candidate.trim().replace(/^['"]|['"]$/g, ''));
+    const declaredFaces = Array.from(document.fonts).filter((fontFace) => fontFace.family.trim().replace(/^['"]|['"]$/g, '') === family);
 
     return {
-      applied: appliedFamilies.includes(family),
-      loaded: document.fonts.check(`1em "${family}"`, sample),
+      applied: appliedFamilies[0] === family,
+      declared: declaredFaces.length > 0,
+      loaded: declaredFaces.some((fontFace) => fontFace.status === 'loaded') && document.fonts.check(`1em "${family}"`, sample),
     };
   }, requiredFont);
+
+  if (!result.declared) {
+    throw new Error(`The required print font "${requiredFont.family}" is not declared for locale "${locale}".`);
+  }
 
   if (!result.applied) {
     throw new Error(`The required print font "${requiredFont.family}" is loaded but not applied for locale "${locale}".`);
@@ -192,7 +204,7 @@ async function assertPrintFont(page, locale) {
   }
 }
 
-async function generatePdf(context, buildServer, { locale, pagePath, pdfPath }, version) {
+async function generatePdf(context, buildServer, { locale, pagePath, pdfPath }, version, arabicPrintFontData) {
   const page = await context.newPage();
   const loadingErrors = [];
 
@@ -212,11 +224,12 @@ async function generatePdf(context, buildServer, { locale, pagePath, pdfPath }, 
 
     await page.emulateMedia({ media: 'print' });
     await page.evaluate(() => document.fonts.ready.then(() => undefined));
-    await assertPrintFont(page, locale);
 
     if (loadingErrors.length > 0) {
       throw new Error(`The printable CV did not load completely:\n${loadingErrors.join('\n')}`);
     }
+
+    await assertPrintFont(page, locale);
 
     if (paginationTest) {
       await inflatePaginationTestVolume(page);
@@ -230,7 +243,7 @@ async function generatePdf(context, buildServer, { locale, pagePath, pdfPath }, 
     const session = await context.newCDPSession(page);
     const { data } = await session.send('Page.printToPDF', {
       displayHeaderFooter: true,
-      footerTemplate: footerTemplate(locale, version),
+      footerTemplate: footerTemplate(locale, version, arabicPrintFontData),
       headerTemplate: '<div></div>',
       preferCSSPageSize: true,
       printBackground: true,
@@ -246,7 +259,9 @@ async function generatePdf(context, buildServer, { locale, pagePath, pdfPath }, 
 }
 
 async function generatePdfs(locales) {
-  const { version } = JSON.parse(await readFile(PACKAGE_PATH, 'utf8'));
+  const [packageContents, arabicPrintFont] = await Promise.all([readFile(PACKAGE_PATH, 'utf8'), readFile(ARABIC_PRINT_FONT_PATH)]);
+  const { version } = JSON.parse(packageContents);
+  const arabicPrintFontData = arabicPrintFont.toString('base64');
   const buildServer = await startBuildServer(DIST_DIRECTORY);
   let browser;
 
@@ -256,7 +271,7 @@ async function generatePdfs(locales) {
 
     for (const locale of locales) {
       const target = generationTarget(locale);
-      const typographyTier = await generatePdf(context, buildServer, target, version);
+      const typographyTier = await generatePdf(context, buildServer, target, version, arabicPrintFontData);
 
       console.log(`Generated ${target.pdfPath} with typography tier ${typographyTier.name} (×${typographyTier.scale})`);
     }
@@ -265,4 +280,4 @@ async function generatePdfs(locales) {
   }
 }
 
-await generatePdfs(paginationTest ? [DEFAULT_LOCALE] : LOCALES);
+await generatePdfs(paginationTest ? [DEFAULT_LOCALE] : localeRoutes().map(({ locale }) => locale));
