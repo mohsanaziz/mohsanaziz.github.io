@@ -16,7 +16,7 @@ export const getStaticPaths = localeStaticPaths;
 const translate = useTranslations(Astro.currentLocale);
 const cv = cvView(translate.locale);
 const portrait = imageAsset(cv.profile.image.source);
-const { githubProfile, profileLocation } = resolveProfileDetails(cv.profile);
+const { githubProfile } = resolveProfileDetails(cv.profile);
 const githubOwner = urlPathSegments(githubProfile.href).at(0);
 const siteLabel = Astro.site?.hostname;
 const jobTitleLanguage = localeContentCoverage(translate.locale) === 'interface-only' ? DEFAULT_LOCALE : undefined;
@@ -48,7 +48,7 @@ if (!githubOwner || !siteLabel) {
 
     <footer class="flex shrink-0 items-center gap-5 border-t border-rule px-14 py-7">
       <Image src={portrait} alt="" class="h-[76px] w-[76px] shrink-0 rounded-full object-cover" width={152} height={152} />
-      <span class="text-[28px] text-copy-muted">{profileLocation.info}</span>
+      <span class="text-[28px] text-copy-muted">{cv.metadata.openGraphLocation}</span>
       <span class="ms-auto font-mono text-[26px] text-copy-muted">{siteLabel}</span>
     </footer>
   </main>

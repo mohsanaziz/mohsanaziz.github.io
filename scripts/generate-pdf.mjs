@@ -2,16 +2,12 @@ import { writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { chromium } from 'playwright';
-
-import { localeDirection, localePagePath, localeRoutes, resumeFileName, resumePath } from '../src/i18n/routing.ts';
-import { startBuildServer } from './build-server.mjs';
-import { generateOpenGraphImages } from './generate-og-images.mjs';
-import { PAGINATION_TEST_LOCALES, paginationTestMarker } from './pdf-test-contract.mjs';
+import { localeDirection, localePagePath, resumeFileName, resumePath } from '../src/i18n/routing.ts';
+import { withLoadedBuildPage } from './capture-build-page.mjs';
+import { paginationTestMarker } from './pdf-test-contract.mjs';
 
 const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const DIST_DIRECTORY = resolve(PROJECT_ROOT, 'dist');
-const paginationTest = process.argv.includes('--pagination-test');
 const CSS_PIXELS_PER_MILLIMETER = 96 / 25.4;
 const A4_PAGE_SIZE_MILLIMETERS = { width: 210, height: 297 };
 // Keep this value synchronized with the @page margin in src/pages/[...locale]/cv-print.astro.
@@ -37,7 +33,7 @@ function printablePagePath(locale) {
   return localePagePath(locale, 'cv-print');
 }
 
-function generationTarget(locale) {
+function generationTarget(locale, paginationTest) {
   const pagePath = printablePagePath(locale);
 
   if (paginationTest) {
@@ -283,81 +279,45 @@ async function assertPrintFont(page, locale) {
   }
 }
 
-async function generatePdf(context, buildServer, { locale, pagePath, pdfPath }) {
-  const page = await context.newPage();
-  const loadingErrors = [];
+async function generatePdf(context, buildServer, { locale, pagePath, pdfPath }, paginationTest) {
+  return withLoadedBuildPage(
+    context,
+    buildServer,
+    { label: `The printable CV for locale "${locale}"`, pagePath, viewport: PRINTABLE_PAGE_SIZE, media: 'print' },
+    async (page) => {
+      await assertPrintFont(page, locale);
 
-  try {
-    page.on('requestfailed', (request) => loadingErrors.push(`${request.method()} ${request.url()}: ${request.failure()?.errorText}`));
-    page.on('response', (response) => {
-      if (response.status() >= 400) {
-        loadingErrors.push(`${response.request().method()} ${response.url()}: HTTP ${response.status()}`);
+      if (paginationTest) {
+        await inflatePaginationTestVolume(page);
       }
-    });
 
-    const response = await page.goto(`${buildServer.origin}${pagePath}`, { waitUntil: 'networkidle' });
+      const typographyTier = await selectTypographyTier(page);
+      await page.evaluate((tierName) => {
+        document.title = `${document.title} [${tierName}]`;
+      }, typographyTier.name);
 
-    if (!response?.ok()) {
-      throw new Error(`The printable CV returned HTTP ${response?.status() ?? 'unknown'}.`);
-    }
+      const session = await context.newCDPSession(page);
+      const { data } = await session.send('Page.printToPDF', {
+        displayHeaderFooter: true,
+        footerTemplate: footerTemplate(locale),
+        headerTemplate: '<div></div>',
+        preferCSSPageSize: true,
+        printBackground: true,
+      });
 
-    await page.emulateMedia({ media: 'print' });
-    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+      await mkdir(dirname(pdfPath), { recursive: true });
+      await writeFile(pdfPath, Buffer.from(data, 'base64'));
 
-    if (loadingErrors.length > 0) {
-      throw new Error(`The printable CV did not load completely:\n${loadingErrors.join('\n')}`);
-    }
-
-    await assertPrintFont(page, locale);
-
-    if (paginationTest) {
-      await inflatePaginationTestVolume(page);
-    }
-
-    const typographyTier = await selectTypographyTier(page);
-    await page.evaluate((tierName) => {
-      document.title = `${document.title} [${tierName}]`;
-    }, typographyTier.name);
-
-    const session = await context.newCDPSession(page);
-    const { data } = await session.send('Page.printToPDF', {
-      displayHeaderFooter: true,
-      footerTemplate: footerTemplate(locale),
-      headerTemplate: '<div></div>',
-      preferCSSPageSize: true,
-      printBackground: true,
-    });
-
-    await mkdir(dirname(pdfPath), { recursive: true });
-    await writeFile(pdfPath, Buffer.from(data, 'base64'));
-
-    return typographyTier;
-  } finally {
-    await page.close();
-  }
+      return typographyTier;
+    },
+  );
 }
 
-async function generatePdfs(locales) {
-  const buildServer = await startBuildServer(DIST_DIRECTORY);
-  let browser;
+export async function generatePdfs(context, buildServer, locales, { paginationTest = false } = {}) {
+  for (const locale of locales) {
+    const target = generationTarget(locale, paginationTest);
+    const typographyTier = await generatePdf(context, buildServer, target, paginationTest);
 
-  try {
-    browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({ viewport: PRINTABLE_PAGE_SIZE });
-
-    for (const locale of locales) {
-      const target = generationTarget(locale);
-      const typographyTier = await generatePdf(context, buildServer, target);
-
-      console.log(`Generated ${target.pdfPath} with typography tier ${typographyTier.name} (×${typographyTier.scale})`);
-    }
-
-    if (!paginationTest) {
-      await generateOpenGraphImages(context, buildServer, DIST_DIRECTORY, locales);
-    }
-  } finally {
-    await Promise.allSettled([browser?.close(), buildServer.close()]);
+    console.log(`Generated ${target.pdfPath} with typography tier ${typographyTier.name} (×${typographyTier.scale})`);
   }
 }
-
-await generatePdfs(paginationTest ? PAGINATION_TEST_LOCALES : localeRoutes().map(({ locale }) => locale));
