@@ -393,7 +393,8 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
     }
 
     .mission-header code {
-      font-family: 'Courier New', 'Liberation Mono', monospace;
+      /* Arabic digits use the hosted face; ASCII code tokens keep the ADR 0006 monospace stack. */
+      font-family: 'Noto Sans Arabic Print', 'Courier New', 'Liberation Mono', monospace;
     }
 
     .print-frame {

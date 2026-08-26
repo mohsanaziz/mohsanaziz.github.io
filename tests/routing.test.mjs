@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { DEFAULT_LOCALE, LOCALES } from '../src/i18n/locales.ts';
-import { localeDirection, localeStaticPaths, resumeFileName, resumePath } from '../src/i18n/routing.ts';
+import { localeDirection, localeRoutes, localeStaticPaths, resumeFileName, resumePath } from '../src/i18n/routing.ts';
 
 test('les trois locales sont déclarées une seule fois, le français par défaut', () => {
   assert.deepEqual([...LOCALES], ['fr', 'en', 'ar']);
@@ -10,6 +10,11 @@ test('les trois locales sont déclarées une seule fois, le français par défau
 });
 
 test('getStaticPaths énumère une page par locale, le français sans préfixe', () => {
+  assert.deepEqual(localeRoutes(), [
+    { locale: 'fr', urlSegment: undefined },
+    { locale: 'en', urlSegment: 'en' },
+    { locale: 'ar', urlSegment: 'ar' },
+  ]);
   assert.deepEqual(localeStaticPaths(), [{ params: { locale: undefined } }, { params: { locale: 'en' } }, { params: { locale: 'ar' } }]);
 });
 
