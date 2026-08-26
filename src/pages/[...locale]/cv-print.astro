@@ -3,22 +3,27 @@ import { GITHUB_LEXICON } from '@/components/lexicon';
 import { STATUS_CLASSES_BY_TONE, TONE_BY_CONTRACT } from '@/components/status';
 import { derivedCv } from '@/data/derived';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
+import { formatDigits } from '@/i18n/format';
+import { localeFormatting } from '@/i18n/locales';
+import { formatMessage } from '@/i18n/messages';
 import { localeStaticPaths } from '@/i18n/routing';
 import { useTranslations } from '@/i18n/translate';
 import { buildMissionReleaseViews, cvView } from '@/i18n/views';
 import Layout from '@/layouts/Layout.astro';
+import packageMetadata from '@package';
 
 export const getStaticPaths = localeStaticPaths;
 
 const translate = useTranslations(Astro.currentLocale);
 const { print } = translate.messages;
 const cv = cvView(translate.locale);
-const printLineHeight = {
-  fr: 1.3,
-  en: 1.3,
-  // Match the measured natural line box of Noto Sans Arabic v2.012 used by the web view.
-  ar: 2.112,
-}[translate.locale];
+const { lineHeight, printHeadingLineHeightFactor, printBadgeLineHeightFactor } = localeFormatting(translate.locale);
+const footerText = formatMessage(print.footer, { version: formatDigits(translate.locale, `v${packageMetadata.version}`) });
+const printTypographyVariables = [
+  `--print-line-height: ${lineHeight}`,
+  `--print-heading-line-height-factor: ${printHeadingLineHeightFactor}`,
+  `--print-badge-line-height-factor: ${printBadgeLineHeightFactor}`,
+].join('; ');
 
 const { profileLocation } = resolveProfileDetails(cv.profile);
 
@@ -37,7 +42,7 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
 ---
 
 <Layout title={cv.metadata.printablePageTitle} description={cv.metadata.pageDescription} robots="noindex, nofollow">
-  <main class="print-document" style={`--print-line-height: ${printLineHeight}`}>
+  <main class="print-document" style={printTypographyVariables}>
     <section class="print-frame" aria-label={GITHUB_LEXICON.readme}>
       <header class="frame-header">
         <span class="frame-title">{GITHUB_LEXICON.readme}</span>
@@ -134,21 +139,12 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
       </div>
     </section>
   </main>
+  <footer class="print-footer-copy">{footerText}</footer>
 </Layout>
 
 <style>
-  @font-face {
-    font-family: 'Noto Sans Arabic Print';
-    src: url('/fonts/NotoSansArabic-arabic.woff2') format('woff2');
-    font-weight: 100 900;
-    font-style: normal;
-    font-display: block;
-    unicode-range: U+0600-06FF;
-  }
-
   .print-document {
     --print-type-scale: 1;
-    --print-line-height: 1.3;
 
     color-scheme: only light;
     box-sizing: border-box;
@@ -204,7 +200,7 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
 
   .readme-content h1 {
     font-size: 2.125em;
-    line-height: calc(var(--print-line-height) * 1.05);
+    line-height: calc(var(--print-line-height) * var(--print-heading-line-height-factor));
     letter-spacing: -0.025em;
   }
 
@@ -301,7 +297,7 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
     border-radius: 999px;
     font-size: 0.8125em;
     font-weight: 650;
-    line-height: calc(var(--print-line-height) * 1.2);
+    line-height: calc(var(--print-line-height) * var(--print-badge-line-height-factor));
   }
 
   .mission-release {
@@ -355,6 +351,10 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
     color: var(--color-copy-muted);
   }
 
+  .print-footer-copy {
+    display: none;
+  }
+
   @media (max-width: 600px) {
     .print-document {
       padding: 4mm;
@@ -386,7 +386,7 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
       margin: 0;
       padding: 0;
       /* The first face is Arabic-only, so Latin keeps the ADR 0006 system stack unchanged. */
-      font-family: 'Noto Sans Arabic Print', Arial, 'Liberation Sans', sans-serif;
+      font-family: 'Noto Sans Arabic', Arial, 'Liberation Sans', sans-serif;
       font-variant-ligatures: none;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
@@ -394,11 +394,23 @@ const socialProfiles = cv.profile.socialLinks.map((link) => ({
 
     .mission-header code {
       /* Arabic digits use the hosted face; ASCII code tokens keep the ADR 0006 monospace stack. */
-      font-family: 'Noto Sans Arabic Print', 'Courier New', 'Liberation Mono', monospace;
+      font-family: 'Noto Sans Arabic', 'Courier New', 'Liberation Mono', monospace;
     }
 
     .print-frame {
       box-decoration-break: clone;
+    }
+
+    .print-footer-copy {
+      position: fixed;
+      inset-inline: 0;
+      bottom: 0;
+      display: block;
+      color: #5c574e;
+      font-family: 'Noto Sans Arabic', Arial, 'Liberation Sans', sans-serif;
+      font-size: 6px;
+      line-height: 1;
+      text-align: center;
     }
   }
 
