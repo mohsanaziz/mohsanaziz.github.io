@@ -5,7 +5,7 @@ import { cv } from '../src/data/cv.ts';
 import * as ar from '../src/i18n/ar.ts';
 import * as en from '../src/i18n/en.ts';
 import * as fr from '../src/i18n/fr.ts';
-import { localeContentCoverage, localeLayer } from '../src/i18n/layers.ts';
+import { localeLayer } from '../src/i18n/layers.ts';
 import { LOCALES } from '../src/i18n/locales.ts';
 import { formatMessage } from '../src/i18n/messages.ts';
 import { useTranslations } from '../src/i18n/translate.ts';
@@ -42,12 +42,6 @@ test('chaque locale déclarée dispose d’un calque', () => {
     assert.ok(messages.labels.contact.length > 0);
     assert.ok(content.about.paragraphs.length > 0);
   }
-});
-
-test('la couverture de contenu reste attachée au calque de chaque locale', () => {
-  assert.equal(localeContentCoverage('fr'), 'complete');
-  assert.equal(localeContentCoverage('en'), 'complete');
-  assert.equal(localeContentCoverage('ar'), 'complete');
 });
 
 test('formatMessage substitue les espaces réservés et refuse une valeur manquante', () => {

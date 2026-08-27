@@ -43,7 +43,6 @@ export interface LocaleMessages {
   };
   readonly languageSelector: {
     readonly switchLanguage: string;
-    readonly interfaceOnly: string;
   };
   readonly labels: {
     readonly contact: string;

@@ -14,7 +14,6 @@ export const messages = defineMessages({
   },
   languageSelector: {
     switchLanguage: 'Changer de langue',
-    interfaceOnly: 'Interface uniquement',
   },
   labels: {
     contact: 'Contact',

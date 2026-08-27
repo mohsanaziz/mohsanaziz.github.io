@@ -3,7 +3,6 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import Icon from '@/components/Icon.astro';
 import { GITHUB_LEXICON } from '@/components/lexicon';
 import ShellBadge from '@/components/ShellBadge.astro';
-import { localeContentCoverage } from '@/i18n/layers';
 import { DEFAULT_LOCALE, LOCALE_ENDONYMS, LOCALES } from '@/i18n/locales';
 import { localeDirection } from '@/i18n/routing';
 import { useTranslations } from '@/i18n/translate';
@@ -17,7 +16,6 @@ const options = LOCALES.map((locale) => ({
   href: getRelativeLocaleUrl(locale),
   current: locale === currentLocale,
   isDefault: locale === DEFAULT_LOCALE,
-  interfaceOnly: localeContentCoverage(locale) === 'interface-only',
 }));
 const current = { endonym: LOCALE_ENDONYMS[currentLocale], direction: localeDirection(currentLocale) };
 ---
@@ -58,7 +56,6 @@ const current = { endonym: LOCALE_ENDONYMS[currentLocale], direction: localeDire
               </span>
 
               {option.isDefault && <ShellBadge>{GITHUB_LEXICON.default}</ShellBadge>}
-              {option.interfaceOnly && <ShellBadge>{languageSelector.interfaceOnly}</ShellBadge>}
             </a>
           </li>
         ))

@@ -3,8 +3,6 @@ import Icon from '@/components/Icon.astro';
 import { GITHUB_LEXICON } from '@/components/lexicon';
 import { imageAsset } from '@/data/images';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
-import { DEFAULT_LOCALE } from '@/i18n/locales';
-import { localeContentCoverage } from '@/i18n/layers';
 import { localeStaticPaths } from '@/i18n/routing';
 import { useTranslations } from '@/i18n/translate';
 import { cvView } from '@/i18n/views';
@@ -19,7 +17,6 @@ const portrait = imageAsset(cv.profile.image.source);
 const { githubProfile } = resolveProfileDetails(cv.profile);
 const githubOwner = urlPathSegments(githubProfile.href).at(0);
 const siteLabel = Astro.site?.hostname;
-const jobTitleLanguage = localeContentCoverage(translate.locale) === 'interface-only' ? DEFAULT_LOCALE : undefined;
 
 if (!githubOwner || !siteLabel) {
   throw new Error('The Open Graph card requires a GitHub owner and the configured site hostname.');
@@ -43,7 +40,7 @@ if (!githubOwner || !siteLabel) {
     <div class="flex min-h-0 flex-1 flex-col justify-center px-14">
       <p class="text-[124px] leading-[0.92] font-black tracking-tight [overflow-wrap:anywhere]" data-og-card-name>{cv.profile.name}</p>
       {cv.profile.alternateName && <p class="mt-3 text-[36px] leading-none font-medium text-copy-muted">{cv.profile.alternateName}</p>}
-      <p class="mt-6 text-[42px] leading-tight text-copy-muted" lang={jobTitleLanguage}>{cv.profile.jobTitle}</p>
+      <p class="mt-6 text-[42px] leading-tight text-copy-muted">{cv.profile.jobTitle}</p>
     </div>
 
     <footer class="flex shrink-0 items-center gap-5 border-t border-rule px-14 py-7">
