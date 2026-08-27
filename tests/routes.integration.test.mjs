@@ -8,6 +8,7 @@ import { chromium } from 'playwright';
 
 import { startBuildServer } from '../scripts/build-server.mjs';
 import { GITHUB_LEXICON } from '../src/components/lexicon.ts';
+import * as ar from '../src/i18n/ar.ts';
 import * as en from '../src/i18n/en.ts';
 import * as fr from '../src/i18n/fr.ts';
 import { localeFormatting, LOCALES } from '../src/i18n/locales.ts';
@@ -94,7 +95,7 @@ test('les cartes Open Graph rendent le calque de leur locale, dont l’arabe en 
   const expected = {
     fr: { name: 'Mohsan AZIZ', jobTitle: 'Développeur freelance Angular/Java', location: 'Paris, France' },
     en: { name: 'Mohsan AZIZ', jobTitle: 'Freelance Angular/Java Developer', location: 'Paris, France' },
-    ar: { name: 'محسن عزيز', jobTitle: 'Développeur freelance Angular/Java', location: 'باريس، فرنسا' },
+    ar: { name: 'محسن عزيز', jobTitle: 'مطوّر Angular/Java مستقل', location: 'باريس، فرنسا' },
   };
 
   for (const locale of LOCALES) {
@@ -162,7 +163,7 @@ test('les cartes Open Graph rendent le calque de leur locale, dont l’arabe en 
     assert.match(card.text, new RegExp(expected[locale].name));
     assert.match(card.text, new RegExp(expected[locale].jobTitle));
     assert.match(card.text, new RegExp(expected[locale].location));
-    assert.equal(card.fallbackLanguage, locale === 'ar' ? 'fr' : null);
+    assert.equal(card.fallbackLanguage, null);
     assert.equal(card.nameLineCount, 1);
     assert.equal(fontRequests.includes('/fonts/NotoSansArabic-arabic.woff2'), locale === 'ar');
     assert.deepEqual(card.arabicFont.families, locale === 'ar' ? ['Noto Sans Arabic'] : []);
@@ -365,7 +366,7 @@ test('le sélecteur relie les trois pages publiques avec des endonymes accessibl
     );
     assert.deepEqual(
       selector.options.map(({ badges }) => badges),
-      [['default'], [], [messages.interfaceOnly]],
+      [['default'], [], []],
     );
 
     await page.locator('header summary').focus();
@@ -514,7 +515,7 @@ test('/ar/ rend son interface, ses chiffres et son interlignage en arabe sans al
     };
   });
 
-  for (const expected of ['معلومات الاتصال', 'الفترة', 'قيد التنفيذ', 'تغيير اللغة', fr.cv.about.paragraphs[0]]) {
+  for (const expected of ['معلومات الاتصال', 'الفترة', 'قيد التنفيذ', 'تغيير اللغة', ar.cv.about.paragraphs[0]]) {
     assert.ok(rendered.accessibleText.includes(expected), `Expected /ar/ to render “${expected}”.`);
   }
 
@@ -553,6 +554,17 @@ test('/en/ ne laisse subsister aucune chaîne française là où l’anglais dif
     if (englishStrings.get(path) === frenchValue) continue;
 
     assert.ok(!html.includes(frenchValue), `Expected the English page to drop the French “${path}”: “${frenchValue}”.`);
+  }
+});
+
+test('/ar/ ne laisse subsister aucune chaîne française là où l’arabe diffère', async () => {
+  const html = decodeHtml(await readBuiltPage('ar'));
+  const arabicStrings = new Map(flattenStrings({ ...ar.messages, ...ar.cv }));
+
+  for (const [path, frenchValue] of flattenStrings({ ...fr.messages, ...fr.cv })) {
+    if (arabicStrings.get(path) === frenchValue) continue;
+
+    assert.ok(!html.includes(frenchValue), `Expected the Arabic page to drop the French “${path}”: “${frenchValue}”.`);
   }
 });
 

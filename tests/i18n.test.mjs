@@ -10,14 +10,19 @@ import { LOCALES } from '../src/i18n/locales.ts';
 import { formatMessage } from '../src/i18n/messages.ts';
 import { useTranslations } from '../src/i18n/translate.ts';
 import { cvView, releaseAssetView } from '../src/i18n/views.ts';
-import { stringPaths } from './layer-strings.mjs';
+import { flattenStrings, stringPaths } from './layer-strings.mjs';
 
-// The French and English layers are typed complete, so `astro check` already refuses an incomplete one.
+// The three layers are typed complete, so `astro check` already refuses an incomplete one.
 // These tests cover what the type system cannot see: the values themselves and the rendering rules.
 
-test('les calques fr et en sont symétriques, clé pour clé', () => {
+test('les calques fr, en et ar sont symétriques, clé pour clé', () => {
   assert.deepEqual(stringPaths(fr.messages), stringPaths(en.messages));
   assert.deepEqual(stringPaths(fr.cv), stringPaths(en.cv));
+  // The Arabic layer adds the one optional leaf the schema allows: the transliterated name.
+  assert.deepEqual(
+    stringPaths(ar.cv).filter((path) => path !== 'profile.name'),
+    stringPaths(fr.cv),
+  );
 });
 
 test('le noyau invariant ne porte aucune phrase de langue naturelle', () => {
@@ -42,7 +47,7 @@ test('chaque locale déclarée dispose d’un calque', () => {
 test('la couverture de contenu reste attachée au calque de chaque locale', () => {
   assert.equal(localeContentCoverage('fr'), 'complete');
   assert.equal(localeContentCoverage('en'), 'complete');
-  assert.equal(localeContentCoverage('ar'), 'interface-only');
+  assert.equal(localeContentCoverage('ar'), 'complete');
 });
 
 test('formatMessage substitue les espaces réservés et refuse une valeur manquante', () => {
@@ -124,13 +129,19 @@ test('les coordonnées invariantes viennent du noyau, les autres du calque', () 
   assert.equal(detailOf(cvView('en'), 'birthdate')?.info, '19 October 1989');
 });
 
-test('le calque arabe traduit l’interface et complète son contenu partiel depuis le français', () => {
+test('le calque arabe porte son interface et sa prose sans repli sur le français', () => {
   const arabic = localeLayer('ar');
+  const frenchStrings = new Set(flattenStrings({ ...fr.messages, ...fr.cv }).map(([, value]) => value));
 
-  assert.equal(ar.cv.about?.paragraphs, undefined, 'Expected prose to stay absent from the partial Arabic layer.');
   assert.equal(arabic.messages.labels.period, 'الفترة');
   assert.equal(arabic.cv.about.title, 'نبذة');
-  assert.deepEqual(arabic.cv.about.paragraphs, fr.cv.about.paragraphs);
+  assert.equal(arabic.cv.about.paragraphs.length, fr.cv.about.paragraphs.length);
+
+  for (const [path, value] of flattenStrings(arabic.cv)) {
+    if (path === 'profile.contactDetails.birthdate.info') continue;
+
+    assert.ok(!frenchStrings.has(value), `Expected the Arabic layer to translate “${path}”, found the French “${value}”.`);
+  }
 });
 
 test('la vue arabe localise les chiffres affichés tout en conservant les cibles ASCII', () => {
@@ -146,15 +157,15 @@ test('la vue arabe localise les chiffres affichés tout en conservant les cibles
       phone,
       birthdate: birthdate?.info,
       project: portalis?.name,
-      fallbackParagraph: arabic.about.paragraphs[0],
+      paragraph: arabic.about.paragraphs[0],
     },
     {
       name: 'محسن عزيز',
       alternateName: 'Mohsan AZIZ',
       phone: { id: 'phone', title: 'الهاتف', info: '٠٦.٢٨.٧٤.٦١.٧٦', icon: 'phone', href: 'tel:+33628746176' },
-      birthdate: '١٩ Octobre ١٩٨٩',
+      birthdate: '١٩ أكتوبر ١٩٨٩',
       project: 'PORTALIS V٣',
-      fallbackParagraph: fr.cv.about.paragraphs[0],
+      paragraph: ar.cv.about.paragraphs[0],
     },
   );
 });
