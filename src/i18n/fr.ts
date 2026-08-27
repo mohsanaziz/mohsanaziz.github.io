@@ -6,6 +6,9 @@ import { defineMessages } from './messages.ts';
 // is quoted from the GitHub interface, so it stays in English and out of this store.
 
 export const messages = defineMessages({
+  notFound: {
+    message: 'Page introuvable. Choisissez votre langue pour revenir à l’accueil.',
+  },
   navigation: {
     additionalInformation: 'Informations complémentaires',
   },
