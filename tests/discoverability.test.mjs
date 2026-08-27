@@ -172,3 +172,19 @@ test('robots.txt bloque les PDF sans masquer les pages techniques ni les futures
   assert.equal(isDisallowed('/cv-print/'), false);
   assert.equal(isDisallowed('/og/cv-fr.png'), false);
 });
+
+test('le build produit une page 404 trilingue avec la direction de chaque message', async () => {
+  const notFoundPath = resolve(DIST_DIRECTORY, '404.html');
+
+  await access(notFoundPath);
+
+  const html = await readFile(notFoundPath, 'utf8');
+
+  for (const [locale, direction] of [
+    ['fr', 'ltr'],
+    ['en', 'ltr'],
+    ['ar', 'rtl'],
+  ]) {
+    assert.match(html, new RegExp(`<p\\b(?=[^>]*\\blang="${locale}")(?=[^>]*\\bdir="${direction}")[^>]*>`));
+  }
+});

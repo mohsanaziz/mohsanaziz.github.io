@@ -4,6 +4,9 @@ import { defineMessages } from './messages.ts';
 // Arabic translates the short interface layer only. CV prose deliberately stays absent here and falls
 // back to French in `localeLayer`, until Arabic content is written and reviewed separately.
 export const messages = defineMessages({
+  notFound: {
+    message: 'هذه الصفحة غير موجودة. اختر لغتك للعودة إلى الصفحة الرئيسية.',
+  },
   navigation: {
     additionalInformation: 'معلومات إضافية',
   },

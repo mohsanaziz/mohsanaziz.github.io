@@ -33,7 +33,15 @@ export type PluralMessage = { readonly [Category in Intl.LDMLPluralRule]?: Messa
   readonly other: MessageWith<'count'>;
 };
 
+// Unlike the Arabic CV content, the 404 copy can never fall back: all three messages are rendered side by
+// side under their own `lang` and `dir`. Keeping this named contract inside LocaleMessages makes a missing
+// translation fail `astro check` in every locale layer, including Arabic.
+export interface NotFoundMessages {
+  readonly message: string;
+}
+
 export interface LocaleMessages {
+  readonly notFound: NotFoundMessages;
   readonly navigation: {
     readonly additionalInformation: string;
   };
