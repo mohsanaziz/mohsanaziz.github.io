@@ -138,8 +138,6 @@ test('le calque arabe porte son interface et sa prose sans repli sur le françai
   assert.equal(arabic.cv.about.paragraphs.length, fr.cv.about.paragraphs.length);
 
   for (const [path, value] of flattenStrings(arabic.cv)) {
-    if (path === 'profile.contactDetails.birthdate.info') continue;
-
     assert.ok(!frenchStrings.has(value), `Expected the Arabic layer to translate “${path}”, found the French “${value}”.`);
   }
 });
