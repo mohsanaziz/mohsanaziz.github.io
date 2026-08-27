@@ -44,6 +44,14 @@ function attributes(tag) {
   return Object.fromEntries(Array.from(tag.matchAll(/([:\w-]+)="([^"]*)"/g), ([, name, value]) => [name, value]));
 }
 
+function htmlAttributes(html) {
+  const [, openingTag] = html.match(/<html\b([^>]*)>/) ?? [];
+
+  assert.ok(openingTag !== undefined, 'Expected the built page to contain an <html> tag.');
+
+  return attributes(openingTag);
+}
+
 function headTags(html, tagName) {
   const [, head] = html.match(/<head>([\s\S]*?)<\/head>/) ?? [];
 
@@ -60,6 +68,26 @@ function singleValue(values, label) {
 
 function metadataValues(metaTags, attribute, name) {
   return metaTags.filter((meta) => meta[attribute] === name).map((meta) => meta.content);
+}
+
+function assertNoDiscoverabilityMetadata(html) {
+  const links = headTags(html, 'link');
+  const meta = headTags(html, 'meta');
+
+  assert.equal(
+    links.some(({ rel }) => rel === 'canonical' || rel === 'alternate'),
+    false,
+  );
+  assert.equal(
+    meta.some(({ property }) => property?.startsWith('og:') || property?.startsWith('profile:')),
+    false,
+  );
+  assert.equal(
+    meta.some(({ name }) => name?.startsWith('twitter:')),
+    false,
+  );
+
+  return meta;
 }
 
 function pngDimensions(contents) {
@@ -121,22 +149,9 @@ test('les pages techniques restent noindex et ne portent aucun bloc de découvra
   for (const locale of LOCALES) {
     for (const route of ['cv-print', 'og-card']) {
       const html = await readFile(builtPagePath(locale, route), 'utf8');
-      const links = headTags(html, 'link');
-      const meta = headTags(html, 'meta');
+      const meta = assertNoDiscoverabilityMetadata(html);
 
       assert.deepEqual(metadataValues(meta, 'name', 'robots'), ['noindex, nofollow']);
-      assert.equal(
-        links.some(({ rel }) => rel === 'canonical' || rel === 'alternate'),
-        false,
-      );
-      assert.equal(
-        meta.some(({ property }) => property?.startsWith('og:') || property?.startsWith('profile:')),
-        false,
-      );
-      assert.equal(
-        meta.some(({ name }) => name?.startsWith('twitter:')),
-        false,
-      );
     }
   }
 });
@@ -179,6 +194,13 @@ test('le build produit une page 404 trilingue avec la direction de chaque messag
   await access(notFoundPath);
 
   const html = await readFile(notFoundPath, 'utf8');
+  const meta = assertNoDiscoverabilityMetadata(html);
+  const { lang, dir } = htmlAttributes(html);
+
+  assert.deepEqual({ lang, dir }, { lang: 'fr', dir: 'ltr' });
+  assert.doesNotMatch(html, /<script\b/);
+  assert.doesNotMatch(html, /http-equiv="refresh"/i);
+  assert.deepEqual(metadataValues(meta, 'name', 'robots'), []);
 
   for (const [locale, direction] of [
     ['fr', 'ltr'],
