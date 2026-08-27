@@ -11,16 +11,16 @@ interface Props {
   title: string;
   description: string;
   kind?: 'public' | 'technical' | 'not-found';
+  explicitDirection?: boolean;
   openGraphImageAlt?: string;
 }
 
-const { title, description, kind = 'technical', openGraphImageAlt } = Astro.props;
+const { title, description, kind = 'technical', explicitDirection = false, openGraphImageAlt } = Astro.props;
 const locale = requireLocale(Astro.currentLocale);
 const { lineHeight } = localeFormatting(locale);
 const direction = localeDirection(locale);
 const isPublic = kind === 'public';
-// Localized LTR pages keep their exact markup; the root 404 names its default direction explicitly.
-const renderedDirection = direction === 'rtl' || kind === 'not-found' ? direction : undefined;
+const renderedDirection = direction === 'rtl' || explicitDirection ? direction : undefined;
 
 const discoveryMetadata = isPublic
   ? (() => {

@@ -34,7 +34,7 @@ const homeLinks = LOCALES.map((locale) => ({
 const frenchMessage = localeLayer(DEFAULT_LOCALE).messages.notFound.message;
 ---
 
-<Layout title={`404 — ${cv.metadata.pageTitle}`} description={frenchMessage} kind="not-found">
+<Layout title={`404 — ${cv.metadata.pageTitle}`} description={frenchMessage} kind="not-found" explicitDirection>
   <RepositoryHeader
     image={portrait}
     owner={githubOwner}
@@ -48,7 +48,7 @@ const frenchMessage = localeLayer(DEFAULT_LOCALE).messages.notFound.message;
       <div class="space-y-3 text-copy-muted">
         {
           messages.map(({ locale, direction, lineHeight, text }) => (
-            <p lang={locale} dir={direction} style={`line-height: ${lineHeight}`}>
+            <p class="cv-prose" lang={locale} dir={direction} style={`--locale-line-height: ${lineHeight}`}>
               {text}
             </p>
           ))

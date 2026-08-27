@@ -61,8 +61,10 @@
     U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1;
 }
 
-/* Noto Sans Arabic v2.012 has a measured natural line box of 2.112 em. Keep this rule
-   unlayered so it outranks Tailwind's leading utilities; print line-height belongs to #77. */
+/* Noto Sans Arabic v2.012 has a measured natural line box of 2.112 em. Match both a prose
+   element carrying lang=ar and prose nested below one. Keep this rule unlayered so it
+   outranks Tailwind's leading utilities; print line-height belongs to #77. */
+:lang(ar).cv-prose,
 :lang(ar) .cv-prose {
   line-height: var(--locale-line-height);
 }
