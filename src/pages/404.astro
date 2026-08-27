@@ -1,0 +1,77 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { GITHUB_LEXICON } from '@/components/lexicon';
+import RepositoryHeader from '@/components/RepositoryHeader.astro';
+import SectionFrame from '@/components/SectionFrame.astro';
+import { imageAsset } from '@/data/images';
+import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
+import { localeLayer } from '@/i18n/layers';
+import { DEFAULT_LOCALE, LOCALE_ENDONYMS, LOCALES, localeFormatting } from '@/i18n/locales';
+import { localeDirection } from '@/i18n/routing';
+import { cvView } from '@/i18n/views';
+import Layout from '@/layouts/Layout.astro';
+
+const cv = cvView(DEFAULT_LOCALE);
+const portrait = { src: imageAsset(cv.profile.image.source), alt: cv.profile.image.alt };
+const { githubProfile } = resolveProfileDetails(cv.profile);
+const githubOwner = urlPathSegments(githubProfile.href).at(0);
+
+if (!githubOwner) {
+  throw new Error('The GitHub profile URL must contain an owner.');
+}
+
+const messages = LOCALES.map((locale) => ({
+  locale,
+  direction: localeDirection(locale),
+  lineHeight: localeFormatting(locale).lineHeight,
+  text: localeLayer(locale).messages.notFound.message,
+}));
+const homeLinks = LOCALES.map((locale) => ({
+  locale,
+  endonym: LOCALE_ENDONYMS[locale],
+  href: getRelativeLocaleUrl(locale),
+}));
+const frenchMessage = localeLayer(DEFAULT_LOCALE).messages.notFound.message;
+---
+
+<Layout title={`404 — ${cv.metadata.pageTitle}`} description={frenchMessage} kind="not-found">
+  <RepositoryHeader
+    image={portrait}
+    owner={githubOwner}
+    repository={GITHUB_LEXICON.repository}
+    ownerHref={githubProfile.href}
+    showLanguageSelector={false}
+  />
+
+  <main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <SectionFrame title="404">
+      <div class="space-y-3 text-copy-muted">
+        {
+          messages.map(({ locale, direction, lineHeight, text }) => (
+            <p lang={locale} dir={direction} style={`line-height: ${lineHeight}`}>
+              {text}
+            </p>
+          ))
+        }
+      </div>
+
+      <ul class="mt-6 flex flex-wrap gap-3">
+        {
+          homeLinks.map(({ locale, endonym, href }) => (
+            <li>
+              <a
+                class="inline-flex rounded-md border border-frame-border bg-panel px-3 py-2 text-sm font-semibold text-link no-underline hover:bg-page"
+                href={href}
+                hreflang={locale}
+              >
+                <span lang={locale} dir="auto">
+                  {endonym}
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </SectionFrame>
+  </main>
+</Layout>

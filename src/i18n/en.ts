@@ -8,6 +8,9 @@ import type { LocaleCv } from './content.ts';
 import { defineMessages } from './messages.ts';
 
 export const messages = defineMessages({
+  notFound: {
+    message: 'Page not found. Choose your language to return home.',
+  },
   navigation: {
     additionalInformation: 'Additional information',
   },

@@ -10,17 +10,19 @@ import '@/styles/main.css';
 interface Props {
   title: string;
   description: string;
-  discoverable?: boolean;
+  kind?: 'public' | 'technical' | 'not-found';
   openGraphImageAlt?: string;
 }
 
-const { title, description, discoverable = false, openGraphImageAlt } = Astro.props;
+const { title, description, kind = 'technical', openGraphImageAlt } = Astro.props;
 const locale = requireLocale(Astro.currentLocale);
 const { lineHeight } = localeFormatting(locale);
-// `dir` is only emitted for right-to-left locales so that the left-to-right pages keep their exact markup.
 const direction = localeDirection(locale);
+const isPublic = kind === 'public';
+// Localized LTR pages keep their exact markup; the root 404 names its default direction explicitly.
+const renderedDirection = direction === 'rtl' || kind === 'not-found' ? direction : undefined;
 
-const discoveryMetadata = discoverable
+const discoveryMetadata = isPublic
   ? (() => {
       const currentPathSegments = Astro.url.pathname.split('/').filter(Boolean);
       const currentLocaleSegment = localeUrlSegment(locale);
@@ -78,12 +80,7 @@ const discoveryMetadata = discoverable
 ---
 
 <!doctype html>
-<html
-  lang={locale}
-  dir={direction === 'rtl' ? direction : undefined}
-  class="h-full scroll-smooth"
-  style={`--locale-line-height: ${lineHeight}`}
->
+<html lang={locale} dir={renderedDirection} class="h-full scroll-smooth" style={`--locale-line-height: ${lineHeight}`}>
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
@@ -111,9 +108,9 @@ const discoveryMetadata = discoverable
           ))}
           <meta name="twitter:card" content="summary_large_image" />
         </>
-      ) : (
+      ) : kind === 'technical' ? (
         <meta name="robots" content="noindex, nofollow" />
-      )
+      ) : null
     }
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
