@@ -1,6 +1,6 @@
 import type { ClientProjectId, ContactDetailId, EmployerId, InstitutionId, InvariantContactDetailId } from '../data/cv.ts';
 
-// The shape of a locale layer's CV content. `fr` and `en` are typed complete: a core entry added without its
+// The shape of a locale layer's CV content. Every layer is typed complete: a core entry added without its
 // translation fails `astro check`, hence `npm run build` (see ADR 0007 §2).
 
 type ContactDetailText<TId extends ContactDetailId> = TId extends InvariantContactDetailId
@@ -38,12 +38,3 @@ export interface LocaleCv {
     readonly entries: { readonly [Id in ClientProjectId]: NameOverride & { readonly description: readonly string[] } };
   };
 }
-
-type DeepPartial<TValue> = TValue extends readonly unknown[]
-  ? TValue
-  : TValue extends object
-    ? { readonly [Key in keyof TValue]?: DeepPartial<TValue[Key]> }
-    : TValue;
-
-/** A locale may override any CV leaf while inheriting every omitted value from French. */
-export type PartialLocaleCv = DeepPartial<LocaleCv>;
