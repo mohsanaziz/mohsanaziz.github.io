@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 import { startBuildServer } from '../scripts/build-server.mjs';
+import { DEFAULT_LOCALE, LOCALES } from '../src/i18n/locales.ts';
+import { localeUrlSegment } from '../src/i18n/routing.ts';
 
 const DIST_DIRECTORY = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
 const INDEX_PATH = resolve(DIST_DIRECTORY, 'index.html');
@@ -69,7 +71,7 @@ test('le build livre les trois faces épinglées et ne précharge que le sans la
 test('la page française ne charge pas le sous-ensemble arabe et distingue les graisses 300 et 900', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
-  const page = await browser.newPage({ locale: 'fr-FR' });
+  const page = await browser.newPage({ locale: DEFAULT_LOCALE });
   const requests = [];
   const responses = [];
 
@@ -155,11 +157,9 @@ test('le sous-ensemble arabe est chargé sur /ar/ et sur elle seule', async (t) 
     await server.close();
   });
 
-  for (const { path, locale } of [
-    { path: '/', locale: 'fr-FR' },
-    { path: '/en/', locale: 'en' },
-    { path: '/ar/', locale: 'ar' },
-  ]) {
+  for (const locale of LOCALES) {
+    const localeSegment = localeUrlSegment(locale);
+    const path = localeSegment === undefined ? '/' : `/${localeSegment}/`;
     const context = await browser.newContext({ locale });
     const page = await context.newPage();
     const fontRequests = [];

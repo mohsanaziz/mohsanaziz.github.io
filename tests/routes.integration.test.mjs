@@ -11,12 +11,15 @@ import { GITHUB_LEXICON } from '../src/components/lexicon.ts';
 import * as ar from '../src/i18n/ar.ts';
 import * as en from '../src/i18n/en.ts';
 import * as fr from '../src/i18n/fr.ts';
-import { localeFormatting, LOCALES } from '../src/i18n/locales.ts';
+import { DEFAULT_LOCALE, localeFormatting, LOCALES } from '../src/i18n/locales.ts';
 import { localeDirection, localePagePath, localeUrlSegment, resumeFileName, resumePath } from '../src/i18n/routing.ts';
 import { useTranslations } from '../src/i18n/translate.ts';
 import { flattenStrings } from './layer-strings.mjs';
 
 const DIST_DIRECTORY = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
+// Les contextes partagés qui visitent la seule route négociable (`/`) annoncent sa locale par défaut.
+// Les routes localisées restent déterministes quelle que soit la langue du navigateur.
+const ROOT_CONTEXT_LOCALE = DEFAULT_LOCALE;
 
 function builtPagePath(locale, route = '') {
   return resolve(DIST_DIRECTORY, ...[localeUrlSegment(locale), route, 'index.html'].filter(Boolean));
@@ -249,7 +252,7 @@ test('le média d’impression charge la face arabe sur /ar/ seulement et l’ap
 test('les hauteurs de ligne d’impression restent compactes en latin et sûres en arabe', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
-  const page = await browser.newPage({ locale: 'fr-FR' });
+  const page = await browser.newPage({ locale: DEFAULT_LOCALE });
 
   t.after(async () => {
     await browser.close();
@@ -296,7 +299,7 @@ test('les hauteurs de ligne d’impression restent compactes en latin et sûres 
 test('le sélecteur relie les trois pages publiques avec des endonymes accessibles et reste absent des pages d’impression', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
-  const page = await browser.newPage({ locale: 'fr-FR' });
+  const page = await browser.newPage({ locale: ROOT_CONTEXT_LOCALE });
 
   t.after(async () => {
     await browser.close();
@@ -383,7 +386,7 @@ test('le sélecteur relie les trois pages publiques avec des endonymes accessibl
 test('à 390 px le panneau reste dans le viewport côté end et seule la pastille Public revient à la ligne', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
-  const page = await browser.newPage({ locale: 'fr-FR', viewport: { width: 390, height: 844 } });
+  const page = await browser.newPage({ locale: ROOT_CONTEXT_LOCALE, viewport: { width: 390, height: 844 } });
 
   t.after(async () => {
     await browser.close();
@@ -435,7 +438,7 @@ test('à 390 px le panneau reste dans le viewport côté end et seule la pastill
 test('sur /ar/ la colonne latérale passe à gauche et les compteurs et valeurs de fait rejoignent le bord opposé', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
-  const page = await browser.newPage({ locale: 'fr-FR', viewport: { width: 1280, height: 900 } });
+  const page = await browser.newPage({ locale: ROOT_CONTEXT_LOCALE, viewport: { width: 1280, height: 900 } });
 
   t.after(async () => {
     await browser.close();
