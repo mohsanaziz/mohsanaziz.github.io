@@ -99,7 +99,7 @@ test('les cartes Open Graph rendent le calque de leur locale, dont l’arabe en 
   };
 
   for (const locale of LOCALES) {
-    const context = await browser.newContext({ viewport: { width: 1200, height: 630 } });
+    const context = await browser.newContext({ locale, viewport: { width: 1200, height: 630 } });
     const page = await context.newPage();
     const fontRequests = [];
 
@@ -187,7 +187,7 @@ test('le média d’impression charge la face arabe sur /ar/ seulement et l’ap
   });
 
   for (const locale of LOCALES) {
-    const context = await browser.newContext();
+    const context = await browser.newContext({ locale });
     const page = await context.newPage();
     const fontRequests = [];
 
@@ -249,7 +249,7 @@ test('le média d’impression charge la face arabe sur /ar/ seulement et l’ap
 test('les hauteurs de ligne d’impression restent compactes en latin et sûres en arabe', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
-  const page = await browser.newPage();
+  const page = await browser.newPage({ locale: 'fr-FR' });
 
   t.after(async () => {
     await browser.close();
@@ -296,7 +296,7 @@ test('les hauteurs de ligne d’impression restent compactes en latin et sûres 
 test('le sélecteur relie les trois pages publiques avec des endonymes accessibles et reste absent des pages d’impression', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
-  const page = await browser.newPage();
+  const page = await browser.newPage({ locale: 'fr-FR' });
 
   t.after(async () => {
     await browser.close();
@@ -383,7 +383,7 @@ test('le sélecteur relie les trois pages publiques avec des endonymes accessibl
 test('à 390 px le panneau reste dans le viewport côté end et seule la pastille Public revient à la ligne', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const page = await browser.newPage({ locale: 'fr-FR', viewport: { width: 390, height: 844 } });
 
   t.after(async () => {
     await browser.close();
@@ -435,7 +435,7 @@ test('à 390 px le panneau reste dans le viewport côté end et seule la pastill
 test('sur /ar/ la colonne latérale passe à gauche et les compteurs et valeurs de fait rejoignent le bord opposé', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const page = await browser.newPage({ locale: 'fr-FR', viewport: { width: 1280, height: 900 } });
 
   t.after(async () => {
     await browser.close();
@@ -483,7 +483,7 @@ test('sur /ar/ la colonne latérale passe à gauche et les compteurs et valeurs 
 test('/ar/ rend son interface, ses chiffres et son interlignage en arabe sans altérer les chemins', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
-  const page = await browser.newPage();
+  const page = await browser.newPage({ locale: 'ar' });
 
   t.after(async () => {
     await browser.close();
