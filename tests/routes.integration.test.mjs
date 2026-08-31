@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { access, readFile } from 'node:fs/promises';
+import { access, glob, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -83,6 +83,20 @@ test('aucune page ne livre de JavaScript ni de redirection meta refresh', async 
       assert.doesNotMatch(html, /<script\b/);
       assert.doesNotMatch(html, /http-equiv="refresh"/i);
     }
+  }
+});
+
+test('chaque document HTML et feuille de style du build tient sur une seule ligne', async () => {
+  const builtAssetPaths = await Array.fromAsync(glob(['**/*.html', '**/*.css'], { cwd: DIST_DIRECTORY }));
+
+  assert.ok(builtAssetPaths.length > 0, 'Expected the build to contain HTML documents and stylesheets.');
+
+  for (const assetPath of builtAssetPaths) {
+    const lines = (await readFile(resolve(DIST_DIRECTORY, assetPath), 'utf8')).split(/\r\n|\r|\n/);
+
+    if (lines.at(-1) === '') lines.pop();
+
+    assert.equal(lines.length, 1, `Expected ${assetPath} to fit on one line, received ${lines.length}.`);
   }
 });
 

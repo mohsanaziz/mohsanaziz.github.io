@@ -6,6 +6,7 @@ import { DEFAULT_LOCALE, LOCALES } from './src/i18n/locales.ts';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://mohsanaziz.github.io',
+  compressHTML: true,
   // The pages are produced by the `[...locale]` rest routes; this block only provides
   // Astro.currentLocale and the locale URL helpers, which absorb the unprefixed default locale.
   i18n: {
@@ -16,6 +17,10 @@ export default defineConfig({
     },
   },
   vite: {
+    build: {
+      minify: 'esbuild',
+      cssMinify: 'esbuild',
+    },
     plugins: [tailwindcss()],
   },
 });
