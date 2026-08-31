@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 import { chromium } from 'playwright';
 
+import { DEFAULT_LOCALE } from '../src/i18n/locales.ts';
 import { localeRoutes } from '../src/i18n/routing.ts';
 import { startBuildServer } from './build-server.mjs';
 import { generateOpenGraphImages } from './generate-og-images.mjs';
@@ -19,7 +20,7 @@ let browser;
 
 try {
   browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext();
+  const context = await browser.newContext({ locale: DEFAULT_LOCALE });
 
   await generatePdfs(context, buildServer, DIST_DIRECTORY, locales, { paginationTest });
 
