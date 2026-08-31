@@ -86,7 +86,14 @@ test('aucune page ne livre de JavaScript ni de redirection meta refresh', async 
 test('chaque document HTML et feuille de style du build tient sur une seule ligne', async () => {
   const builtAssetPaths = await Array.fromAsync(glob(['**/*.html', '**/*.css'], { cwd: DIST_DIRECTORY }));
 
-  assert.ok(builtAssetPaths.length > 0, 'Expected the build to contain HTML documents and stylesheets.');
+  assert.ok(
+    builtAssetPaths.some((assetPath) => assetPath.endsWith('.html')),
+    'Expected the build to contain HTML documents.',
+  );
+  assert.ok(
+    builtAssetPaths.some((assetPath) => assetPath.endsWith('.css')),
+    'Expected the build to contain stylesheets.',
+  );
 
   for (const assetPath of builtAssetPaths) {
     const lines = (await readFile(resolve(DIST_DIRECTORY, assetPath), 'utf8')).split(/\r\n|\r|\n/);
