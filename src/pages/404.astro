@@ -7,6 +7,7 @@ import { imageAsset } from '@/data/images';
 import { resolveProfileDetails, urlPathSegments } from '@/data/profile';
 import { localeLayer } from '@/i18n/layers';
 import { DEFAULT_LOCALE, LOCALE_ENDONYMS, LOCALES, localeFormatting } from '@/i18n/locales';
+import { languageChoiceHref } from '@/i18n/negotiation';
 import { localeDirection } from '@/i18n/routing';
 import { cvView } from '@/i18n/views';
 import Layout from '@/layouts/Layout.astro';
@@ -29,7 +30,7 @@ const messages = LOCALES.map((locale) => ({
 const homeLinks = LOCALES.map((locale) => ({
   locale,
   endonym: LOCALE_ENDONYMS[locale],
-  href: getRelativeLocaleUrl(locale),
+  href: languageChoiceHref(locale, getRelativeLocaleUrl(locale)),
 }));
 const frenchMessage = localeLayer(DEFAULT_LOCALE).messages.notFound.message;
 ---

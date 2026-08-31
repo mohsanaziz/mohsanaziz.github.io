@@ -4,6 +4,7 @@ import Icon from '@/components/Icon.astro';
 import { GITHUB_LEXICON } from '@/components/lexicon';
 import ShellBadge from '@/components/ShellBadge.astro';
 import { DEFAULT_LOCALE, LOCALE_ENDONYMS, LOCALES } from '@/i18n/locales';
+import { languageChoiceHref } from '@/i18n/negotiation';
 import { localeDirection } from '@/i18n/routing';
 import { useTranslations } from '@/i18n/translate';
 
@@ -13,7 +14,7 @@ const { languageSelector } = translate.messages;
 const options = LOCALES.map((locale) => ({
   locale,
   endonym: LOCALE_ENDONYMS[locale],
-  href: getRelativeLocaleUrl(locale),
+  href: languageChoiceHref(locale, getRelativeLocaleUrl(locale)),
   current: locale === currentLocale,
   isDefault: locale === DEFAULT_LOCALE,
 }));
