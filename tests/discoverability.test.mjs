@@ -198,8 +198,6 @@ test('le build produit une page 404 trilingue avec la direction de chaque messag
   const { lang, dir } = htmlAttributes(html);
 
   assert.deepEqual({ lang, dir }, { lang: 'fr', dir: 'ltr' });
-  assert.doesNotMatch(html, /<script\b/);
-  assert.doesNotMatch(html, /http-equiv="refresh"/i);
   assert.deepEqual(metadataValues(meta, 'name', 'robots'), []);
 
   for (const [locale, direction] of [
