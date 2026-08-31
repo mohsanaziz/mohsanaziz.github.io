@@ -69,7 +69,7 @@ test('le build livre les trois faces épinglées et ne précharge que le sans la
 test('la page française ne charge pas le sous-ensemble arabe et distingue les graisses 300 et 900', async (t) => {
   const server = await startBuildServer(DIST_DIRECTORY);
   const browser = await chromium.launch();
-  const page = await browser.newPage();
+  const page = await browser.newPage({ locale: 'fr-FR' });
   const requests = [];
   const responses = [];
 
@@ -155,8 +155,12 @@ test('le sous-ensemble arabe est chargé sur /ar/ et sur elle seule', async (t) 
     await server.close();
   });
 
-  for (const path of ['/', '/en/', '/ar/']) {
-    const context = await browser.newContext();
+  for (const { path, locale } of [
+    { path: '/', locale: 'fr-FR' },
+    { path: '/en/', locale: 'en' },
+    { path: '/ar/', locale: 'ar' },
+  ]) {
+    const context = await browser.newContext({ locale });
     const page = await context.newPage();
     const fontRequests = [];
 
