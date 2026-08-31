@@ -1,6 +1,9 @@
 @import 'tailwindcss' source(none);
 
 @source '../../src';
+/* The i18n modules carry prose and data, never class names. Scanning them only harvests false positives
+   from comments and imports, which would grow the stylesheet on every edit to a comment. */
+@source not '../../src/i18n';
 
 @theme {
   --font-sans: 'Noto Sans Arabic', 'Noto Sans Arabic Latin', system-ui, sans-serif;

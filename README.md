@@ -12,7 +12,9 @@ npx playwright install chromium
 npm run dev
 ```
 
-Le site est alors accessible sur `http://localhost:4321`. Il sert une URL par locale : `/` en français, `/en/` en anglais et `/ar/` en arabe de droite à gauche, sans `/fr/` ni redirection. Les locales sont déclarées une seule fois dans `src/i18n/locales.ts`, et les pages sont produites par les routes `src/pages/[...locale]/`.
+Le site est alors accessible sur `http://localhost:4321`. Il sert une URL par locale : `/` en français, `/en/` en anglais et `/ar/` en arabe de droite à gauche, sans `/fr/`. Les locales sont déclarées une seule fois dans `src/i18n/locales.ts`, et les pages sont produites par les routes `src/pages/[...locale]/`.
+
+La racine négocie la langue du navigateur, et elle seule. Un script minimal, inline dans le `<head>` et minifié au build à partir de la source `src/i18n/negotiate-language.ts`, parcourt `navigator.languages` dans l’ordre annoncé et conduit un visiteur anglophone vers `/en/` et un arabophone vers `/ar/` avant le premier rendu. La reconnaissance porte sur la langue et non sur le pays : `en-GB` et `ar-DZ` sont reconnus. Le français et les langues non servies restent sur `/`, la chaîne de requête et le fragment suivent la redirection, et l’entrée d’historique courante est remplacée. Le paramètre `?lang=fr` que porte le lien français du sélecteur de langue et de la page 404 neutralise la négociation et reste dans l’URL, de sorte qu’un rechargement conserve le choix. Aucun cookie ni stockage local n’est écrit, et sans JavaScript la racine rend la page française complète avec son sélecteur natif. La décision est documentée dans [l’ADR 0008](docs/adr/0008-negotiate-language-from-root.md).
 
 Le contenu du CV est séparé entre le noyau invariant `src/data/cv.ts` et les calques complets `src/i18n/fr.ts`, `src/i18n/en.ts` et `src/i18n/ar.ts`. Chaque calque exporte ses messages d’interface et son contenu localisé. Leur forme est contrôlée par TypeScript : une clé manquante, notamment dans le calque anglais, fait échouer `astro check` et donc le build.
 

@@ -18,6 +18,13 @@ export function localeStaticPaths(): { params: { locale: Locale | undefined } }[
   return localeRoutes().map(({ urlSegment }) => ({ params: { locale: urlSegment } }));
 }
 
+// The home URL of a locale, trailing slash included so GitHub Pages serves it without a redirect of its own.
+export function localeHomePath(locale: Locale): string {
+  const segment = localeUrlSegment(locale);
+
+  return segment === undefined ? '/' : `/${segment}/`;
+}
+
 export function localeDirection(locale: Locale): Direction {
   return RTL_LOCALES.has(locale) ? 'rtl' : 'ltr';
 }

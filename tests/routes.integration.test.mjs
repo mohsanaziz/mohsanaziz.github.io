@@ -12,7 +12,8 @@ import * as ar from '../src/i18n/ar.ts';
 import * as en from '../src/i18n/en.ts';
 import * as fr from '../src/i18n/fr.ts';
 import { DEFAULT_LOCALE, localeFormatting, LOCALES } from '../src/i18n/locales.ts';
-import { localeDirection, localePagePath, localeUrlSegment, resumeFileName, resumePath } from '../src/i18n/routing.ts';
+import { LANGUAGE_CHOICE_PARAMETER, languageChoiceHref } from '../src/i18n/negotiation.ts';
+import { localeDirection, localeHomePath, localePagePath, localeUrlSegment, resumeFileName, resumePath } from '../src/i18n/routing.ts';
 import { useTranslations } from '../src/i18n/translate.ts';
 import { flattenStrings } from './layer-strings.mjs';
 
@@ -75,13 +76,30 @@ test('chaque page publique affiche et télécharge le PDF de sa locale', async (
   }
 });
 
-test('aucune page ne livre de JavaScript ni de redirection meta refresh', async () => {
+test('seule la racine livre un script, inline, et aucune page ne livre de redirection meta refresh', async () => {
   for (const locale of LOCALES) {
     for (const route of ['', 'cv-print', 'og-card']) {
       const html = await readBuiltPage(locale, route);
+      const scripts = Array.from(html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g));
+      const isRoot = locale === DEFAULT_LOCALE && route === '';
+      const pagePath = localePagePath(locale, route);
 
-      assert.doesNotMatch(html, /<script\b/);
-      assert.doesNotMatch(html, /http-equiv="refresh"/i);
+      assert.doesNotMatch(html, /http-equiv="refresh"/i, `Expected ${pagePath} to redirect through no meta refresh.`);
+      assert.equal(scripts.length, isRoot ? 1 : 0, `Expected ${isRoot ? 'the root' : pagePath} to ship ${isRoot ? 'one' : 'no'} script.`);
+
+      if (!isRoot) continue;
+
+      const [, attributes, code] = scripts[0];
+
+      assert.doesNotMatch(attributes, /\b(src|type|defer|async)\b/, 'Expected the negotiation script to be inline and synchronous.');
+      assert.doesNotMatch(code, /[\r\n]/, 'Expected the negotiation script to be minified at build time.');
+      assert.doesNotMatch(code, /cookie|localStorage|sessionStorage/, 'Expected the negotiation to keep the URL as its only memory.');
+      assert.ok(code.includes(`"${LANGUAGE_CHOICE_PARAMETER}"`), 'Expected the negotiation script to read the shared choice marker.');
+
+      // The map is derived from the locale list, so a fourth locale would land here without touching the script.
+      for (const servedLocale of LOCALES) {
+        assert.ok(code.includes(`"${localeHomePath(servedLocale)}"`), `Expected the negotiation map to serve ${servedLocale}.`);
+      }
     }
   }
 });
@@ -105,6 +123,162 @@ test('chaque document HTML et feuille de style du build tient sur une seule lign
 
     assert.equal(lines.length, 1, `Expected ${assetPath} to fit on one line, received ${lines.length}.`);
   }
+});
+
+test('la racine conduit chaque navigateur vers sa langue, requête et fragment compris, sans empiler d’historique', async (t) => {
+  const server = await startBuildServer(DIST_DIRECTORY);
+  const browser = await chromium.launch();
+
+  t.after(async () => {
+    await browser.close();
+    await server.close();
+  });
+
+  // Les tags régionaux sont reconnus par leur seul sous-tag primaire ; une langue non servie laisse la racine en place.
+  for (const { browserLocale, locale } of [
+    { browserLocale: 'en-GB', locale: 'en' },
+    { browserLocale: 'ar-DZ', locale: 'ar' },
+    { browserLocale: 'fr-CA', locale: 'fr' },
+    { browserLocale: 'de-DE', locale: 'fr' },
+  ]) {
+    const context = await browser.newContext({ locale: browserLocale });
+    const page = await context.newPage();
+
+    await page.goto(`${server.origin}/`);
+
+    const landed = await page.evaluate(() => ({
+      lang: document.documentElement.lang,
+      cookie: document.cookie,
+      storedEntries: localStorage.length + sessionStorage.length,
+    }));
+
+    assert.equal(new URL(page.url()).pathname, localeHomePath(locale), `Expected ${browserLocale} to land on the ${locale} page.`);
+    assert.equal(landed.lang, locale, `Expected ${browserLocale} to be served the ${locale} document.`);
+    assert.equal(landed.cookie, '', 'Expected the negotiation to write no cookie.');
+    assert.equal(landed.storedEntries, 0, 'Expected the negotiation to write no local or session storage.');
+
+    await context.close();
+  }
+
+  // L’ordre du navigateur tranche : l’allemand n’est pas servi, l’arabe précède l’anglais.
+  const orderedContext = await browser.newContext({ locale: 'de-DE' });
+
+  await orderedContext.addInitScript(() => {
+    Object.defineProperty(navigator, 'languages', { get: () => ['de-DE', 'ar-DZ', 'en-GB'] });
+  });
+
+  const orderedPage = await orderedContext.newPage();
+
+  await orderedPage.goto(`${server.origin}/`);
+  assert.equal(new URL(orderedPage.url()).pathname, '/ar/', 'Expected the first served language of the browser list to win.');
+  await orderedContext.close();
+
+  const context = await browser.newContext({ locale: 'en-GB' });
+  const page = await context.newPage();
+
+  await page.goto(`${server.origin}/?utm_source=cv&page=2#profil`);
+  assert.equal(page.url(), `${server.origin}/en/?utm_source=cv&page=2#profil`, 'Expected the query string and the fragment to follow.');
+
+  // Le saut remplace l’entrée courante : le retour arrière quitte la racine au lieu de la rejouer.
+  await page.goto(`${server.origin}/ar/`);
+  await page.goto(`${server.origin}/`);
+  assert.equal(new URL(page.url()).pathname, '/en/');
+  await page.goBack();
+  assert.equal(new URL(page.url()).pathname, '/ar/', 'Expected the back navigation to skip the replaced root entry.');
+});
+
+test('le marqueur de choix neutralise la négociation, au chargement comme au rechargement, et n’est porté que par le lien français', async (t) => {
+  const server = await startBuildServer(DIST_DIRECTORY);
+  const browser = await chromium.launch();
+  const context = await browser.newContext({ locale: 'en-GB' });
+  const page = await context.newPage();
+
+  t.after(async () => {
+    await browser.close();
+    await server.close();
+  });
+
+  const markedRoot = `/?${LANGUAGE_CHOICE_PARAMETER}=${DEFAULT_LOCALE}`;
+
+  await page.goto(`${server.origin}${markedRoot}`);
+  assert.equal(new URL(page.url()).pathname, '/', 'Expected the marker to keep an English browser on the French root.');
+  assert.equal(await page.evaluate(() => document.documentElement.lang), DEFAULT_LOCALE);
+
+  // Le marqueur n’est pas nettoyé après lecture : sans lui dans la barre d’adresse, un rechargement déferait le choix.
+  await page.reload();
+  assert.equal(page.url(), `${server.origin}${markedRoot}`, 'Expected the marker to survive a reload.');
+  assert.equal(await page.evaluate(() => document.documentElement.lang), DEFAULT_LOCALE);
+
+  // Seule la présence de la clé compte ; sa valeur n’est jamais interprétée.
+  await page.goto(`${server.origin}/?${LANGUAGE_CHOICE_PARAMETER}=en`);
+  assert.equal(new URL(page.url()).pathname, '/', 'Expected the marker value to be left uninterpreted.');
+
+  // Les liens vers l’anglais et l’arabe restent nus : ces pages ne négocient rien.
+  const expectedHomeHrefs = LOCALES.map((locale) => languageChoiceHref(locale, localeHomePath(locale)));
+
+  assert.deepEqual(expectedHomeHrefs, [markedRoot, '/en/', '/ar/']);
+
+  const homeHrefs = (selector) => page.locator(selector).evaluateAll((links) => links.map((link) => link.getAttribute('href')));
+
+  await page.goto(`${server.origin}/404.html`);
+  assert.deepEqual(await homeHrefs('main a[hreflang]'), expectedHomeHrefs, 'Expected the 404 home links to mark French only.');
+
+  // Un anglophone qui choisit délibérément le français obtient le français, et le garde.
+  await page.locator('main a[hreflang="fr"]').click();
+  assert.equal(page.url(), `${server.origin}${markedRoot}`);
+  assert.equal(await page.evaluate(() => document.documentElement.lang), DEFAULT_LOCALE);
+
+  for (const locale of LOCALES) {
+    await page.goto(`${server.origin}${languageChoiceHref(locale, localeHomePath(locale))}`);
+    assert.deepEqual(
+      await homeHrefs('header details a[hreflang]'),
+      expectedHomeHrefs,
+      `Expected the ${locale} selector to mark French only.`,
+    );
+  }
+});
+
+test('aucune page hors de la racine ne négocie, même pour un navigateur anglophone', async (t) => {
+  const server = await startBuildServer(DIST_DIRECTORY);
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ locale: 'en-GB' });
+
+  t.after(async () => {
+    await browser.close();
+    await server.close();
+  });
+
+  const paths = [
+    ...LOCALES.filter((locale) => locale !== DEFAULT_LOCALE).map((locale) => localeHomePath(locale)),
+    ...LOCALES.flatMap((locale) => ['cv-print', 'og-card'].map((route) => `${localePagePath(locale, route)}/`)),
+    '/404.html',
+  ];
+
+  for (const path of paths) {
+    await page.goto(`${server.origin}${path}`);
+    assert.equal(new URL(page.url()).pathname, path, `Expected ${path} to stay put for an English browser.`);
+  }
+});
+
+test('sans JavaScript la racine rend le français complet et son sélecteur reste utilisable', async (t) => {
+  const server = await startBuildServer(DIST_DIRECTORY);
+  const browser = await chromium.launch();
+  const context = await browser.newContext({ locale: 'en-GB', javaScriptEnabled: false });
+  const page = await context.newPage();
+
+  t.after(async () => {
+    await browser.close();
+    await server.close();
+  });
+
+  await page.goto(`${server.origin}/`);
+  assert.equal(new URL(page.url()).pathname, '/', 'Expected the redirection to remain a shortcut, never a dependency.');
+  assert.equal(await page.locator('html').getAttribute('lang'), DEFAULT_LOCALE);
+  assert.ok((await page.locator('main').textContent())?.includes(fr.cv.about.paragraphs[0]), 'Expected the full French page.');
+
+  await page.locator('header summary').click();
+  await page.locator('header details a[hreflang="en"]').click();
+  assert.equal(new URL(page.url()).pathname, '/en/', 'Expected the native language selector to work without JavaScript.');
 });
 
 test('les cartes Open Graph rendent le calque de leur locale, dont l’arabe en RTL avec sa police embarquée', async (t) => {
@@ -328,7 +502,7 @@ test('le sélecteur relie les trois pages publiques avec des endonymes accessibl
   });
 
   const expectedOptions = [
-    { locale: 'fr', href: '/', endonym: 'Français' },
+    { locale: 'fr', href: '/?lang=fr', endonym: 'Français' },
     { locale: 'en', href: '/en/', endonym: 'English' },
     { locale: 'ar', href: '/ar/', endonym: 'العربية' },
   ];
