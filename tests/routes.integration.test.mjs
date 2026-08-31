@@ -22,6 +22,19 @@ const DIST_DIRECTORY = resolve(fileURLToPath(new URL('../dist/', import.meta.url
 // Les routes localisées restent déterministes quelle que soit la langue du navigateur.
 const ROOT_CONTEXT_LOCALE = DEFAULT_LOCALE;
 
+// Les tests de négociation partagent ce montage : le dist réel servi, piloté par un vrai navigateur, fermé avec le test.
+async function startBrowserFixture(t) {
+  const server = await startBuildServer(DIST_DIRECTORY);
+  const browser = await chromium.launch();
+
+  t.after(async () => {
+    await browser.close();
+    await server.close();
+  });
+
+  return { server, browser };
+}
+
 function builtPagePath(locale, route = '') {
   return resolve(DIST_DIRECTORY, ...[localeUrlSegment(locale), route, 'index.html'].filter(Boolean));
 }
@@ -77,29 +90,39 @@ test('chaque page publique affiche et télécharge le PDF de sa locale', async (
 });
 
 test('seule la racine livre un script, inline, et aucune page ne livre de redirection meta refresh', async () => {
-  for (const locale of LOCALES) {
-    for (const route of ['', 'cv-print', 'og-card']) {
-      const html = await readBuiltPage(locale, route);
-      const scripts = Array.from(html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g));
-      const isRoot = locale === DEFAULT_LOCALE && route === '';
-      const pagePath = localePagePath(locale, route);
+  // L’invariant porte sur tout ce que le build publie : les neuf pages localisées et techniques, et la 404.
+  const publishedPages = [
+    ...LOCALES.flatMap((locale) =>
+      ['', 'cv-print', 'og-card'].map((route) => ({
+        path: localePagePath(locale, route),
+        isRoot: locale === DEFAULT_LOCALE && route === '',
+        read: () => readBuiltPage(locale, route),
+      })),
+    ),
+    { path: '/404.html', isRoot: false, read: () => readFile(resolve(DIST_DIRECTORY, '404.html'), 'utf8') },
+  ];
 
-      assert.doesNotMatch(html, /http-equiv="refresh"/i, `Expected ${pagePath} to redirect through no meta refresh.`);
-      assert.equal(scripts.length, isRoot ? 1 : 0, `Expected ${isRoot ? 'the root' : pagePath} to ship ${isRoot ? 'one' : 'no'} script.`);
+  assert.equal(publishedPages.length, 10, 'Expected the invariant to cover every published page.');
 
-      if (!isRoot) continue;
+  for (const { path, isRoot, read } of publishedPages) {
+    const html = await read();
+    const scripts = Array.from(html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g));
 
-      const [, attributes, code] = scripts[0];
+    assert.doesNotMatch(html, /http-equiv="refresh"/i, `Expected ${path} to redirect through no meta refresh.`);
+    assert.equal(scripts.length, isRoot ? 1 : 0, `Expected ${path} to ship ${isRoot ? 'one' : 'no'} script.`);
 
-      assert.doesNotMatch(attributes, /\b(src|type|defer|async)\b/, 'Expected the negotiation script to be inline and synchronous.');
-      assert.doesNotMatch(code, /[\r\n]/, 'Expected the negotiation script to be minified at build time.');
-      assert.doesNotMatch(code, /cookie|localStorage|sessionStorage/, 'Expected the negotiation to keep the URL as its only memory.');
-      assert.ok(code.includes(`"${LANGUAGE_CHOICE_PARAMETER}"`), 'Expected the negotiation script to read the shared choice marker.');
+    if (!isRoot) continue;
 
-      // The map is derived from the locale list, so a fourth locale would land here without touching the script.
-      for (const servedLocale of LOCALES) {
-        assert.ok(code.includes(`"${localeHomePath(servedLocale)}"`), `Expected the negotiation map to serve ${servedLocale}.`);
-      }
+    const [, attributes, code] = scripts[0];
+
+    assert.doesNotMatch(attributes, /\b(src|type|defer|async)\b/, 'Expected the negotiation script to be inline and synchronous.');
+    assert.doesNotMatch(code, /[\r\n]/, 'Expected the negotiation script to be minified at build time.');
+    assert.doesNotMatch(code, /cookie|localStorage|sessionStorage/, 'Expected the negotiation to keep the URL as its only memory.');
+    assert.ok(code.includes(`"${LANGUAGE_CHOICE_PARAMETER}"`), 'Expected the negotiation script to read the shared choice marker.');
+
+    // The map is derived from the locale list, so a fourth locale would land here without touching the script.
+    for (const servedLocale of LOCALES) {
+      assert.ok(code.includes(`"${localeHomePath(servedLocale)}"`), `Expected the negotiation map to serve ${servedLocale}.`);
     }
   }
 });
@@ -126,13 +149,7 @@ test('chaque document HTML et feuille de style du build tient sur une seule lign
 });
 
 test('la racine conduit chaque navigateur vers sa langue, requête et fragment compris, sans empiler d’historique', async (t) => {
-  const server = await startBuildServer(DIST_DIRECTORY);
-  const browser = await chromium.launch();
-
-  t.after(async () => {
-    await browser.close();
-    await server.close();
-  });
+  const { server, browser } = await startBrowserFixture(t);
 
   // Les tags régionaux sont reconnus par leur seul sous-tag primaire ; une langue non servie laisse la racine en place.
   for (const { browserLocale, locale } of [
@@ -188,15 +205,9 @@ test('la racine conduit chaque navigateur vers sa langue, requête et fragment c
 });
 
 test('le marqueur de choix neutralise la négociation, au chargement comme au rechargement, et n’est porté que par le lien français', async (t) => {
-  const server = await startBuildServer(DIST_DIRECTORY);
-  const browser = await chromium.launch();
+  const { server, browser } = await startBrowserFixture(t);
   const context = await browser.newContext({ locale: 'en-GB' });
   const page = await context.newPage();
-
-  t.after(async () => {
-    await browser.close();
-    await server.close();
-  });
 
   const markedRoot = `/?${LANGUAGE_CHOICE_PARAMETER}=${DEFAULT_LOCALE}`;
 
@@ -239,14 +250,8 @@ test('le marqueur de choix neutralise la négociation, au chargement comme au re
 });
 
 test('aucune page hors de la racine ne négocie, même pour un navigateur anglophone', async (t) => {
-  const server = await startBuildServer(DIST_DIRECTORY);
-  const browser = await chromium.launch();
+  const { server, browser } = await startBrowserFixture(t);
   const page = await browser.newPage({ locale: 'en-GB' });
-
-  t.after(async () => {
-    await browser.close();
-    await server.close();
-  });
 
   const paths = [
     ...LOCALES.filter((locale) => locale !== DEFAULT_LOCALE).map((locale) => localeHomePath(locale)),
@@ -261,15 +266,9 @@ test('aucune page hors de la racine ne négocie, même pour un navigateur anglop
 });
 
 test('sans JavaScript la racine rend le français complet et son sélecteur reste utilisable', async (t) => {
-  const server = await startBuildServer(DIST_DIRECTORY);
-  const browser = await chromium.launch();
+  const { server, browser } = await startBrowserFixture(t);
   const context = await browser.newContext({ locale: 'en-GB', javaScriptEnabled: false });
   const page = await context.newPage();
-
-  t.after(async () => {
-    await browser.close();
-    await server.close();
-  });
 
   await page.goto(`${server.origin}/`);
   assert.equal(new URL(page.url()).pathname, '/', 'Expected the redirection to remain a shortcut, never a dependency.');
